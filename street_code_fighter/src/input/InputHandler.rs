@@ -43,7 +43,7 @@ let mut event_pump = sdl_context.event_pump()?;
                 // call some code to alter momentum, player speed, and player position
                 // handle this in Movement.rs
             },
-            Event::KeyDown { keycode: Some(Keycode::W), repeat: false, .. } |
+            Event::KeyDown { keycode: Some(Keycode::Up), repeat: false, .. } |
             Event::KeyDown {keycode: Some(Keycode::Space), repeat: false, .. } => {
                 // player moved up / jumped
                 // acounts for 'W' or spacebar
