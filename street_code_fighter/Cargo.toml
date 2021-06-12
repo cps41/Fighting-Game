@@ -9,4 +9,4 @@ edition = "2018"
 [dependencies.sdl2]
 version = "0.34"
 default-features = false
-features = ["ttf","image","gfx","mixer"]
+features = ["image","mixer"]
