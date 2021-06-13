@@ -1,5 +1,7 @@
 #[derive(Default)]
 struct Fighter {
+    x_pos: f32,
+    y_pos: f32,
     weight: u16,
     gravity: f32,
     max_fall_speed: u16,
@@ -27,6 +29,12 @@ struct Fighter {
 
 impl Person {
     // Getters
+    fn x_pos(&self) -> &String {
+        &self.x_pos
+    }
+    fn y_pos(&self) -> &String {
+        &self.y_pos
+    }
     fn weight(&self) -> &String {
         &self.weight
     }
@@ -98,6 +106,12 @@ impl Person {
     }
 
     // Setters
+    fn x_pos_mut(&mut self) -> &mut String {
+        &mut self.x_pos
+    }
+    fn y_pos_mut(&mut self) -> &mut String {
+        &mut self.y_pos
+    }
     fn weight_mut(&mut self) -> &mut String {
         &mut self.weight
     }

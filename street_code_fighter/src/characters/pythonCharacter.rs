@@ -1,5 +1,7 @@
 fn create_python_fighter() {
     // These are just random values for now
+    let x_pos = 0.0;
+    let y_pos = 0.0;
     let weight = 180;
     let gravity = -9.8;
     let max_fall_speed = 20;
@@ -24,7 +26,7 @@ fn create_python_fighter() {
     let hitstun_elasticity = 2.5;
     let shield_size = 3;
 
-    let mut python_fighter = Fighter{ weight, gravity, max_fall_speed, max_ground_speed,
+    let mut python_fighter = Fighter{ x_pos, y_pos, weight, gravity, max_fall_speed, max_ground_speed,
                                       run_speed, max_air_speed, aerial_transition_speed, crawl_speed, 
                                       dodge_speed, friction, static_grip, pivot_grip, 
                                       air_resistance, air_control, jumps, jump_height, 
