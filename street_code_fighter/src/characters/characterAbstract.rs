@@ -22,7 +22,7 @@ struct Fighter {
     wavedash_lag: u16,
     fastfall_multiplier: f32,
     hitstun_elasticity: f32,
-    shield_size: u16
+    shield_size: u16,
 }
 
 impl Person {
