@@ -1,7 +1,7 @@
 #[derive(Default)]
 struct Fighter {
     weight: u16,
-    gravity: i16,
+    gravity: f32,
     max_fall_speed: u16,
     max_ground_speed: u16,
     run_speed: u16,
@@ -9,10 +9,10 @@ struct Fighter {
     aerial_transition_speed: u16,
     crawl_speed: u16,
     dodge_speed: u16,
-    friction: i16,
+    friction: f32,
     static_grip: u16,
     pivot_grip: u16,
-    air_resistance: i16,
+    air_resistance: f32,
     air_control: u16,
     jumps: u16,
     jump_height: u16,
@@ -20,8 +20,8 @@ struct Fighter {
     air_jump_height: u16,
     heavy_land_lag: u16,
     wavedash_lag: u16,
-    fastfall_multiplier: u16,
-    hitstun_elasticity: u16,
+    fastfall_multiplier: f32,
+    hitstun_elasticity: f32,
     shield_size: u16
 }
 
