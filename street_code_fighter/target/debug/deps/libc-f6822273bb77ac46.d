@@ -1,0 +1,11 @@
+C:\Users\asanders\documents\Fighting-Game\street_code_fighter\target\debug\deps\libc-f6822273bb77ac46.rmeta: C:\Users\asanders\.cargo\registry\src\github.com-1ecc6299db9ec823\libc-0.2.96\src\lib.rs C:\Users\asanders\.cargo\registry\src\github.com-1ecc6299db9ec823\libc-0.2.96\src\macros.rs C:\Users\asanders\.cargo\registry\src\github.com-1ecc6299db9ec823\libc-0.2.96\src\fixed_width_ints.rs C:\Users\asanders\.cargo\registry\src\github.com-1ecc6299db9ec823\libc-0.2.96\src\windows\mod.rs C:\Users\asanders\.cargo\registry\src\github.com-1ecc6299db9ec823\libc-0.2.96\src\windows\msvc.rs
+
+C:\Users\asanders\documents\Fighting-Game\street_code_fighter\target\debug\deps\liblibc-f6822273bb77ac46.rlib: C:\Users\asanders\.cargo\registry\src\github.com-1ecc6299db9ec823\libc-0.2.96\src\lib.rs C:\Users\asanders\.cargo\registry\src\github.com-1ecc6299db9ec823\libc-0.2.96\src\macros.rs C:\Users\asanders\.cargo\registry\src\github.com-1ecc6299db9ec823\libc-0.2.96\src\fixed_width_ints.rs C:\Users\asanders\.cargo\registry\src\github.com-1ecc6299db9ec823\libc-0.2.96\src\windows\mod.rs C:\Users\asanders\.cargo\registry\src\github.com-1ecc6299db9ec823\libc-0.2.96\src\windows\msvc.rs
+
+C:\Users\asanders\documents\Fighting-Game\street_code_fighter\target\debug\deps\libc-f6822273bb77ac46.d: C:\Users\asanders\.cargo\registry\src\github.com-1ecc6299db9ec823\libc-0.2.96\src\lib.rs C:\Users\asanders\.cargo\registry\src\github.com-1ecc6299db9ec823\libc-0.2.96\src\macros.rs C:\Users\asanders\.cargo\registry\src\github.com-1ecc6299db9ec823\libc-0.2.96\src\fixed_width_ints.rs C:\Users\asanders\.cargo\registry\src\github.com-1ecc6299db9ec823\libc-0.2.96\src\windows\mod.rs C:\Users\asanders\.cargo\registry\src\github.com-1ecc6299db9ec823\libc-0.2.96\src\windows\msvc.rs
+
+C:\Users\asanders\.cargo\registry\src\github.com-1ecc6299db9ec823\libc-0.2.96\src\lib.rs:
+C:\Users\asanders\.cargo\registry\src\github.com-1ecc6299db9ec823\libc-0.2.96\src\macros.rs:
+C:\Users\asanders\.cargo\registry\src\github.com-1ecc6299db9ec823\libc-0.2.96\src\fixed_width_ints.rs:
+C:\Users\asanders\.cargo\registry\src\github.com-1ecc6299db9ec823\libc-0.2.96\src\windows\mod.rs:
+C:\Users\asanders\.cargo\registry\src\github.com-1ecc6299db9ec823\libc-0.2.96\src\windows\msvc.rs:

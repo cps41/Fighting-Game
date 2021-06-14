@@ -16,6 +16,7 @@ use sdl2::keyboard::Keycode;
 let mut event_pump = sdl_context.event_pump()?;
 
 // SDL2 allows for 'running loop', essentially the same as a while
+// EDIT: Remove running gamp loop, encapsulate for loop within public function
 'running: loop {
 
     // Handle the user input during combat
@@ -24,7 +25,8 @@ let mut event_pump = sdl_context.event_pump()?;
 
             // these events account for the player using either the arrow keys (Right, Left, etc.)
             // OR ASDW and spacebar
-
+			// EDIT: Add in Quit event for Escape
+			// EDIT: Roll into "match" switch-like statement per example: https://github.com/nfarnan/cs1666_examples/blob/main/sdl/examples/sdl05_key_events.rs
             Event::KeyDown { keycode: Some(Keycode::Left), repeat: false, .. } |
             Event::KeyDown { keycode: Some(Keycode::A), repeat: false, .. } => {
                 // player moved left
@@ -50,11 +52,15 @@ let mut event_pump = sdl_context.event_pump()?;
                 // call some code to alter momentum, player speed, and player position
                 // handle this in Movement.rs
             },
+			// EDIT: Add in all fight key codes, based on Appendix > controls: https://docs.google.com/document/d/1k_R2QGC2Lmlz-AfOTmTTM9RsKEg4kmrS/edit# (no preference here)
+
+			// additional keyboard presses or press combinations for combat
+            // moves should be included *here*
+			
             _ => {} // not really sure what to do for default key press yet
 
 
-            // additional keyboard presses or press combinations for combat
-            // moves should be included *here*
+
         }
     }
 
