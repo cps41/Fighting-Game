@@ -1,3 +1,5 @@
+// EDIT: will need to add `use characterAbstract`
+
 fn create_java_fighter() {
     // These are just random values for now
     let x_pos = 0.0;
@@ -26,6 +28,7 @@ fn create_java_fighter() {
     let hitstun_elasticity = 2.5;
     let shield_size = 3;
 
+// EDIT: should add a new() function to characterAbstract.rs, make this a f(x)
     let mut java_fighter = Fighter{ x_pos, y_pos, weight, gravity, max_fall_speed, max_ground_speed,
                                       run_speed, max_air_speed, aerial_transition_speed, crawl_speed, 
                                       dodge_speed, friction, static_grip, pivot_grip, 
