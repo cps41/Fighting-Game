@@ -1,3 +1,5 @@
+use crate::characters; // used to get Fighter
+
 //
 // extend structure to include this in InputHandler.rs
 //
@@ -6,20 +8,22 @@
 // these variables may be more useful in the characterAbstract.rs
 // we should also consider adding dimensions to characterAbstract
 // to determine hitboxes
-let grounded: bool = true;
+
+//TODO: resolve variables outside of function
+/*let grounded: bool = true;
 let falling: bool = false;
 let blocking: bool = false;
-let crouched: bool = false;
+let crouched: bool = false;*/
 
 // direction enum
-enum {
+pub enum Direction {
     Left,
     Right,
     Up,
-    Down
-};
+    Down,
+}
 
-fn player_run(&Fighter) -> bool {
+fn player_run(f: &characters::characterAbstract::Fighter) -> bool {
 //     // this action should be looped until the key is unpressed
 //     // determine which direction the player is facing
 //  IF CROUCHED == False && BLOCK == False <-- cannot move while crouched/blocking
@@ -48,8 +52,9 @@ fn player_run(&Fighter) -> bool {
 //         }
 //     }
 //     return true;
+		return false;
 }
-fn player_jump(&Fighter) -> bool {
+fn player_jump(f: &characters::characterAbstract::Fighter) -> bool {
     // // if the player jumps
     // // this 'if' may not be needed
     //  IF CROUCHED == False && BLOCK == False <-- cannot move while crouched/blocking
@@ -79,8 +84,9 @@ fn player_jump(&Fighter) -> bool {
     //     }
     // }
     // return true;
+		return false;
 }
-fn player_punch(&Fighter) -> bool {
+fn player_punch(f: &characters::characterAbstract::Fighter) -> bool {
     // // *update player sprite*
     // IF CROUCHED == False && BLOCK == False <-- cannot move while crouched/blocking
     // if there is an object within some variable 'range_of_punch' {
@@ -96,8 +102,9 @@ fn player_punch(&Fighter) -> bool {
     //         // do nothing
     //     }
     // }
+		return false;
 }
-fn player_kick(&Fighter) -> bool {
+fn player_kick(f: &characters::characterAbstract::Fighter) -> bool {
     // similar to the punch fn
     // *update player sprite*
     // IF CROUCHED == False && BLOCK == False <-- cannot move while crouched/blocking
@@ -114,8 +121,9 @@ fn player_kick(&Fighter) -> bool {
     //         // do nothing
     //     }
     // }
+	return false;
 }
-fn player_crouch(&Fighter) -> bool {
+fn player_crouch(f: &characters::characterAbstract::Fighter) -> bool {
     // *update player sprite*
     // reduce sprite hitbox to appropriate ratio
     // this action should be looped similar with running
@@ -125,8 +133,9 @@ fn player_crouch(&Fighter) -> bool {
     //     // crouched = true;
     // }
     // return true;
+	return false;
 }
-fn player_block(&Fighter) -> bool {
+fn player_block(f: &characters::characterAbstract::Fighter) -> bool {
     // // *update player sprite*
     // // this action should be looped similar with running/crouching
     // while KeyDown::BlockKey {
@@ -135,4 +144,5 @@ fn player_block(&Fighter) -> bool {
     //     // blocking == true;
     // }
     // return true;
+	return false;
 }
