@@ -2,6 +2,10 @@ extern crate sdl2;
 
 use sdl2::rect::Rect;
 
+pub mod animation; // add file name modules
+pub mod characters;
+pub mod input;
+
 pub struct SDLCore {
 	sdl_cxt: sdl2::Sdl,
 	pub wincan: sdl2::render::WindowCanvas,
