@@ -7,31 +7,36 @@ use sdl2::rect::Rect;
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 
-use sdl_rust::SDLCore;
-use sdl_rust::Demo;
+use street_code_fighter::SDLCore;
+use street_code_fighter::Demo;
 
-const TITLE: &str = "SDL08 Rect Collisions";
-const CAM_W: u32 = 640;
-const CAM_H: u32 = 480;
-const SPEED_LIMIT: i32 = 5;
-const ACCEL_RATE: i32 = 1;
-
-fn check_collision(a: &Rect, b: &Rect) -> bool {
-    if a.obj_type != Character{
-            if a.bottom() < b.top()
-            || a.top() > b.bottom()
-            || a.right() < b.left()
-            || a.left() > b.right()
-        {
-            false
-        }
-        else {
-            true
-        }
-    }
+pub fn check_collision(a: &CollisionObject, b: &CollisionObject) -> bool {
+	match a.obj_type {
+		CollisionObjectType::Character => {
+			match b.obj_type {
+				CollisionObjectType::Character => false,
+				_ => reg_collision(a.rect, b.rect),
+			}
+		},
+		_ => reg_collision(a.rect, b.rect),
+	}
+	reg_collision(a.rect, b.rect)
 }
 
-fn resist(vel: i32, deltav: i32) -> i32 {
+pub fn reg_collision(a: &Rect, b: &Rect) -> bool {
+	if a.bottom() < b.top()
+			|| a.top() > b.bottom()
+			|| a.right() < b.left()
+			|| a.left() > b.right()
+		{
+			false;
+		}
+		else {
+			true;
+		}
+}
+
+pub fn resist(vel: i32, deltav: i32) -> i32 {
 	if deltav == 0 {
 		if vel > 0 {
 			-1
@@ -46,10 +51,6 @@ fn resist(vel: i32, deltav: i32) -> i32 {
 	else {
 		deltav
 	}
-}
-
-pub struct SDL08 {
-	core: SDLCore,
 }
 
 enum COLLISION_OBJECT_TYPE {
@@ -73,8 +74,4 @@ impl COLLISION_OBJECT {
             r,
         }
     }
-}
-
-fn main() {
-	sdl_rust::runner(TITLE, SDL08::init);
 }
