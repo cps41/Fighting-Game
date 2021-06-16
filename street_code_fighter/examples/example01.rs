@@ -40,37 +40,27 @@ impl Demo for SDL01 {
 		let texture_creator = self.core.wincan.texture_creator();
 		let texture = texture_creator.load_texture("src/assets/images/characters/python/fjump-outline.png")?;
 	    
-	    'gameloop: loop { // game loop
-			for event in self.core.event_pump.poll_iter() { //input events
-				match event {
-					Event::Quit{..} | Event::KeyDown{keycode: Some(Keycode::Escape), ..} => break 'gameloop,
-					Event::KeyDown{keycode: Some(k), ..} => {
-						match k {
-							Keycode::W => (), // jump
-							Keycode::A => { fighter.char_state.direction = scf::input::movement::Direction::Left; // update direction left
-											scf::input::movement::walk(&mut fighter); // character walks left
-										   },
-							Keycode::S => (), // crouch (stretch goal)
-							Keycode::D => { fighter.char_state.direction = scf::input::movement::Direction::Right; // update direction right 
-											scf::input::movement::walk(&mut fighter); // character walks right
-										   },
-							Keycode::Space => (), 
-							_ => {},
-						}
-					}
-					_ => {},
-				}
-			}
+		// game loop
+		'gameloop: loop {
 
-        // update player states
-        // update_fighter(&mut fighter);
+            for event in self.core.event_pump.poll_iter() { //input events
+                match event {
+                    Event::Quit{..} | Event::KeyDown{keycode: Some(Keycode::Escape), ..} => break 'gameloop,
+					_ => { scf::input::inputHandler::keyboard_input(&event, &mut fighter); } // handles non-exit behavior
+				} // end match
+			} // end for loop
 
-        // render canvas
-        Self::render(&mut self.core.wincan, Color::RGB(222,222,222), &texture, &fighter);
+			// updates in game ... 
 
-		}
-		Ok(())
-	}
+	        // render canvas
+	        Self::render(&mut self.core.wincan, Color::RGB(222,222,222), &texture, &fighter);
+
+    	} // close gameloop
+
+		Ok(()) // needs to return Result :)
+
+	} // close run fn
+
 
 
 	fn render(canvas: &mut WindowCanvas,
