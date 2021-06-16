@@ -51,8 +51,7 @@ Creating the ability for players to fight one another across a network using a s
 ## Midterm Goals
 
 * Keyboard input can control general movement around the XY plane (not combat moves)
-* Objects will "collide" with basic physical responses (i.e. player will not fall through floor, players cannot 
-walk through each other) 
+* Objects will "collide" with basic physical responses (i.e. player will not fall through floor, players cannot walk through each other) 
 * Network can create multiplayer connection and send basic data back and forth
 * Physics engine has basic kinematics applied to object movement within confined bounds, platform not generated yet (aka no falling off the edge)
 
