@@ -1,6 +1,8 @@
 extern crate sdl2;
 
 use sdl2::rect::Rect;
+use sdl2::render::{WindowCanvas, Texture};
+use sdl2::pixels::Color;
 
 pub mod animation; // add file name modules
 pub mod characters;
@@ -57,6 +59,11 @@ impl SDLCore {
 pub trait Demo {
 	fn init() -> Result<Self, String> where Self: Sized;
 	fn run(&mut self) -> Result<(), String>;
+	fn render(canvas: &mut WindowCanvas,
+			  color: Color,
+			  texture: &Texture,
+			  fighter: &characters::characterAbstract::Fighter,
+			  ) -> Result<(), String>;
 }
 
 pub fn runner<F, D>(desc: &str, initter: F)
