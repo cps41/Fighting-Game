@@ -10,7 +10,7 @@ use sdl2::keyboard::Keycode;
 use street_code_fighter::SDLCore;
 use street_code_fighter::Demo;
 
-const TITLE: &str = "SDL08 Rect Collisions";
+const TITLE: &str = "Collisions Example";
 const CAM_W: u32 = 640;
 const CAM_H: u32 = 480;
 const SPEED_LIMIT: i32 = 5;
