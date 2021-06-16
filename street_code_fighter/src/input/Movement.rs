@@ -39,6 +39,7 @@ pub fn walk(f: &mut characters::characterAbstract::Fighter) {
 }
 
 // EDIT: make functions public
+// EDIT: remove "player_"
 // fn player_run(f: &characters::characterAbstract::Fighter) -> bool {
 // //     // this action should be looped until the key is unpressed
 // //     // determine which direction the player is facing
