@@ -33,7 +33,7 @@ pub struct CharacterState {
 pub struct Fighter {
 	pub name: Characters,
 	pub char_state: CharacterState, 
-	// pub texture: &'a mut HashMap<animation::sprites::State, Texture<'a>>,
+	pub texture: HashMap<animation::sprites::State, Texture<'static>>,
 	pub speed: i32,
 	//x_pos: f32, // roll into CharacterState
     //y_pos: f32, // roll into CharacterState
@@ -73,7 +73,7 @@ impl Fighter {
 			name: Characters::Python,
 			char_state: c,
 			speed: 20, // arbitrary #
-			// texture: None,
+			texture: HashMap::new(),
 		}
 	} 
 

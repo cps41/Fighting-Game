@@ -65,6 +65,9 @@ pub trait Demo {
 			  texture: &Texture,
 			  fighter: &characters::characterAbstract::Fighter,
 			  ) -> Result<(), String>;
+	fn load_textures(canvas: &mut WindowCanvas, 
+					 texture_creator: &mut TextureCreator<WindowContext>,
+                     f: &mut characters::characterAbstract::Fighter) -> HashMap<animation::sprites::State, Texture<'static>>;
 }
 
 pub fn runner<F, D>(desc: &str, initter: F)
@@ -87,3 +90,4 @@ pub fn runner<F, D>(desc: &str, initter: F)
 			},
 		};
 	}
+

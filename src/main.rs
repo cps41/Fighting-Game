@@ -33,6 +33,39 @@ pub struct SDL {
     core: core::SDLCore,
 }
 
+// pub struct TextureManager<'a> {
+//     pub name: &'a characters::characterAbstract::Characters,
+//     pub map: HashMap<&'a animation::sprites::State, Texture<'a>>,
+// }
+
+// impl <'a> TextureManager <'a> {
+//     pub fn new(name: &'a characters::characterAbstract::Characters, 
+//            state: &'a animation::sprites::State, 
+//            texture: Texture<'a>) -> TextureManager<'a> {
+//         let mut map = HashMap::new();
+//         map.insert(state, texture);
+//         TextureManager {
+//             name: name,
+//             map: map,
+//         }
+//     }
+//     pub fn texture(&mut self, 
+//                name: &'a characters::characterAbstract::Characters,
+//                state: &'a animation::sprites::State) -> &Texture {
+//         match &self.map.get(&state) {
+//             Some(t) => t,
+//             None => panic!("no texture found"), 
+//         }
+//     }
+//     pub fn add_texture(&mut self, 
+//                    name: &'a characters::characterAbstract::Characters,
+//                    state: &'a animation::sprites::State,
+//                    texture: Texture<'a>) {
+//         &self.map.insert(state, texture);
+//     }
+
+// } // close Texture Manager impl
+
 impl core::Demo for SDL {
     fn init() -> Result<Self, String> {
         let core = core::SDLCore::init(TITLE, true, CAM_W, CAM_H)?;
@@ -45,7 +78,7 @@ impl core::Demo for SDL {
         let cs = characters::characterAbstract::CharacterState::new();
         let mut fighter = characters::characterAbstract::Fighter::new(cs); 
 
-        let texture_creator = self.core.wincan.texture_creator();
+        let texture_creator = self.core.wincan.texture_creator(); // TextureCreator<WindowContext>
 
         //////////////////////////
 
@@ -72,6 +105,13 @@ impl core::Demo for SDL {
             python_textures.insert(animation::sprites::State::Block, block);
 
          ///////////////////////
+
+        // let mut pt = TextureManager::new(characters::characterAbstract::Characters::Python, animation::sprites::State::Idle, idle);
+
+         //////////////////////
+
+         let mut pythonHash = Self::load_textures(&mut self.core.wincan, &mut texture_creator, &mut fighter);
+         ////////
 
         // game loop
         'gameloop: loop {
@@ -133,8 +173,30 @@ impl core::Demo for SDL {
 
             Ok(())
     } // close render fn
+    
+    // Failed
+    fn load_textures(canvas: &mut WindowCanvas, 
+                     texture_creator: &mut TextureCreator<WindowContext>,
+                     f: &mut characters::characterAbstract::Fighter) -> HashMap<animation::sprites::State, Texture<'static>> {
 
+        // // loading textures
+        // let texture_creator = canvas.texture_creator();
+
+            let mut python_textures = HashMap::new();
+
+            let idle = texture_creator.load_texture("src/assets/images/characters/python/idle-outline.png");
+
+            match idle {
+                Ok(i) => { python_textures.insert(animation::sprites::State::Idle, i); },
+                Err(e) => { panic!("Nooo"); },
+            }
+            
+            python_textures
+    } // close load_textures
 } // close Demo trait
+
+
+
 
 // // run credits
 // pub fn run_credits() -> Result<(), String> {
