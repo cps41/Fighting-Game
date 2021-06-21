@@ -3,18 +3,23 @@ use sdl2::EventPump;
 use sdl2::keyboard::Keycode;
 use crate::characters; // use to get get acces to Fighter struct
 use crate::input; // add to use stuff in movement
+use crate::animation; // used to get States
 
 pub fn keyboard_input(event: &Event, fighter: &mut characters::characterAbstract::Fighter) {
             match event {
                     Event::KeyDown{keycode: Some(k), ..} => {
                         match k {
-                            Keycode::W => { input::movement::jump(fighter); }, // jump
+                            Keycode::W => { input::movement::fjump(fighter); }, // jump
                             Keycode::A => { fighter.char_state.direction = input::movement::Direction::Left; // update direction left
-                                            input::movement::walk(fighter); // character walks left
+                                            if fighter.char_state.state == animation::sprites::State::Idle { // if we're idle, then walk
+                                                input::movement::walk(fighter); // character walks left
+                                            }
                                            },
                             Keycode::S => (), // crouch (stretch goal)
                             Keycode::D => { fighter.char_state.direction = input::movement::Direction::Right; // update direction right 
-                                            input::movement::walk(fighter); // character walks right
+                                            if fighter.char_state.state == animation::sprites::State::Idle { // if we're idle, then walk
+                                                input::movement::walk(fighter); // character walks right
+                                            }
                                            },
                             Keycode::Space => (), 
                             // TODO: expand keyboard commands

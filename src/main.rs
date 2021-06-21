@@ -4,7 +4,6 @@ use sdl2::image::{self, LoadTexture}; // InitFlag,
 use sdl2::render::{WindowCanvas, Texture, TextureCreator};
 use sdl2::rect::{Point, Rect};
 use sdl2::pixels::Color;
-// use std::time::Duration;
 // use std::thread;
 // use std::fs;
 use sdl2::event::Event;
@@ -14,6 +13,8 @@ use std::path::Path;
 use sdl2::render::Canvas;
 use sdl2::video::Window;
 use sdl2::video::WindowContext;
+use std::time::{Instant, Duration}; // needed for FPS
+use std::thread;
 
 pub mod characters; // for characterAbstract
 pub mod view; // for core
@@ -32,39 +33,6 @@ const CAM_H: u32 = 720;
 pub struct SDL {
     core: core::SDLCore,
 }
-
-// pub struct TextureManager<'a> {
-//     pub name: &'a characters::characterAbstract::Characters,
-//     pub map: HashMap<&'a animation::sprites::State, Texture<'a>>,
-// }
-
-// impl <'a> TextureManager <'a> {
-//     pub fn new(name: &'a characters::characterAbstract::Characters, 
-//            state: &'a animation::sprites::State, 
-//            texture: Texture<'a>) -> TextureManager<'a> {
-//         let mut map = HashMap::new();
-//         map.insert(state, texture);
-//         TextureManager {
-//             name: name,
-//             map: map,
-//         }
-//     }
-//     pub fn texture(&mut self, 
-//                name: &'a characters::characterAbstract::Characters,
-//                state: &'a animation::sprites::State) -> &Texture {
-//         match &self.map.get(&state) {
-//             Some(t) => t,
-//             None => panic!("no texture found"), 
-//         }
-//     }
-//     pub fn add_texture(&mut self, 
-//                    name: &'a characters::characterAbstract::Characters,
-//                    state: &'a animation::sprites::State,
-//                    texture: Texture<'a>) {
-//         &self.map.insert(state, texture);
-//     }
-
-// } // close Texture Manager impl
 
 impl <'t> core::Demo <'t> for SDL {
     fn init() -> Result<Self, String> {
@@ -106,7 +74,7 @@ impl <'t> core::Demo <'t> for SDL {
 
          ///////////////////////
          // NOT YET FUNCTIONING
-         Self::load_textures(&texture_creator, &mut fighter);
+         // Self::load_textures(&texture_creator, &mut fighter);
 
          ////////
 
@@ -123,18 +91,32 @@ impl <'t> core::Demo <'t> for SDL {
 
             // updates in game ... 
 
-            let texture = match (fighter.textures).get(&fighter.char_state.state) { // gets the first texture (needs to get out of Option)
+
+            // get the proper texture within the game
+            let texture = match python_textures.get(&fighter.char_state.state) { // gets the first texture (needs to get out of Option) // (fighter.textures)
                     Some(text) => text,
                     _ => panic!("No texture found for the state! Oh nos."),
                 };
 
+            // movement direction occurs here
 
             // render canvas
             Self::render(&mut self.core.wincan, Color::RGB(222,222,222), &texture, &fighter);
 
+            // reset walking to idle
+            if fighter.char_state.state == animation::sprites::State::Walk {
+                fighter.char_state.state = animation::sprites::State::Idle;
+                fighter.char_state.current_frame = 0;
+            }
+
+            
+            // advance frame
+            // fighter.char_state.advance_frame();
+            // println!("Main, current_frame: {}, frames_per_state: {}", fighter.char_state.current_frame, fighter.char_state.frames_per_state);
+
         } // close gameloop
 
-        Ok(()) // needs to return Result :)
+        Ok(()) // // Out of game loop, needs to return Result :)
 
     } // close run fn
 
@@ -175,12 +157,12 @@ impl <'t> core::Demo <'t> for SDL {
     fn load_textures(texture_creator: &'t TextureCreator<WindowContext>,
                      f: &mut characters::characterAbstract::Fighter) {
 
-            let idle = texture_creator.load_texture("src/assets/images/characters/python/idle-outline.png");
+            // let idle = texture_creator.load_texture("src/assets/images/characters/python/idle-outline.png");
 
-            match idle {
-                Ok(i) =>  { f.add_texture(animation::sprites::State::Idle, i); },
-                Err(e) => { panic!("Nooo"); },
-            }  
+            // match idle {
+            //     Ok(i) =>  { f.add_texture(animation::sprites::State::Idle, i); },
+            //     Err(e) => { panic!("Nooo"); },
+            // }  
             
     } // close load_textures
 } // close Demo trait

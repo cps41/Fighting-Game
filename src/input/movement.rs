@@ -1,5 +1,6 @@
 use crate::characters; // used to get Fighter
 use crate::animation; // used to get States
+
 //
 // extend structure to include this in InputHandler.rs
 //
@@ -27,23 +28,64 @@ pub fn walk(f: &mut characters::characterAbstract::Fighter) {
     f.char_state.set_state(animation::sprites::State::Walk);
 
     match &f.char_state.direction {
-        Direction::Left => { println!("L"); f.char_state.position = f.char_state.position.offset(-f.speed, 0); },
-        Direction::Right => { println!("R"); f.char_state.position = f.char_state.position.offset(f.speed, 0); },
+        Direction::Left =>  { f.char_state.position = f.char_state.position.offset(-f.speed, 0); },
+        Direction::Right => { f.char_state.position = f.char_state.position.offset(f.speed, 0); },
         Direction::Up => (),
         Direction::Down => (),
     }
 
-    // Only continue to animate if the player is moving
+    // Note: will move into main.rs
     if f.speed != 0 {
         f.char_state.advance_frame(); // update frame modulo # of frames
     }
 
 }
 
-pub fn jump(f: &mut characters::characterAbstract::Fighter) {
+pub fn fjump(f: &mut characters::characterAbstract::Fighter) {
+    f.char_state.set_state(animation::sprites::State::FJump);
 
-    f.char_state.set_state(animation::sprites::State::Jump);
+    let max_frames = animation::sprites::get_frame_cnt(&f.char_state);
 
+    match &f.char_state.direction {
+        Direction::Left => { println!("JL"); 
+                                if f.char_state.current_frame < (max_frames/2+1)  { // Note: only works since there are 7x states in fjump.
+                                    f.char_state.position = f.char_state.position.offset(-f.speed, -f.speed);
+                                } else if f.char_state.current_frame < (max_frames - 1) { // account for starting at 0
+                                    f.char_state.position = f.char_state.position.offset(-f.speed, f.speed);
+                                } else if f.char_state.current_frame == (max_frames - 1) { 
+                                    f.char_state.position = f.char_state.position.offset(-f.speed, f.speed);
+                                    f.char_state.state = animation::sprites::State::Idle;
+                                    f.char_state.current_frame = 0;
+                                }
+                            },
+        Direction::Right => { println!("JR"); 
+                                if f.char_state.current_frame < (max_frames/2+1) {
+                                    f.char_state.position = f.char_state.position.offset(f.speed, -f.speed);
+                                } else if f.char_state.current_frame < (max_frames - 1) {
+                                    f.char_state.position = f.char_state.position.offset(f.speed, f.speed);
+                                } else if f.char_state.current_frame == (max_frames - 1) {
+                                    f.char_state.position = f.char_state.position.offset(f.speed, f.speed);
+                                    f.char_state.state = animation::sprites::State::Idle;
+                                    f.char_state.current_frame = 0;
+                                }
+                            },
+        Direction::Up => { println!("J"); 
+                                if f.char_state.current_frame < (max_frames/2+1) {
+                                    f.char_state.position = f.char_state.position.offset(0, -f.speed);
+                                } else if f.char_state.current_frame < (max_frames - 1) {
+                                    f.char_state.position = f.char_state.position.offset(0, f.speed);
+                                } else if f.char_state.current_frame == (max_frames - 1) {
+                                    f.char_state.position = f.char_state.position.offset(0, f.speed);
+                                    f.char_state.state = animation::sprites::State::Idle;
+                                    f.char_state.current_frame = 0;
+                                }
+                            },
+        Direction::Down => (),
+    }
+ // Note: will move into main.rs
+    if f.speed != 0 {
+        f.char_state.advance_frame(); // update frame modulo # of frames
+    }
 
 }
 

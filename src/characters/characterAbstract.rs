@@ -265,7 +265,7 @@ impl CharacterState {
 			sprite: Rect::new(0, 0, 210, 300),
 			auto_repeat: true,
 			next_state: animation::sprites::State::Idle,
-			direction: input::movement::Direction::Right,
+			direction: input::movement::Direction::Up,
 		}
 	}
 	
@@ -297,7 +297,8 @@ impl CharacterState {
 	// settters (use to update)
 	pub fn set_position(&mut self, p: Point)						{ self.position = p; }
 	pub fn set_state(&mut self, s: animation::sprites::State)		{ self.state = s; 
-																	  self.frames_per_state = animation::sprites::get_frame_cnt(self); }
+																	  self.frames_per_state = animation::sprites::get_frame_cnt(self);
+																	}
 	pub fn set_current_frame(&mut self, i: i32)						{ self.current_frame = (self.current_frame + i) % self.frames_per_state; } // need to stay within # of frames
 	pub fn set_sprite(&mut self, r: Rect)							{ self.sprite = r; }
 	pub fn set_auto_repeat(&mut self, b: bool)						{ self.auto_repeat = b; }
