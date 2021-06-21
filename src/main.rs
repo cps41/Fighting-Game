@@ -81,7 +81,7 @@ impl <'t> core::Demo <'t> for SDL {
         let texture_creator = self.core.wincan.texture_creator(); // TextureCreator<WindowContext>
 
         //////////////////////////
-
+        // FUNCTIONING
         // EDIT: Modularize. Challenge: figuring out how to deal with texture's + hashmap lifetime
             // create HashMap of all textures
             let mut python_textures = HashMap::new();
@@ -105,7 +105,7 @@ impl <'t> core::Demo <'t> for SDL {
             python_textures.insert(animation::sprites::State::Block, block);
 
          ///////////////////////
-
+         // NOT YET FUNCTIONING
          Self::load_textures(&texture_creator, &mut fighter);
 
          ////////
@@ -171,7 +171,7 @@ impl <'t> core::Demo <'t> for SDL {
             Ok(())
     } // close render fn
     
-    // Failed
+    // FAILED
     fn load_textures(texture_creator: &'t TextureCreator<WindowContext>,
                      f: &mut characters::characterAbstract::Fighter) {
 
