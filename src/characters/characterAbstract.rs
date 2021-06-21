@@ -30,10 +30,10 @@ pub struct CharacterState {
 // EDIT: simplify, if desired
 // EDIT: consider updating integers to i32
 // EDIT: make fields public (with `pub`)
-pub struct Fighter {
+pub struct Fighter<'t> {
 	pub name: Characters,
 	pub char_state: CharacterState, 
-	pub texture: HashMap<animation::sprites::State, Texture<'static>>,
+	pub textures: HashMap<animation::sprites::State, Texture<'t>>,
 	pub speed: i32,
 	//x_pos: f32, // roll into CharacterState
     //y_pos: f32, // roll into CharacterState
@@ -67,17 +67,32 @@ pub struct Fighter {
 // EDIT: for setters, consider updating to start with "set_" and removed "_mut"
 // EDIT: should add a new() function to characterAbstract.rs, make this a f(x)
 // EDIT: update 'Person' to 'Fighter'
-impl Fighter {
-	pub fn new (c: CharacterState) -> Fighter {
+impl <'t> Fighter <'t> {
+	pub fn new (c: CharacterState) -> Fighter<'t> {
 		Fighter {
 			name: Characters::Python,
 			char_state: c,
 			speed: 20, // arbitrary #
-			texture: HashMap::new(),
+			textures: HashMap::new(),
 		}
 	} 
 
-	    // Getters
+	pub fn textures(&self) -> &Texture<'t> {
+		match &self.textures.get(&self.char_state.state) {
+			Some(texture) => texture,
+			None => panic!("Texture issue in fighter"),
+		}
+	}
+
+	pub fn add_texture(&mut self, s: animation::sprites::State, t: Texture<'t>) {
+            &self.textures.insert(s, t);
+	}
+
+	// pub fn update_textures(&self, h: &HashMap<animation::sprites::State, Texture<'a>>) {
+	// 	&self.textures = h;
+	// }
+
+	// Getters
  //    fn x_pos(&self) -> &String {
  //        &self.x_pos
  //    }
@@ -231,7 +246,7 @@ impl Fighter {
  //        &mut self.shield_size
 	// }
 	
-}
+} // close Fighter impl
 
 
 

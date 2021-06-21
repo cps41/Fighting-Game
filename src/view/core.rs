@@ -57,7 +57,7 @@ impl SDLCore {
 	}
 }
 
-pub trait Demo {
+pub trait Demo<'t> {
 	fn init() -> Result<Self, String> where Self: Sized;
 	fn run(&mut self) -> Result<(), String>;
 	fn render(canvas: &mut WindowCanvas,
@@ -65,15 +65,14 @@ pub trait Demo {
 			  texture: &Texture,
 			  fighter: &characters::characterAbstract::Fighter,
 			  ) -> Result<(), String>;
-	fn load_textures(canvas: &mut WindowCanvas, 
-					 texture_creator: &mut TextureCreator<WindowContext>,
-                     f: &mut characters::characterAbstract::Fighter) -> HashMap<animation::sprites::State, Texture<'static>>;
+	fn load_textures(texture_creator: &'t TextureCreator<WindowContext>,
+                     f: &mut characters::characterAbstract::Fighter);
 }
 
-pub fn runner<F, D>(desc: &str, initter: F)
+pub fn runner<'t, F, D>(desc: &str, initter: F)
 		where
 			F: Fn() -> Result<D, String>,
-			D: Demo,
+			D: Demo<'t>,
 	{
 		println!("\nRunning {}:", desc);
 		print!("\tInitting...");

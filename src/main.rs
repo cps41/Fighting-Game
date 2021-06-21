@@ -66,7 +66,7 @@ pub struct SDL {
 
 // } // close Texture Manager impl
 
-impl core::Demo for SDL {
+impl <'t> core::Demo <'t> for SDL {
     fn init() -> Result<Self, String> {
         let core = core::SDLCore::init(TITLE, true, CAM_W, CAM_H)?;
         Ok(SDL{ core })
@@ -106,11 +106,8 @@ impl core::Demo for SDL {
 
          ///////////////////////
 
-        // let mut pt = TextureManager::new(characters::characterAbstract::Characters::Python, animation::sprites::State::Idle, idle);
+         Self::load_textures(&texture_creator, &mut fighter);
 
-         //////////////////////
-
-         let mut pythonHash = Self::load_textures(&mut self.core.wincan, &mut texture_creator, &mut fighter);
          ////////
 
         // game loop
@@ -126,7 +123,7 @@ impl core::Demo for SDL {
 
             // updates in game ... 
 
-            let texture = match python_textures.get(&fighter.char_state.state) { // gets the first texture (needs to get out of Option)
+            let texture = match (fighter.textures).get(&fighter.char_state.state) { // gets the first texture (needs to get out of Option)
                     Some(text) => text,
                     _ => panic!("No texture found for the state! Oh nos."),
                 };
@@ -175,23 +172,16 @@ impl core::Demo for SDL {
     } // close render fn
     
     // Failed
-    fn load_textures(canvas: &mut WindowCanvas, 
-                     texture_creator: &mut TextureCreator<WindowContext>,
-                     f: &mut characters::characterAbstract::Fighter) -> HashMap<animation::sprites::State, Texture<'static>> {
-
-        // // loading textures
-        // let texture_creator = canvas.texture_creator();
-
-            let mut python_textures = HashMap::new();
+    fn load_textures(texture_creator: &'t TextureCreator<WindowContext>,
+                     f: &mut characters::characterAbstract::Fighter) {
 
             let idle = texture_creator.load_texture("src/assets/images/characters/python/idle-outline.png");
 
             match idle {
-                Ok(i) => { python_textures.insert(animation::sprites::State::Idle, i); },
+                Ok(i) =>  { f.add_texture(animation::sprites::State::Idle, i); },
                 Err(e) => { panic!("Nooo"); },
-            }
+            }  
             
-            python_textures
     } // close load_textures
 } // close Demo trait
 
