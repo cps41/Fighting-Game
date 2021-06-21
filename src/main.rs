@@ -1,21 +1,27 @@
 extern crate sdl2;
 
-use sdl2::image::{self, InitFlag, LoadTexture};
-use sdl2::render::{WindowCanvas, Texture};
+use sdl2::image::{self, LoadTexture}; // InitFlag,
+use sdl2::render::{WindowCanvas, Texture, TextureCreator};
 use sdl2::rect::{Point, Rect};
 use sdl2::pixels::Color;
-use std::time::Duration;
-use std::thread;
-use std::fs;
+// use std::time::Duration;
+// use std::thread;
+// use std::fs;
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
+use std::collections::HashMap;
+use std::path::Path;
+use sdl2::render::Canvas;
+use sdl2::video::Window;
+use sdl2::video::WindowContext;
 
 pub mod characters; // for characterAbstract
 pub mod view; // for core
 pub mod input; // for inputHandler and movement
 pub mod animation;
-use crate::view::core; // need for SDLCore
+use crate::view::core; // need for SDLCore and TextureManager
 use crate::view::core::Demo; // need for SDLCore's Demo
+// use crate::view::loads; 
 
 const TITLE: &str = "Street Code Fighter";
 const TIMEOUT: u64 = 5000;
@@ -35,14 +41,38 @@ impl core::Demo for SDL {
 
     fn run(&mut self) -> Result<(), String> {
 
-        // creating initial character state and 
+        // creating initial character state
         let cs = characters::characterAbstract::CharacterState::new();
-        let mut fighter = characters::characterAbstract::Fighter::new(cs);
+        let mut fighter = characters::characterAbstract::Fighter::new(cs); 
 
-        // loading textures
         let texture_creator = self.core.wincan.texture_creator();
-        let texture = texture_creator.load_texture("src/assets/images/characters/python/fjump-outline.png")?; // TODO: organize into hashmaps
-        
+
+        //////////////////////////
+
+        // EDIT: Modularize. Challenge: figuring out how to deal with texture's + hashmap lifetime
+            // create HashMap of all textures
+            let mut python_textures = HashMap::new();
+
+            let idle = texture_creator.load_texture("src/assets/images/characters/python/idle-outline.png")?;
+            let walk = texture_creator.load_texture("src/assets/images/characters/python/walk-outline.png")?;
+            let jump = texture_creator.load_texture("src/assets/images/characters/python/jump-outline.png")?;
+            let fjump = texture_creator.load_texture("src/assets/images/characters/python/fjump-outline.png")?;
+            let lpunch = texture_creator.load_texture("src/assets/images/characters/python/lpunch-outline.png")?;
+            let lkick = texture_creator.load_texture("src/assets/images/characters/python/lkick-outline.png")?;
+            let hkick = texture_creator.load_texture("src/assets/images/characters/python/hkick-outline.png")?;
+            let block = texture_creator.load_texture("src/assets/images/characters/python/block-outline.png")?;
+
+            python_textures.insert(animation::sprites::State::Idle, idle); 
+            python_textures.insert(animation::sprites::State::Walk, walk);
+            python_textures.insert(animation::sprites::State::Jump, jump);
+            python_textures.insert(animation::sprites::State::FJump, fjump);
+            python_textures.insert(animation::sprites::State::LPunch, lpunch);
+            python_textures.insert(animation::sprites::State::LKick, lkick);
+            python_textures.insert(animation::sprites::State::HKick, hkick);
+            python_textures.insert(animation::sprites::State::Block, block);
+
+         ///////////////////////
+
         // game loop
         'gameloop: loop {
 
@@ -53,7 +83,14 @@ impl core::Demo for SDL {
                 } // end match
             } // end for loop
 
+
             // updates in game ... 
+
+            let texture = match python_textures.get(&fighter.char_state.state) { // gets the first texture (needs to get out of Option)
+                    Some(text) => text,
+                    _ => panic!("No texture found for the state! Oh nos."),
+                };
+
 
             // render canvas
             Self::render(&mut self.core.wincan, Color::RGB(222,222,222), &texture, &fighter);
@@ -95,8 +132,9 @@ impl core::Demo for SDL {
             canvas.present();
 
             Ok(())
-    }
-}
+    } // close render fn
+
+} // close Demo trait
 
 // // run credits
 // pub fn run_credits() -> Result<(), String> {

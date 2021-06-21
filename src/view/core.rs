@@ -1,9 +1,13 @@
 extern crate sdl2;
 
 use sdl2::rect::Rect;
-use sdl2::render::{WindowCanvas, Texture};
+use sdl2::render::{WindowCanvas, Texture, TextureCreator};
 use sdl2::pixels::Color;
+use std::collections::HashMap;
+use sdl2::video::WindowContext;
+
 use crate::characters;
+use crate::animation;
 
 pub struct SDLCore {
 	sdl_cxt: sdl2::Sdl,

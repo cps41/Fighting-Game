@@ -8,7 +8,7 @@ pub fn keyboard_input(event: &Event, fighter: &mut characters::characterAbstract
             match event {
                     Event::KeyDown{keycode: Some(k), ..} => {
                         match k {
-                            Keycode::W => (), // jump
+                            Keycode::W => { input::movement::jump(fighter); }, // jump
                             Keycode::A => { fighter.char_state.direction = input::movement::Direction::Left; // update direction left
                                             input::movement::walk(fighter); // character walks left
                                            },

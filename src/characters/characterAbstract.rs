@@ -2,9 +2,12 @@ use crate::animation; // to reference sprite State
 use crate::input; // use to reference Direction
 
 use sdl2::rect::{Point, Rect};
+use sdl2::render::Texture;
+use std::collections::HashMap;
 
 // Enums 
 // defines optional Characters
+#[derive(Hash, Eq, PartialEq, Debug)]
 pub enum Characters {
 	Python,
 	// Stretch goal: add more
@@ -15,7 +18,6 @@ pub enum Characters {
 pub struct CharacterState {
 	pub position: Point,
     pub state: animation::sprites::State,
-	// pub texture: Texture<'a>,
 	pub frames_per_state: i32,
 	pub current_frame: i32, 
 	pub sprite: Rect,
@@ -31,6 +33,7 @@ pub struct CharacterState {
 pub struct Fighter {
 	pub name: Characters,
 	pub char_state: CharacterState, 
+	// pub texture: &'a mut HashMap<animation::sprites::State, Texture<'a>>,
 	pub speed: i32,
 	//x_pos: f32, // roll into CharacterState
     //y_pos: f32, // roll into CharacterState
@@ -65,14 +68,15 @@ pub struct Fighter {
 // EDIT: should add a new() function to characterAbstract.rs, make this a f(x)
 // EDIT: update 'Person' to 'Fighter'
 impl Fighter {
-	pub fn new(c: CharacterState) -> Fighter {
+	pub fn new (c: CharacterState) -> Fighter {
 		Fighter {
 			name: Characters::Python,
 			char_state: c,
 			speed: 20, // arbitrary #
+			// texture: None,
 		}
 	} 
-	
+
 	    // Getters
  //    fn x_pos(&self) -> &String {
  //        &self.x_pos

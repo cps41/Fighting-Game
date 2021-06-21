@@ -1,5 +1,5 @@
 use crate::characters; // used to get Fighter
-
+use crate::animation; // used to get States
 //
 // extend structure to include this in InputHandler.rs
 //
@@ -24,6 +24,8 @@ pub enum Direction {
 }
 
 pub fn walk(f: &mut characters::characterAbstract::Fighter) {
+    f.char_state.set_state(animation::sprites::State::Walk);
+
     match &f.char_state.direction {
         Direction::Left => { println!("L"); f.char_state.position = f.char_state.position.offset(-f.speed, 0); },
         Direction::Right => { println!("R"); f.char_state.position = f.char_state.position.offset(f.speed, 0); },
@@ -35,6 +37,13 @@ pub fn walk(f: &mut characters::characterAbstract::Fighter) {
     if f.speed != 0 {
         f.char_state.advance_frame(); // update frame modulo # of frames
     }
+
+}
+
+pub fn jump(f: &mut characters::characterAbstract::Fighter) {
+
+    f.char_state.set_state(animation::sprites::State::Jump);
+
 
 }
 
