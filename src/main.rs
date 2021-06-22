@@ -29,7 +29,7 @@ const TIMEOUT: u64 = 5000;
 const CAM_W: u32 = 1280;
 const CAM_H: u32 = 720;
 
-// FPS contants?
+// TODO: FPS constants
 // // 5px / frame @60fps == 300 px/s
 // const SPEED_LIMIT: f64 = 300.0;
 // // 1px / frame^2 @60fps == px/s^2
@@ -83,7 +83,7 @@ impl <'t> core::Demo <'t> for SDL {
          // Self::load_textures(&texture_creator, &mut fighter);
          ////////
 
-        // FPS setup here? 
+        // TODO: FPS setup here
 
         // game loop
         'gameloop: loop {
@@ -116,14 +116,20 @@ impl <'t> core::Demo <'t> for SDL {
             // }
 
             // reset direction
-            fighter.char_state.direction = input::movement::Direction::Up;
-            
+            if fighter.char_state.state != animation::sprites::State::Jump &&
+               fighter.char_state.state != animation::sprites::State::FJump  {
+                fighter.char_state.direction = input::movement::Direction::Up;
+            }
+
             // advance frame 
-            // fighter.char_state.advance_frame(); // EPILEPSY WARNING: don't uncomment this, if you have epilepsy
+            fighter.char_state.advance_frame(); // EPILEPSY WARNING: don't uncomment this, if you have epilepsy
 
-            // FPS stuff advancement
+            // TODO: FPS stuff advancement
+            // Sleep
+            let ten_millis = std::time::Duration::from_millis(70); // arbitrary #
+            let now = std::time::Instant::now();
 
-
+            thread::sleep(ten_millis);
 
         } // close gameloop
 

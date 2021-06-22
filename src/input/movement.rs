@@ -39,22 +39,23 @@ pub fn jump(f: &mut characters::characterAbstract::Fighter) {
                                     f.char_state.position = f.char_state.position.offset(f.speed, -f.speed);
                                 } else if f.char_state.current_frame < 6 {
                                     f.char_state.position = f.char_state.position.offset(f.speed, f.speed);
-                                } else if f.char_state.current_frame == 7 {
+                                } else if f.char_state.current_frame == 6 {
                                     f.char_state.position = f.char_state.position.offset(f.speed, f.speed);
                                     f.char_state.state = animation::sprites::State::Idle;
                                     f.char_state.current_frame = 0;
                                 }
                             },
-        Direction::Up => {      f.char_state.set_state(animation::sprites::State::FJump);
-                                if f.char_state.current_frame < 3 {
+        Direction::Up => {      f.char_state.set_state(animation::sprites::State::Jump);
+                                if f.char_state.current_frame < 3 { // 0 1 2 ^^^
                                     f.char_state.position = f.char_state.position.offset(0, -f.speed);
-                                } else if f.char_state.current_frame < 5 {
+                                } else if f.char_state.current_frame < 5 { // 3 4 v v Note: works b/c there are 6x states in jump
                                     f.char_state.position = f.char_state.position.offset(0, f.speed);
-                                } else if f.char_state.current_frame == 5 {
+                                } else if f.char_state.current_frame == 5 { // 5 v
                                     f.char_state.position = f.char_state.position.offset(0, f.speed);
                                     f.char_state.state = animation::sprites::State::Idle;
                                     f.char_state.current_frame = 0;
                                 }
+                                println!("{}", f.char_state.current_frame);
                             },
         Direction::Down => (),
     }
