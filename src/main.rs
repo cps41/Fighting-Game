@@ -1,33 +1,46 @@
 extern crate sdl2;
 
-use sdl2::image::{self, InitFlag, LoadTexture};
-use sdl2::render::{WindowCanvas, Texture};
+use sdl2::image::{self, LoadTexture}; // InitFlag,
+use sdl2::render::{WindowCanvas, Texture, TextureCreator};
 use sdl2::rect::{Point, Rect};
 use sdl2::pixels::Color;
-use std::time::Duration;
-use std::thread;
-use std::fs;
+// use std::thread;
+// use std::fs;
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
+use std::collections::HashMap;
+use std::path::Path;
+use sdl2::render::Canvas;
+use sdl2::video::Window;
+use sdl2::video::WindowContext;
+use std::time::{Instant, Duration}; // needed for FPS
+use std::thread;
 
 pub mod characters; // for characterAbstract
 pub mod view; // for core
 pub mod input; // for inputHandler and movement
 pub mod animation;
-use crate::view::core; // need for SDLCore
+use crate::view::core; // need for SDLCore and TextureManager
 use crate::view::core::Demo; // need for SDLCore's Demo
+// use crate::view::loads; 
 
 const TITLE: &str = "Street Code Fighter";
 const TIMEOUT: u64 = 5000;
 const CAM_W: u32 = 1280;
 const CAM_H: u32 = 720;
 
+// TODO: FPS constants
+// // 5px / frame @60fps == 300 px/s
+// const SPEED_LIMIT: f64 = 300.0;
+// // 1px / frame^2 @60fps == px/s^2
+// const ACCEL_RATE: f64 = 3600.0;
+
 // SDL structure
 pub struct SDL {
     core: core::SDLCore,
 }
 
-impl core::Demo for SDL {
+impl <'t> core::Demo <'t> for SDL {
     fn init() -> Result<Self, String> {
         let core = core::SDLCore::init(TITLE, true, CAM_W, CAM_H)?;
         Ok(SDL{ core })
@@ -35,14 +48,43 @@ impl core::Demo for SDL {
 
     fn run(&mut self) -> Result<(), String> {
 
-        // creating initial character state and 
+        // creating initial character state
         let cs = characters::characterAbstract::CharacterState::new();
-        let mut fighter = characters::characterAbstract::Fighter::new(cs);
+        let mut fighter = characters::characterAbstract::Fighter::new(cs); 
 
-        // loading textures
-        let texture_creator = self.core.wincan.texture_creator();
-        let texture = texture_creator.load_texture("src/assets/images/characters/python/fjump-outline.png")?; // TODO: organize into hashmaps
-        
+        let texture_creator = self.core.wincan.texture_creator(); // TextureCreator<WindowContext>
+
+        //////////////////////////
+        // FUNCTIONING
+        // EDIT: Modularize. Challenge: figuring out how to deal with texture's + hashmap lifetime
+            // create HashMap of all textures
+            let mut python_textures = HashMap::new();
+
+            let idle = texture_creator.load_texture("src/assets/images/characters/python/idle-outline.png")?;
+            let walk = texture_creator.load_texture("src/assets/images/characters/python/walk-outline.png")?;
+            let jump = texture_creator.load_texture("src/assets/images/characters/python/jump-outline.png")?;
+            let fjump = texture_creator.load_texture("src/assets/images/characters/python/fjump-outline.png")?;
+            let lpunch = texture_creator.load_texture("src/assets/images/characters/python/lpunch-outline.png")?;
+            let lkick = texture_creator.load_texture("src/assets/images/characters/python/lkick-outline.png")?;
+            let hkick = texture_creator.load_texture("src/assets/images/characters/python/hkick-outline.png")?;
+            let block = texture_creator.load_texture("src/assets/images/characters/python/block-outline.png")?;
+
+            python_textures.insert(animation::sprites::State::Idle, idle); 
+            python_textures.insert(animation::sprites::State::Walk, walk);
+            python_textures.insert(animation::sprites::State::Jump, jump);
+            python_textures.insert(animation::sprites::State::FJump, fjump);
+            python_textures.insert(animation::sprites::State::LPunch, lpunch);
+            python_textures.insert(animation::sprites::State::LKick, lkick);
+            python_textures.insert(animation::sprites::State::HKick, hkick);
+            python_textures.insert(animation::sprites::State::Block, block);
+
+         ///////////////////////
+         // NOT YET FUNCTIONING
+         // Self::load_textures(&texture_creator, &mut fighter);
+         ////////
+
+        // TODO: FPS setup here
+
         // game loop
         'gameloop: loop {
 
@@ -55,12 +97,43 @@ impl core::Demo for SDL {
 
             // updates in game ... 
 
+            // get the proper texture within the game
+            let texture = match python_textures.get(&fighter.char_state.state) { // gets the first texture (needs to get out of Option) // (fighter.textures)
+                    Some(text) => text,
+                    _ => panic!("No texture found for the state! Oh nos."),
+                };
+
+            // movement direction occurs here
+
             // render canvas
             Self::render(&mut self.core.wincan, Color::RGB(222,222,222), &texture, &fighter);
 
+            // resets
+            // reset walking to idle
+            // if fighter.char_state.state == animation::sprites::State::Walk {
+            //     fighter.char_state.state = animation::sprites::State::Idle;
+            //     fighter.char_state.current_frame = 0;
+            // }
+
+            // reset direction
+            if fighter.char_state.state != animation::sprites::State::Jump &&
+               fighter.char_state.state != animation::sprites::State::FJump  {
+                fighter.char_state.direction = input::movement::Direction::Up;
+            }
+
+            // advance frame 
+            fighter.char_state.advance_frame(); // EPILEPSY WARNING: don't uncomment this, if you have epilepsy
+
+            // TODO: FPS stuff advancement
+            // Sleep
+            let ten_millis = std::time::Duration::from_millis(70); // arbitrary #
+            let now = std::time::Instant::now();
+
+            thread::sleep(ten_millis);
+
         } // close gameloop
 
-        Ok(()) // needs to return Result :)
+        Ok(()) // // Out of game loop, needs to return Result :)
 
     } // close run fn
 
@@ -95,8 +168,24 @@ impl core::Demo for SDL {
             canvas.present();
 
             Ok(())
-    }
-}
+    } // close render fn
+    
+    // NOT FUNCTIONING YET
+    fn load_textures(texture_creator: &'t TextureCreator<WindowContext>,
+                     f: &mut characters::characterAbstract::Fighter) {
+
+            // let idle = texture_creator.load_texture("src/assets/images/characters/python/idle-outline.png");
+
+            // match idle {
+            //     Ok(i) =>  { f.add_texture(animation::sprites::State::Idle, i); },
+            //     Err(e) => { panic!("Nooo"); },
+            // }  
+            
+    } // close load_textures
+} // close Demo trait
+
+
+
 
 // // run credits
 // pub fn run_credits() -> Result<(), String> {
