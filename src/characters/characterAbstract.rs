@@ -32,31 +32,27 @@ pub struct Fighter {
 	pub name: Characters,
 	pub char_state: CharacterState, 
 	pub speed: i32,
-	//x_pos: f32, // roll into CharacterState
-    //y_pos: f32, // roll into CharacterState
-    // weight: u16,
-    // gravity: f32,
-    // max_fall_speed: u16,
-    // max_ground_speed: u16,
-    // run_speed: u16,
-    // max_air_speed: u16,
-    // aerial_transition_speed: u16,
-    // crawl_speed: u16,
-    // dodge_speed: u16,
-    // friction: f32,
-    // static_grip: u16,
-    // pivot_grip: u16,
-    // air_resistance: f32,
-    // air_control: u16,
-    // jumps: u16,
-    // jump_height: u16,
-    // short_hop_height: u16,
-    // air_jump_height: u16,
-    // heavy_land_lag: u16,
-    // wavedash_lag: u16,
-    // fastfall_multiplier: f32,
-    // hitstun_elasticity: f32,
-    // shield_size: u16,
+    pub weight: i32,
+    pub gravity: f32,
+    pub max_fall_speed: i32,
+    pub walk_speed: i32,
+    pub run_speed: i32,
+    pub max_air_speed: i32,
+    pub aerial_transition_speed: i32,
+    pub crawl_speed: i32,
+    pub dodge_speed: i32,
+    pub friction: f32,
+    pub static_grip: i32,
+    pub pivot_grip: i32,
+    pub air_resistance: f32,
+    pub air_control: i32,
+    pub jumps: i32,
+    pub jump_height: i32,
+    pub short_hop_height: i32,
+    pub air_jump_height: i32,
+    pub heavy_land_lag: i32,
+    pub fastfall_multiplier: f32,
+    pub shield_size: i32,
 }
 
 // EDIT: make functions public
@@ -70,162 +66,75 @@ impl Fighter {
 			name: Characters::Python,
 			char_state: c,
 			speed: 20, // arbitrary #
+			weight: 180,
+			gravity: -9.8,
+			max_fall_speed: 20,
+			walk_speed: 10,
+			run_speed: 15,
+			max_air_speed: 5,
+			aerial_transition_speed: 3,
+			crawl_speed: 3,
+			dodge_speed: 5,
+			friction: -0.1,
+			static_grip: 20,
+			pivot_grip: 25,
+			air_resistance: -0.1,
+			air_control: 5,
+			jumps: 2,
+			jump_height: 10,
+			short_hop_height: 5,
+			air_jump_height: 7,
+			heavy_land_lag: 2,
+			fastfall_multiplier: 1.25,
+			shield_size: 3,
 		}
 	} 
 	
-	    // Getters
- //    fn x_pos(&self) -> &String {
- //        &self.x_pos
- //    }
- //    fn y_pos(&self) -> &String {
- //        &self.y_pos
- //    }
- //    fn weight(&self) -> &String {
- //        &self.weight
- //    }
- //    fn gravity(&self) -> &String {
- //        &self.gravity
- //    }
- //    fn max_fall_speed(&self) -> &String {
- //        &self.max_fall_speed
- //    }
- //    fn max_ground_speed(&self) -> &String {
- //        &self.max_ground_speed
- //    }
- //    fn run_speed(&self) -> &String {
- //        &self.run_speed
- //    }
- //    fn max_air_speed(&self) -> &String {
- //        &self.max_air_speed
- //    }
- //    fn aerial_transition_speed(&self) -> &String {
- //        &self.aerial_transition_speed
- //    }
- //    fn crawl_speed(&self) -> &String {
- //        &self.crawl_speed
- //    }
- //    fn dodge_speed(&self) -> &String {
- //        &self.dodge_speed
- //    }
- //    fn friction(&self) -> &String {
- //        &self.friction
- //    }
- //    fn static_grip(&self) -> &String {
- //        &self.static_grip
- //    }
- //    fn pivot_grip(&self) -> &String {
- //        &self.pivot_grip
- //    }
- //    fn air_resistance(&self) -> &String {
- //        &self.air_resistance
- //    }
- //    fn air_control(&self) -> &String {
- //        &self.air_control
- //    }
- //    fn jumps(&self) -> &String {
- //        &self.jumps
- //    }
- //    fn jump_height(&self) -> &String {
- //        &self.jump_height
- //    }
- //    fn short_hop_height(&self) -> &String {
- //        &self.short_hop_height
- //    }
- //    fn air_jump_height(&self) -> &String {
- //        &self.air_jump_height
- //    }
- //    fn heavy_land_lag(&self) -> &String {
- //        &self.heavy_land_lag
- //    }
- //    fn wavedash_lag(&self) -> &String {
- //        &self.wavedash_lag
- //    }
- //    fn fastfall_multiplier(&self) -> &String {
- //        &self.fastfall_multiplier
- //    }
- //    fn hitstun_elasticity(&self) -> &String {
- //        &self.hitstun_elasticity
- //    }
- //    fn shield_size(&self) -> &String {
- //        &self.shield_size
- //    }
+	// Getters
+    pub fn weight(&self) -> &i32 {&self.weight}
+    pub fn gravity(&self) -> &f32 {&self.gravity}
+    pub fn max_fall_speed(&self) -> &i32 {&self.max_fall_speed}
+    pub fn walk_speed(&self) -> &i32 {&self.walk_speed}
+    pub fn run_speed(&self) -> &i32 {&self.run_speed}
+    pub fn max_air_speed(&self) -> &i32 {&self.max_air_speed}
+    pub fn aerial_transition_speed(&self) -> &i32 {&self.aerial_transition_speed}
+    pub fn crawl_speed(&self) -> &i32 {&self.crawl_speed}
+    pub fn dodge_speed(&self) -> &i32 {&self.dodge_speed}
+    pub fn friction(&self) -> &f32 {&self.friction}
+    pub fn static_grip(&self) -> &i32 {&self.static_grip}
+    pub fn pivot_grip(&self) -> &i32 {&self.pivot_grip}
+    pub fn air_resistance(&self) -> &f32 {&self.air_resistance}
+    pub fn air_control(&self) -> &i32 {&self.air_control}
+    pub fn jumps(&self) -> &i32 {&self.jumps}
+    pub fn jump_height(&self) -> &i32 {&self.jump_height}
+    pub fn short_hop_height(&self) -> &i32 {&self.short_hop_height}
+    pub fn air_jump_height(&self) -> &i32 {&self.air_jump_height}
+    pub fn heavy_land_lag(&self) -> &i32 {&self.heavy_land_lag}
+    pub fn fastfall_multiplier(&self) -> &f32 {&self.fastfall_multiplier}
+    pub fn shield_size(&self) -> &i32 {&self.shield_size}
 
- //    // Setters
- //    fn x_pos_mut(&mut self) -> &mut String {
- //        &mut self.x_pos
- //    }
- //    fn y_pos_mut(&mut self) -> &mut String {
- //        &mut self.y_pos
- //    }
- //    fn weight_mut(&mut self) -> &mut String {
- //        &mut self.weight
- //    }
- //    fn gravity_mut(&mut self) -> &mut String {
- //        &mut self.gravity
- //    }
- //    fn max_fall_speed_mut(&mut self) -> &mut String {
- //        &mut self.max_fall_speed
- //    }
- //    fn max_ground_speed_mut(&mut self) -> &mut String {
- //        &mut self.max_ground_speed
- //    }
- //    fn run_speed_mut(&mut self) -> &mut String {
- //        &mut self.run_speed
- //    }
- //    fn max_air_speed_mut(&mut self) -> &mut String {
- //        &mut self.max_air_speed
- //    }
- //    fn aerial_transition_speed_mut(&mut self) -> &mut String {
- //        &mut self.aerial_transition_speed
- //    }
- //    fn crawl_speed_mut(&mut self) -> &mut String {
- //        &mut self.crawl_speed
- //    }
- //    fn dodge_speed_mut(&mut self) -> &mut String {
- //        &mut self.dodge_speed
- //    }
- //    fn friction_mut(&mut self) -> &mut String {
- //        &mut self.friction
- //    }
- //    fn static_grip_mut(&mut self) -> &mut String {
- //        &mut self.static_grip
- //    }
- //    fn pivot_grip_mut(&mut self) -> &mut String {
- //        &mut self.pivot_grip
- //    }
- //    fn air_resistance_mut(&mut self) -> &mut String {
- //        &mut self.air_resistance
- //    }
- //    fn air_control_mut(&mut self) -> &mut String {
- //        &mut self.air_control
- //    }
- //    fn jumps_mut(&mut self) -> &mut String {
- //        &mut self.jumps
- //    }
- //    fn jump_height_mut(&mut self) -> &mut String {
- //        &mut self.jump_height
- //    }
- //    fn short_hop_height_mut(&mut self) -> &mut String {
- //        &mut self.short_hop_height
- //    }
- //    fn air_jump_height_mut(&mut self) -> &mut String {
- //        &mut self.air_jump_height
- //    }
- //    fn heavy_land_lag_mut(&mut self) -> &mut String {
- //        &mut self.heavy_land_lag
- //    }
- //    fn wavedash_lag_mut(&mut self) -> &mut String {
- //        &mut self.wavedash_lag
- //    }
- //    fn fastfall_multiplier_mut(&mut self) -> &mut String {
- //        &mut self.fastfall_multiplier
- //    }
- //    fn hitstun_elasticity_mut(&mut self) -> &mut String {
- //        &mut self.hitstun_elasticity
- //    }
- //    fn shield_size_mut(&mut self) -> &mut String {
- //        &mut self.shield_size
-	// }
+    // Setters
+    pub fn set_weight(&mut self) -> &mut i32 {&mut self.weight}
+    pub fn set_gravity(&mut self) -> &mut f32 {&mut self.gravity}
+    pub fn set_max_fall_speed(&mut self) -> &mut i32 {&mut self.max_fall_speed}
+    pub fn set_walk_speed(&mut self) -> &mut i32 {&mut self.walk_speed}
+    pub fn set_run_speed(&mut self) -> &mut i32 {&mut self.run_speed}
+    pub fn set_max_air_speed(&mut self) -> &mut i32 {&mut self.max_air_speed}
+    pub fn set_aerial_transition_speed(&mut self) -> &mut i32 {&mut self.aerial_transition_speed}
+    pub fn set_crawl_speed(&mut self) -> &mut i32 {&mut self.crawl_speed}
+    pub fn set_dodge_speed(&mut self) -> &mut i32 {&mut self.dodge_speed}
+    pub fn set_friction(&mut self) -> &mut f32 {&mut self.friction}
+    pub fn set_static_grip(&mut self) -> &mut i32 {&mut self.static_grip}
+    pub fn set_pivot_grip(&mut self) -> &mut i32 {&mut self.pivot_grip}
+    pub fn set_air_resistance(&mut self) -> &mut f32 {&mut self.air_resistance}
+    pub fn set_air_control(&mut self) -> &mut i32 {&mut self.air_control}
+    pub fn set_jumps(&mut self) -> &mut i32 {&mut self.jumps}
+    pub fn set_jump_height(&mut self) -> &mut i32 {&mut self.jump_height}
+    pub fn set_short_hop_height(&mut self) -> &mut i32 {&mut self.short_hop_height}
+    pub fn set_air_jump_height(&mut self) -> &mut i32 {&mut self.air_jump_height}
+    pub fn set_heavy_land_lag(&mut self) -> &mut i32 {&mut self.heavy_land_lag}
+    pub fn set_fastfall_multiplier(&mut self) -> &mut f32 {&mut self.fastfall_multiplier}
+    pub fn set_shield_size(&mut self) -> &mut i32 {&mut self.shield_size}
 	
 }
 
