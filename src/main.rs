@@ -29,6 +29,12 @@ const TIMEOUT: u64 = 5000;
 const CAM_W: u32 = 1280;
 const CAM_H: u32 = 720;
 
+// FPS contants?
+// // 5px / frame @60fps == 300 px/s
+// const SPEED_LIMIT: f64 = 300.0;
+// // 1px / frame^2 @60fps == px/s^2
+// const ACCEL_RATE: f64 = 3600.0;
+
 // SDL structure
 pub struct SDL {
     core: core::SDLCore,
@@ -75,8 +81,9 @@ impl <'t> core::Demo <'t> for SDL {
          ///////////////////////
          // NOT YET FUNCTIONING
          // Self::load_textures(&texture_creator, &mut fighter);
-
          ////////
+
+        // FPS setup here? 
 
         // game loop
         'gameloop: loop {
@@ -88,9 +95,7 @@ impl <'t> core::Demo <'t> for SDL {
                 } // end match
             } // end for loop
 
-
             // updates in game ... 
-
 
             // get the proper texture within the game
             let texture = match python_textures.get(&fighter.char_state.state) { // gets the first texture (needs to get out of Option) // (fighter.textures)
@@ -103,16 +108,22 @@ impl <'t> core::Demo <'t> for SDL {
             // render canvas
             Self::render(&mut self.core.wincan, Color::RGB(222,222,222), &texture, &fighter);
 
+            // resets
             // reset walking to idle
-            if fighter.char_state.state == animation::sprites::State::Walk {
-                fighter.char_state.state = animation::sprites::State::Idle;
-                fighter.char_state.current_frame = 0;
-            }
+            // if fighter.char_state.state == animation::sprites::State::Walk {
+            //     fighter.char_state.state = animation::sprites::State::Idle;
+            //     fighter.char_state.current_frame = 0;
+            // }
 
+            // reset direction
+            fighter.char_state.direction = input::movement::Direction::Up;
             
-            // advance frame
-            // fighter.char_state.advance_frame();
-            // println!("Main, current_frame: {}, frames_per_state: {}", fighter.char_state.current_frame, fighter.char_state.frames_per_state);
+            // advance frame 
+            // fighter.char_state.advance_frame(); // EPILEPSY WARNING: don't uncomment this, if you have epilepsy
+
+            // FPS stuff advancement
+
+
 
         } // close gameloop
 
@@ -153,7 +164,7 @@ impl <'t> core::Demo <'t> for SDL {
             Ok(())
     } // close render fn
     
-    // FAILED
+    // NOT FUNCTIONING YET
     fn load_textures(texture_creator: &'t TextureCreator<WindowContext>,
                      f: &mut characters::characterAbstract::Fighter) {
 
