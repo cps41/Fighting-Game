@@ -2,9 +2,12 @@ use crate::animation; // to reference sprite State
 use crate::input; // use to reference Direction
 
 use sdl2::rect::{Point, Rect};
+use sdl2::render::Texture;
+use std::collections::HashMap;
 
 // Enums 
 // defines optional Characters
+#[derive(Hash, Eq, PartialEq, Debug)]
 pub enum Characters {
 	Python,
 	// Stretch goal: add more
@@ -15,7 +18,6 @@ pub enum Characters {
 pub struct CharacterState {
 	pub position: Point,
     pub state: animation::sprites::State,
-	// pub texture: Texture<'a>,
 	pub frames_per_state: i32,
 	pub current_frame: i32, 
 	pub sprite: Rect,
@@ -28,9 +30,10 @@ pub struct CharacterState {
 // EDIT: simplify, if desired
 // EDIT: consider updating integers to i32
 // EDIT: make fields public (with `pub`)
-pub struct Fighter {
+pub struct Fighter<'t> {
 	pub name: Characters,
 	pub char_state: CharacterState, 
+	pub textures: HashMap<animation::sprites::State, Texture<'t>>,
 	pub speed: i32,
 	//x_pos: f32, // roll into CharacterState
     //y_pos: f32, // roll into CharacterState
@@ -64,16 +67,32 @@ pub struct Fighter {
 // EDIT: for setters, consider updating to start with "set_" and removed "_mut"
 // EDIT: should add a new() function to characterAbstract.rs, make this a f(x)
 // EDIT: update 'Person' to 'Fighter'
-impl Fighter {
-	pub fn new(c: CharacterState) -> Fighter {
+impl <'t> Fighter <'t> {
+	pub fn new (c: CharacterState) -> Fighter<'t> {
 		Fighter {
 			name: Characters::Python,
 			char_state: c,
 			speed: 20, // arbitrary #
+			textures: HashMap::new(),
 		}
 	} 
-	
-	    // Getters
+
+	pub fn textures(&self) -> &Texture<'t> {
+		match &self.textures.get(&self.char_state.state) {
+			Some(texture) => texture,
+			None => panic!("Texture issue in fighter"),
+		}
+	}
+
+	pub fn add_texture(&mut self, s: animation::sprites::State, t: Texture<'t>) {
+            &self.textures.insert(s, t);
+	}
+
+	// pub fn update_textures(&self, h: &HashMap<animation::sprites::State, Texture<'a>>) {
+	// 	&self.textures = h;
+	// }
+
+	// Getters
  //    fn x_pos(&self) -> &String {
  //        &self.x_pos
  //    }
@@ -227,7 +246,7 @@ impl Fighter {
  //        &mut self.shield_size
 	// }
 	
-}
+} // close Fighter impl
 
 
 
@@ -246,7 +265,7 @@ impl CharacterState {
 			sprite: Rect::new(0, 0, 210, 300),
 			auto_repeat: true,
 			next_state: animation::sprites::State::Idle,
-			direction: input::movement::Direction::Right,
+			direction: input::movement::Direction::Up,
 		}
 	}
 	
@@ -278,7 +297,8 @@ impl CharacterState {
 	// settters (use to update)
 	pub fn set_position(&mut self, p: Point)						{ self.position = p; }
 	pub fn set_state(&mut self, s: animation::sprites::State)		{ self.state = s; 
-																	  self.frames_per_state = animation::sprites::get_frame_cnt(self); }
+																	  self.frames_per_state = animation::sprites::get_frame_cnt(self);
+																	}
 	pub fn set_current_frame(&mut self, i: i32)						{ self.current_frame = (self.current_frame + i) % self.frames_per_state; } // need to stay within # of frames
 	pub fn set_sprite(&mut self, r: Rect)							{ self.sprite = r; }
 	pub fn set_auto_repeat(&mut self, b: bool)						{ self.auto_repeat = b; }
