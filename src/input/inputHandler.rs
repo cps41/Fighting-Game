@@ -3,87 +3,37 @@ use sdl2::EventPump;
 use sdl2::keyboard::Keycode;
 use crate::characters; // use to get get acces to Fighter struct
 use crate::input; // add to use stuff in movement
+use crate::animation; // used to get States
 
 pub fn keyboard_input(event: &Event, fighter: &mut characters::characterAbstract::Fighter) {
             match event {
                     Event::KeyDown{keycode: Some(k), ..} => {
                         match k {
-                            Keycode::W => (), // jump
+                            Keycode::W => { input::movement::jump(fighter); }, // jump
                             Keycode::A => { fighter.char_state.direction = input::movement::Direction::Left; // update direction left
-                                            input::movement::walk(fighter); // character walks left
+                                            // if fighter.char_state.state == animation::sprites::State::Idle { // if we're idle, then walk
+                                                input::movement::walk(fighter); // character walks left
+                                           // }
                                            },
                             Keycode::S => (), // crouch (stretch goal)
                             Keycode::D => { fighter.char_state.direction = input::movement::Direction::Right; // update direction right 
-                                            input::movement::walk(fighter); // character walks right
+                                            //if fighter.char_state.state == animation::sprites::State::Idle { // if we're idle, then walk
+                                                input::movement::walk(fighter); // character walks right
+                                            // }
                                            },
-                            Keycode::Space => (), 
-                            // TODO: expand keyboard commands
+                            Keycode::Space => (),
+                            Keycode::KpEnter => { input::movement::block(fighter); }, 
+                            Keycode::J => { input::movement::lkick(fighter); }, 
+                            Keycode::I => { input::movement::hkick(fighter); }, 
+                            Keycode::K => { input::movement::lpunch(fighter); }, 
+
+                            // Stetch goal: expand keyboard commands, if expand moves
                             _ => {},
                         } // close match k
                     } // close KeyDown
                     _ => {},
             } // close match event
 } // close fn
-
-
-// EDIT: delete below, move comments up (as desired)
-// let mut event_pump = sdl_context.event_pump()?;
-
-// // SDL2 allows for 'running loop', essentially the same as a while
-// 'running: loop {
-
-//     // Handle the user input during combat
-//     for event in event_pump.poll_iter() {
-//         match event {
-
-//             // these events account for the player using either the arrow keys (Right, Left, etc.)
-//             // OR ASDW and spacebar
-// 			// EDIT: Add in Quit event for Escape
-// 			// EDIT: Roll into "match" switch-like statement per example: https://github.com/nfarnan/cs1666_examples/blob/main/sdl/examples/sdl05_key_events.rs
-//             Event::KeyDown { keycode: Some(Keycode::Left), repeat: false, .. } |
-//             Event::KeyDown { keycode: Some(Keycode::A), repeat: false, .. } => {
-//                 // player moved left
-//                 // call some code to alter momentum, player speed, and player position
-//                 // handle this in Movement.rs
-//             },
-//             Event::KeyDown { keycode: Some(Keycode::Right), repeat: false, .. } |
-//             Event::KeyDown { keycode: Some(Keycode::D), repeat: false, .. } => {
-//                 // player moved right
-//                 // call some code to alter momentum, player speed, and player position
-//                 // handle this in Movement.rs
-//             },
-//             Event::KeyDown { keycode: Some(Keycode::Down), repeat: false, .. } |
-//             Event::KeyDown { keycode: Some(Keycode::S), repeat: false, .. } => {
-//                 // player moved down
-//                 // call some code to alter momentum, player speed, and player position
-//                 // handle this in Movement.rs
-//             },
-//             Event::KeyDown { keycode: Some(Keycode::W), repeat: false, .. } |
-//             Event::KeyDown {keycode: Some(Keycode::Space), repeat: false, .. } => {
-//                 // player moved up / jumped
-//                 // acounts for 'W' or spacebar
-//                 // call some code to alter momentum, player speed, and player position
-//                 // handle this in Movement.rs
-//             },
-// 			// EDIT: Add in all fight key codes, based on Appendix > controls: https://docs.google.com/document/d/1k_R2QGC2Lmlz-AfOTmTTM9RsKEg4kmrS/edit# (no preference here)
-
-// 			// additional keyboard presses or press combinations for combat
-//             // moves should be included *here*
-			
-//             _ => {} // not really sure what to do for default key press yet
-
-
-
-//         }
-//     }
-
-//     // additional method of handling player movement would be to alter
-//     // the values in the player enum within the above loop, and calulate
-//     // the new player position here
-
-// }
-// // end loop
-// Ok(())
 
 // *** ALL POSSIBLE KEYCODES AVAILABLE FOR KeyEvent *** //
 // https://docs.rs/sdl2/0.9.0/sdl2/keyboard/enum.Keycode.html //

@@ -1,9 +1,13 @@
 extern crate sdl2;
 
 use sdl2::rect::Rect;
-use sdl2::render::{WindowCanvas, Texture};
+use sdl2::render::{WindowCanvas, Texture, TextureCreator};
 use sdl2::pixels::Color;
+use std::collections::HashMap;
+use sdl2::video::WindowContext;
+
 use crate::characters;
+use crate::animation;
 
 pub struct SDLCore {
 	sdl_cxt: sdl2::Sdl,
@@ -53,7 +57,7 @@ impl SDLCore {
 	}
 }
 
-pub trait Demo {
+pub trait Demo<'t> {
 	fn init() -> Result<Self, String> where Self: Sized;
 	fn run(&mut self) -> Result<(), String>;
 	fn render(canvas: &mut WindowCanvas,
@@ -61,12 +65,14 @@ pub trait Demo {
 			  texture: &Texture,
 			  fighter: &characters::characterAbstract::Fighter,
 			  ) -> Result<(), String>;
+	fn load_textures(texture_creator: &'t TextureCreator<WindowContext>,
+                     f: &mut characters::characterAbstract::Fighter);
 }
 
-pub fn runner<F, D>(desc: &str, initter: F)
+pub fn runner<'t, F, D>(desc: &str, initter: F)
 		where
 			F: Fn() -> Result<D, String>,
-			D: Demo,
+			D: Demo<'t>,
 	{
 		println!("\nRunning {}:", desc);
 		print!("\tInitting...");
@@ -83,3 +89,4 @@ pub fn runner<F, D>(desc: &str, initter: F)
 			},
 		};
 	}
+
