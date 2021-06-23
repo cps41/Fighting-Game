@@ -1,6 +1,6 @@
 use std::net::UdpSocket;
  
-fn main() -> std::io::Result<()> {
+pub fn server_start() -> std::io::Result<()> {
     let socket = UdpSocket::bind("127.0.0.1:8080")?;
  
     loop {
@@ -8,7 +8,8 @@ fn main() -> std::io::Result<()> {
         let (amt, src) = socket.recv_from(&mut buf)?;
  
         let buf = &mut buf[..amt];
-        buf.reverse();
         socket.send_to(buf, &src)?;
+
+        //if str::from_utf8(&buf).eq("exit") {break};
     }
 }
