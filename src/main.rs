@@ -108,25 +108,77 @@ impl <'t> core::Demo <'t> for SDL {
             // render canvas
             Self::render(&mut self.core.wincan, Color::RGB(222,222,222), &texture, &fighter);
 
-            // resets
-            // reset walking to idle
-            // if fighter.char_state.state == animation::sprites::State::Walk {
-            //     fighter.char_state.state = animation::sprites::State::Idle;
-            //     fighter.char_state.current_frame = 0;
-            // }
+            // advance frame 
+            fighter.char_state.advance_frame();
 
-            // reset direction
+            // ANIMATION
+            // Jumps
+            if fighter.char_state.state == animation::sprites::State::Jump ||
+               fighter.char_state.state == animation::sprites::State::FJump {
+                match &fighter.char_state.direction {
+                    input::movement::Direction::Left => {
+                                            if fighter.char_state.current_frame < 3 { // Note: only works since there are 6x states in Jump.
+                                                fighter.char_state.position = fighter.char_state.position.offset(-fighter.speed, -fighter.speed);
+                                            } else if fighter.char_state.current_frame < 5 { // account for starting at 0
+                                                fighter.char_state.position = fighter.char_state.position.offset(-fighter.speed, fighter.speed);
+                                            } else if fighter.char_state.current_frame == 5 { 
+                                                fighter.char_state.position = fighter.char_state.position.offset(-fighter.speed, fighter.speed);
+                                                fighter.char_state.state = animation::sprites::State::Idle;
+                                                fighter.char_state.current_frame = 0;
+                                            }
+                                        },
+                    input::movement::Direction::Right => {   
+                                            if fighter.char_state.current_frame < 4 {
+                                                fighter.char_state.position = fighter.char_state.position.offset(fighter.speed, -fighter.speed);
+                                            } else if fighter.char_state.current_frame < 6 {
+                                                fighter.char_state.position = fighter.char_state.position.offset(fighter.speed, fighter.speed);
+                                            } else if fighter.char_state.current_frame == 6 {
+                                                fighter.char_state.position = fighter.char_state.position.offset(fighter.speed, fighter.speed);
+                                                fighter.char_state.state = animation::sprites::State::Idle;
+                                                fighter.char_state.current_frame = 0;
+                                            }
+                                        },
+                    input::movement::Direction::Up => {      
+                                            if fighter.char_state.current_frame < 3 { 
+                                                fighter.char_state.position = fighter.char_state.position.offset(0, -fighter.speed);
+                                            } else if fighter.char_state.current_frame < 5 { // Note: works b/c there are 6x states in jump
+                                                fighter.char_state.position = fighter.char_state.position.offset(0, fighter.speed);
+                                            } else if fighter.char_state.current_frame == 5 { 
+                                                fighter.char_state.position = fighter.char_state.position.offset(0, fighter.speed);
+                                                fighter.char_state.state = animation::sprites::State::Idle;
+                                                fighter.char_state.current_frame = 0;
+                                            }
+                                        },
+                    input::movement::Direction::Down => (),
+                 } // end direction jump match
+            }  // end jump if
+
+            // RESETS
+            // reset walking to idle
+            if fighter.char_state.state == animation::sprites::State::Walk &&
+               fighter.char_state.current_frame % 2 == 0 { // 3 is arbitary #
+                fighter.char_state.state = animation::sprites::State::Idle;
+                fighter.char_state.current_frame = 0;
+            }
+
+            // reset direction to up
             if fighter.char_state.state != animation::sprites::State::Jump &&
                fighter.char_state.state != animation::sprites::State::FJump  {
                 fighter.char_state.direction = input::movement::Direction::Up;
             }
 
-            // advance frame 
-            fighter.char_state.advance_frame(); // EPILEPSY WARNING: don't uncomment this, if you have epilepsy
+             // println!("s: {:?}, cf: {}", fighter.char_state.state, fighter.char_state.current_frame);
+
+            // resetting to idle, if reached max frames (since idle is our only auto repeat)
+            if fighter.char_state.state != animation::sprites::State::Idle && 
+               fighter.char_state.current_frame == animation::sprites::get_frame_cnt(&fighter.char_state) - 1 { // we've hit the max frames
+                fighter.char_state.set_state(animation::sprites::State::Idle); 
+                fighter.char_state.set_current_frame(0);
+            }
 
             // TODO: FPS stuff advancement
             // Sleep
-            let ten_millis = std::time::Duration::from_millis(70); // arbitrary #
+            let ten_millis = std::time::Duration::from_millis(200); // arbitrary #
             let now = std::time::Instant::now();
 
             thread::sleep(ten_millis);

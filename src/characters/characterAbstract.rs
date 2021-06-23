@@ -298,12 +298,14 @@ impl CharacterState {
 	pub fn set_position(&mut self, p: Point)						{ self.position = p; }
 	pub fn set_state(&mut self, s: animation::sprites::State)		{ self.state = s; 
 																	  self.frames_per_state = animation::sprites::get_frame_cnt(self);
+																	  // println!("s: {:?}, cf: {}", self.state, self.current_frame);
 																	}
 	pub fn set_current_frame(&mut self, i: i32)						{ self.current_frame = (self.current_frame + i) % self.frames_per_state; } // need to stay within # of frames
 	pub fn set_sprite(&mut self, r: Rect)							{ self.sprite = r; }
 	pub fn set_auto_repeat(&mut self, b: bool)						{ self.auto_repeat = b; }
 	pub fn set_next_state(&mut self, s: animation::sprites::State)	{ self.next_state = s; }
 	pub fn set_direction(&mut self, d: input::movement::Direction)	{ self.direction = d; }
-		
+	pub fn reset_current_frame(&mut self)							{ self.current_frame = 0; }
+
 }
 

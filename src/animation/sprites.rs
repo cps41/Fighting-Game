@@ -23,23 +23,6 @@ pub enum State {
 	// Stretch goal: add more
 }
 
-// Functions to get current file name as string, to use to generate textures
-pub fn get_state_filename(c: &characters::characterAbstract::Fighter) -> &'static str {
-	match c.name {
-		characters::characterAbstract::Characters::Python =>
-			match c.char_state.state {
-				State::Idle => { return "src/assets/images/characters/python/idle.png"; },
-				State::Walk => { return "src/assets/images/characters/python/walk.png"; },
-				State::Jump => { return "src/assets/images/characters/python/jump.png"; },
-				State::FJump => { return "src/assets/images/characters/python/fjump.png"; },
-				State::LPunch => { return "src/assets/images/characters/python/lpunch.png"; },
-				State::LKick => { return "src/assets/images/characters/python/lkick.png"; },
-				State::HKick => { return "src/assets/images/characters/python/hkick.png"; },
-				State::Block => { return "src/assets/images/characters/python/block.png"; },
-			},
-	}
-}
-
 // Gets the rectangle to use for positioning view of sprite
 pub fn get_rectangle(f: u32) -> Rect { // current frame
 	let x = W*f; // + 0
