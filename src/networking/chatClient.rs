@@ -1,10 +1,10 @@
 use std::net::UdpSocket;
 use std::{io, str};
  
-fn main() -> std::io::Result<()> {
+pub fn server_connect() -> std::io::Result<()> {
     let socket = UdpSocket::bind("127.0.0.1:8000")?;
     socket.connect("127.0.0.1:8080")?;
- 
+
     loop {
         let mut input = String::new();
         io::stdin().read_line(&mut input)?;
@@ -17,5 +17,10 @@ fn main() -> std::io::Result<()> {
             "recv: {}",
             str::from_utf8(&buffer).expect("Could not write buffer as string")
         );
+/*
+        if str::from_utf8(&buffer).eq("exit") {
+            break;
+        };
+*/
     }
 }
