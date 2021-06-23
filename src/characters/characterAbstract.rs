@@ -83,7 +83,7 @@ impl <'t> Fighter <'t> {
 			heavy_land_lag: 2,
 			fastfall_multiplier: 1.25,
 			shield_size: 3,
-      textures: HashMap::new(),
+      	textures: HashMap::new(),
 		}
 	} 
 	
@@ -108,9 +108,7 @@ impl <'t> Fighter <'t> {
     pub fn air_jump_height(&self) -> &i32 {&self.air_jump_height}
     pub fn heavy_land_lag(&self) -> &i32 {&self.heavy_land_lag}
     pub fn fastfall_multiplier(&self) -> &f32 {&self.fastfall_multiplier}
-    pub fn shield_size(&self) -> &i32 {&self.shield_size}
-		}
-	} 
+    pub fn shield_size(&self) -> &i32 {&self.shield_size} 
 
 	pub fn textures(&self) -> &Texture<'t> {
 		match &self.textures.get(&self.char_state.state) {
@@ -202,4 +200,3 @@ impl CharacterState {
 	pub fn reset_current_frame(&mut self)							{ self.current_frame = 0; }
 
 }
-
