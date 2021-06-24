@@ -11,6 +11,8 @@ const TIMEOUT: u64 = 5000;
 const CAM_W: u32 = 1280;
 const CAM_H: u32 = 720;
 
+mod physics;
+
 pub fn run_credits() -> Result<(), String> {
 
     let sdl_context = sdl2::init()?;
