@@ -195,11 +195,7 @@ pub fn run_game() -> Result<(), String>{
 }
 
 pub fn run_server() -> Result<(), String>{
-    println!("Hello, World!");
-
     networking::chatServer::server_start();
-
-
     Ok(())
 }
 
@@ -270,7 +266,7 @@ fn main() -> Result<(), String> {
     if args.len() > 1 && "server".eq(&args[1]){
         run_server()?;
     }else{
-        run_game()?;
+        // run_game()?;
         networking::chatClient::server_connect();
     }
 
