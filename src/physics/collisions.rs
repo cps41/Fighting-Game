@@ -1,5 +1,4 @@
-extern crate street_code_fighter;
-
+#![allow(non_snake_case)]
 use sdl2::rect::Rect;
 
 pub fn check_collision(a: &CollisionObject, b: &CollisionObject) -> bool {
@@ -39,7 +38,7 @@ pub fn resist(vel: i32, deltav: i32) -> i32 {
 	}
 }
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 pub enum CollisionObjectType {
 	HitBox,
 	HurtBox,
@@ -62,7 +61,7 @@ impl Area for Rect {
 	}
 }
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 pub struct CollisionObject {
     obj_type: CollisionObjectType,
 	area: u32,
@@ -116,7 +115,7 @@ impl<T> Refer<T> for Link<T> {
 	}
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct BVHNode {
 	children: (Link<BVHNode>, Link<BVHNode>),
 	obj: Link<CollisionObject>,
@@ -204,29 +203,45 @@ impl BVHNode {
 		if self.isLeaf() {
 			self.children.0 = Some(Box::new(BVHNode::new((None, None), self.obj.take(), self.area)));
 			self.children.1 = Some(Box::new(BVHNode::new((None, None), Some(Box::new(new_obj)), Rect::new(0, 0, 0, 0))));
-			self.calculateArea();
 		}
 
 		else {
-			if self.children.0.refer().area.union(new_obj.rect).area() < self.children.1.refer().area.union(new_obj.rect).area() {
+			let size0 = self.children.0.as_deref().map(|node| {
+				node.area.area()
+			});
+			let size1 = self.children.1.as_deref().map(|node| {
+				node.area.area()
+			});
+			if size0 <= size1 {
 				self.children.0.as_mut().unwrap().insert(new_obj);
 			}
 			else {
 				self.children.1.as_mut().unwrap().insert(new_obj);
 			}
 		}
+		self.calculateArea();
 	}
 
-	fn remove(&mut self, parent: Link<BVHNode>) {
-		
+	fn remove(&mut self, parent: &mut Link<BVHNode>) {
+		if let Some(parent_node) = parent {
+			let mut sibling: Link<BVHNode>;
+			if parent_node.children.0 == Some(Box::new(self.clone())) {sibling = parent_node.children.1.take();}
+			else {sibling = parent_node.children.0.take();}
+
+			*parent = sibling.take();
+			parent.as_deref_mut().map(|par| {
+				par.calculateArea();
+			});
+		}
+
+		self.children.0.as_deref_mut().take();
+		self.children.1.as_deref_mut().take();
 	}
 }
 
 #[cfg(test)]
 mod test {
-	use super::CollisionObject;
-	use super::CollisionObjectType;
-	use super::check_collision;
+	use super::*;
 
 	#[test]
 	fn testCollide() {
@@ -234,5 +249,51 @@ mod test {
 		let c2 = CollisionObject::new(CollisionObjectType::Hazard, 28, 20, 10, 20);
 
 		assert_eq!(check_collision(&c1, &c2), true);
-	}	
+	}
+
+	#[test]
+	fn testBVHNodeInit() {
+		let mut node = BVHNode::new((None, None), None, Rect::new(0, 0, 0, 0));
+
+		assert_eq!(node.children.0, None);
+		assert_eq!(node.children.1, None);
+		assert_eq!(node.obj, None);
+		assert_eq!(node.area, Rect::new(0,0,0,0));
+	}
+
+	#[test]
+	fn testBVHNodeInsert() {
+		let mut node = BVHNode::new((None, None), 
+									Some(Box::new(
+										CollisionObject::new(CollisionObjectType::HitBox, 
+										7, 5, 4, 7))), 
+										Rect::new(0, 0, 0, 0));
+		node.insert(CollisionObject::new(CollisionObjectType::HitBox, 5, 5, 4, 10));
+
+		assert_ne!(node.children.0, None);
+		assert_ne!(node.children.1, None);
+		assert_eq!(node.obj, None);
+		assert_eq!(node.area, Rect::new(5,5,6,10));
+		assert_eq!(*node.children.0.refer(), BVHNode{children: (None, None),
+													obj: Some(Box::new(CollisionObject::new(CollisionObjectType::HitBox, 7,5,4,7))), 
+													area: Rect::new(7,5,4,7)});
+		assert_eq!(*node.children.1.refer(), BVHNode{children: (None, None),
+													obj: Some(Box::new(CollisionObject::new(CollisionObjectType::HitBox, 5,5,4,10))), 
+													area: Rect::new(5,5,4,10)});
+													
+		node.insert(CollisionObject::new(CollisionObjectType::Hazard, 5, 8, 2, 12));
+		let cur = node.children.0.as_deref_mut().unwrap();
+
+		assert_ne!(cur.children.0, None);
+		assert_ne!(cur.children.1, None);
+		assert_eq!(cur.obj, None);
+		assert_eq!(cur.area, Rect::new(5,5,6,15));
+		assert_eq!(node.area, Rect::new(5,5,6,15));
+		assert_eq!(*cur.children.0.refer(), BVHNode{children: (None, None),
+													obj: Some(Box::new(CollisionObject::new(CollisionObjectType::HitBox, 7,5,4,7))), 
+													area: Rect::new(7,5,4,7)});
+		assert_eq!(*cur.children.1.refer(), BVHNode{children: (None, None),
+													obj: Some(Box::new(CollisionObject::new(CollisionObjectType::Hazard, 5,8,2,12))), 
+													area: Rect::new(5,8,2,12)});
+	}
 }
