@@ -4,13 +4,13 @@ use std::str;
 
 pub fn main() {
 
-    let addrs: [SocketAddr; 1] = [
+    let server_addresses: [SocketAddr; 1] = [
         SocketAddr::from(([127, 0, 0, 1], 1666)),
         // can add backup IPs
     ];
 
     
-    let socket = UdpSocket::bind(&addrs[..]).expect("couldn't bind to address");
+    let socket = UdpSocket::bind(&server_addresses[..]).expect("couldn't bind to address");
 
     // loop { // listening loop
 
