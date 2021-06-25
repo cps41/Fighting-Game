@@ -1,5 +1,3 @@
-extern crate street_code_fighter;
-
 use sdl2::rect::Rect;
 
 pub fn check_collision(a: &CollisionObject, b: &CollisionObject) -> bool {
