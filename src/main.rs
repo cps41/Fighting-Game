@@ -143,7 +143,7 @@ pub fn run_game() -> Result<(), String>{
                                         } else if fighter.char_state.current_frame < 5 { // Note: works b/c there are 6x states in jump
                                             fighter.char_state.position = fighter.char_state.position.offset(0, fighter.speed);
                                         } else if fighter.char_state.current_frame == 5 { 
-                                            fighter.char_state.position = fighter.char_state.position.offset(0, fighter.speed);
+                                            fighter.char_state.position = fighter.char_state.position.offset(0, 0);
                                             fighter.char_state.state = animation::sprites::State::Idle;
                                             fighter.char_state.current_frame = 0;
                                         }
@@ -195,7 +195,11 @@ pub fn run_game() -> Result<(), String>{
 }
 
 pub fn run_server() -> Result<(), String>{
+    println!("Hello, World!");
+
     networking::chatServer::server_start();
+
+
     Ok(())
 }
 
