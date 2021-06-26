@@ -19,8 +19,11 @@ pub fn main() -> Result<(), String>{
         let mut buffer = [0u8; 4096]; // a buffer than accepts 4096 
 
         match socket.recv(&mut buffer) {
-            Ok(received) => { 
+            Ok(received) => {         
+                // Test 1: print bytes recieved and array
                 // println!("received {} bytes {:?}", received, &buffer[..received]); // test to print bytes and buffer
+                
+                // Test 2: print current system time and text from client sent buffer 
                 let system_time = SystemTime::now(); // get system time
                 let ugly_text = str::from_utf8(&buffer).unwrap(); // get the text from buffer
                 let pretty_text = ugly_text.trim_matches(char::from(0)); // cut the trailing 0s
