@@ -199,4 +199,14 @@ impl CharacterState {
 	pub fn set_direction(&mut self, d: input::movement::Direction)	{ self.direction = d; }
 	pub fn reset_current_frame(&mut self)							{ self.current_frame = 0; }
 
+	pub fn isMoving(&self) -> bool {
+		if self.state == animation::sprites::State::Jump || self.state == animation::sprites::State::FJump 
+		|| self.state == animation::sprites::State::LPunch || self.state == animation::sprites::State::LKick
+		|| self.state == animation::sprites::State::HKick {
+			true
+		} else {
+			false
+		}
+	}
+
 }

@@ -6,7 +6,7 @@ use crate::input; // add to use stuff in movement
 use crate::animation; // used to get States
 
 pub fn keyboard_input(event: &Event, fighter: &mut characters::characterAbstract::Fighter) {
-            if fighter.char_state.state != animation::sprites::State::Jump && fighter.char_state.state != animation::sprites::State::FJump {
+            if !fighter.char_state.isMoving() {
                 match event {
                         Event::KeyDown{keycode: Some(Keycode::A), repeat:true, ..} => {
                             if fighter.char_state.state != animation::sprites::State::Walk {
