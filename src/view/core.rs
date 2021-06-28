@@ -67,7 +67,9 @@ impl SDLCore{
 
 		let (frame_width, frame_height) = fighter.char_state.sprite.size();
 
+		//get curent chararcter state
         let current_frame = Rect::new(
+        	//determins which sprite to get, using current_frame as offset on sprite sheet
             fighter.char_state.sprite.x() + frame_width as i32 * fighter.char_state.current_frame,
             fighter.char_state.sprite.y(), // should always be 0, since y should remain consistent
             frame_width,
@@ -80,7 +82,6 @@ impl SDLCore{
         self.wincan.copy(texture, current_frame, screen_rect)?;
 
         self.wincan.present();
-
         Ok(())
 	} // closing render fun
 

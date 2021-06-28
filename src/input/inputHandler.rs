@@ -9,7 +9,7 @@ pub fn keyboard_input(event: &Event, fighter: &mut characters::characterAbstract
             match event {
                     Event::KeyDown{keycode: Some(k), ..} => {
                         if fighter.char_state.state != animation::sprites::State::Walk {
-                            fighter.char_state.reset_current_frame(); // reset frames to 0 every click
+                            fighter.char_state.reset_current_frame(); // reset frames to 0 every keypress
                         }
                         match k {
                             Keycode::W => { input::movement::jump(fighter); }, // jump

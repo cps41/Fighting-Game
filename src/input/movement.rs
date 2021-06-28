@@ -28,6 +28,7 @@ pub fn jump(f: &mut characters::characterAbstract::Fighter) {
         Direction::Up => { f.char_state.set_state(animation::sprites::State::Jump); },
         Direction::Down => (),
     }
+    println!("Jump Input");
 
 } // close jump fn
 
@@ -37,14 +38,17 @@ pub fn block(f: &mut characters::characterAbstract::Fighter) {
 
 pub fn lkick(f: &mut characters::characterAbstract::Fighter) {
     f.char_state.set_state(animation::sprites::State::LKick);
+    println!("Low Kick Input");
 } // close lkick fn
 
 pub fn hkick(f: &mut characters::characterAbstract::Fighter) {
     f.char_state.set_state(animation::sprites::State::HKick);
+    println!("High Kick Input");
 } // close hkick fn
 
 pub fn lpunch(f: &mut characters::characterAbstract::Fighter) {
     f.char_state.set_state(animation::sprites::State::LPunch);
+    println!("Left Punch Input");
 } // close lpunch fn
 
 
