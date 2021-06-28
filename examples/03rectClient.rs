@@ -8,8 +8,8 @@ use sdl2::rect::Rect;
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use std::net::{SocketAddr, UdpSocket};
-use bincode::{serialize, deserialize}; // NOT AUTHORIZED YET
-use serde_derive::{Serialize, Deserialize}; // NOT AUTHORIZED YET
+use bincode::{serialize, deserialize}; 
+use serde_derive::{Serialize, Deserialize}; 
 
 /////// NETWORKING CODE
 fn client_setup() -> UdpSocket{

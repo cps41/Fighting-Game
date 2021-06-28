@@ -1,6 +1,7 @@
 use std::net::{SocketAddr, UdpSocket};
 use std::time::{SystemTime,UNIX_EPOCH};
 use std::str;
+use std::thread;
 
 pub fn main() -> Result<(), String>{
 
@@ -12,6 +13,12 @@ pub fn main() -> Result<(), String>{
 
     // BINDING
     let socket = UdpSocket::bind(&server_addresses[..]).expect("couldn't bind to address");
+
+    // THREADS? Not sure if we need?
+    // thread::spawn(move || { // standard thread stuff
+    //     // some work here
+
+    // });
 
     // LISTENING
     'listening: loop { // listening loop
@@ -31,6 +38,10 @@ pub fn main() -> Result<(), String>{
             }, 
             Err(e) => println!("recv function failed: {:?}", e),
         } // deal with Result that's recieved from the buffer
+
+        // Test 3: Send array back to the client
+        // Note: Need to figure out if we need to send socket address or how to get that
+        socket.send_to(&[1,6,6,6], "127.0.0.1:1667").expect("couldn't send message"); // Test1: Send array message
 
         // note: use ctrl+c to exit
     } // close listening loop

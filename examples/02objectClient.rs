@@ -1,8 +1,8 @@
 use std::net::{SocketAddr, UdpSocket};
 use std::{io, str}; // For input 
 
-use bincode::{serialize, deserialize}; // NOT AUTHORIZED YET
-use serde_derive::{Serialize, Deserialize}; // NOT AUTHORIZED YET
+use bincode::{serialize, deserialize};
+use serde_derive::{Serialize, Deserialize}; 
 
 extern crate street_code_fighter as scf;
 use scf::networking::packet::Packet;

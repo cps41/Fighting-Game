@@ -2,8 +2,8 @@ use std::net::{SocketAddr, UdpSocket};
 use std::time::{SystemTime,UNIX_EPOCH};
 use std::str;
 
-use bincode::{serialize, deserialize}; // NOT AUTHORIZED YET
-use serde_derive::{Serialize, Deserialize}; // NOT AUTHORIZED YET
+use bincode::{serialize, deserialize}; 
+use serde_derive::{Serialize, Deserialize}; 
 
 // From our crate
 extern crate street_code_fighter as scf;

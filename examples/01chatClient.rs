@@ -26,8 +26,19 @@ pub fn main() -> std::io::Result<()> {
      	let mut input = String::new();
      	io::stdin().read_line(&mut input)?;
      	socket.send(input.as_bytes())?;	// must send a &[u8]
+
+      // Test 3: Recieving input from server
+      let mut buffer = [0u8; 4096]; // a buffer than accepts 4096 
+      match socket.recv(&mut buffer) {
+            Ok(received) => {         
+                // Test 3: print bytes recieved and array from server
+                println!("received {} bytes {:?}", received, &buffer[..received]); // test to print bytes and buffer
+            }, 
+            Err(e) => println!("recv function failed: {:?}", e),
+      } // deal with Result that's recieved from the buffer
+
         // note: use ctrl+c to exit
-      } // close sending loop
+    } // close sending loop
 
     Ok(())
 } // close main fn
