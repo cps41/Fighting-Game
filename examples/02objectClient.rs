@@ -38,11 +38,11 @@ pub fn main() -> std::io::Result<()> {
               auto_repeat: true,
               next_state: animation::sprites::State::Idle,
               direction: input::movement::Direction::Up,
-          }); 
+          }); // creates a Vec
 
           match envelope {
     	       Ok(encoded_message) => {
-                let message = encoded_message.as_slice();
+                let message = encoded_message.as_slice(); // changes from Vec to &[u8]
                 socket.send(message);
              },
              Err(e) => panic!("oh nos! No message"),
@@ -65,3 +65,9 @@ pub struct CharacterState {
   pub direction: input::movement::Direction,
   pub next_state: animation::sprites::State,  
 }
+
+// impl CharacterState {
+//   pub fn frames_per_state(&self) -> i32{
+//     self.frames_per_state
+//   }
+// }

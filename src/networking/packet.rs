@@ -1,3 +1,5 @@
+// abstracted packet
+
 use std::net::SocketAddr;
 
 pub struct Packet {

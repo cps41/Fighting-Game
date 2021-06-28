@@ -2,10 +2,8 @@ use std::net::{SocketAddr, UdpSocket};
 use std::time::{SystemTime,UNIX_EPOCH};
 use std::str;
 
-// NOT AUTHORIZED BELOW
-use bincode::{serialize, deserialize};
-use serde_derive::{Serialize, Deserialize};
-// NOT AUTHORIZED ABOVE
+use bincode::{serialize, deserialize}; // NOT AUTHORIZED YET
+use serde_derive::{Serialize, Deserialize}; // NOT AUTHORIZED YET
 
 // From our crate
 extern crate street_code_fighter as scf;
@@ -33,7 +31,11 @@ pub fn main() -> Result<(), String>{
 
         match socket.recv(&mut buffer) {
             Ok(received) => {         
-                println!("{:?}",  deserialize::<CharacterState>(&buffer).expect("cannot crack ze coooode")); // print to console
+               println!("{:?}",  deserialize::<CharacterState>(&buffer).expect("cannot crack ze coooode")); // Test 3: print object to console
+               // Test 4: print attribute to the console
+               let state: CharacterState = deserialize::<CharacterState>(&buffer).expect("cannot crack ze coooode");
+               let message: i32 = state.frames_per_state();
+               println!("Should print 5: {}", message);
             }, 
             Err(e) => println!("recv function failed: {:?}", e),
         } // deal with Result that's recieved from the buffer
@@ -56,4 +58,9 @@ pub struct CharacterState {
     pub auto_repeat: bool,
     pub direction: input::movement::Direction,
     pub next_state: animation::sprites::State,  
+}
+impl CharacterState {
+  pub fn frames_per_state(&self) -> i32{
+    self.frames_per_state
+  }
 }
