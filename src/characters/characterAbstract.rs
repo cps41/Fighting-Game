@@ -177,8 +177,8 @@ impl CharacterState {
     pub fn advance_frame(&mut self) {
     	//self.frame_count = (self.frame_count + 1) % self.frames_per_state;
     	//println!("Current State is {}", self.state);
-    	println!("Frame count is: {}    Frame Per State is: {}    Current Frame is: {}    State is: {:?}",
-    		 self.frame_count, self.frames_per_state, self.current_frame, self.state);
+    	// println!("Frame count is: {}    Frame Per State is: {}    Current Frame is: {}    State is: {:?}",
+    	// 	 self.frame_count, self.frames_per_state, self.current_frame, self.state);
     	match self.state{
     		animation::sprites::State::Idle =>{
     			if (self.frame_count % 6) == 0{

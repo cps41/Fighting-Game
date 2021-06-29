@@ -31,7 +31,7 @@ const TITLE: &str = "Street Code Fighter";
 const TIMEOUT: u64 = 5000;
 const CAM_W: u32 = 1280;
 const CAM_H: u32 = 720;
-const FRAME_RATE: f64 = 1.0/60.0;
+const FRAME_RATE: f64 = 1.0/30.0;
 
 // TODO: FPS constants
 // // 5px / frame @60fps == 300 px/s
@@ -111,11 +111,8 @@ pub fn run_game() -> Result<(), String>{
         // render canvas
         game_window.render(Color::RGB(222,222,222), &texture, &fighter, &hazard, &hazard_texture);
 
-
         //advance frame
         fighter.char_state.advance_frame();
-        game_window.render(Color::RGB(222,222,222), &texture, &fighter);
-
 
         //ANIMATION
         //Jumps
