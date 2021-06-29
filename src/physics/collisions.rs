@@ -1,5 +1,60 @@
 #![allow(non_snake_case)]
 use sdl2::rect::Rect;
+use std::cell::{self, RefCell, Ref, RefMut};
+use std::fmt;
+use std::ops::{Deref, DerefMut};
+use std::rc::{Rc, Weak};
+
+
+
+pub struct NodeRef<T>(Rc<RefCell<Node<T>>>);
+
+type Link<T> = Option<Rc<RefCell<Node<T>>>>;
+type WeakLink<T> = Option<Weak<RefCell<Node<T>>>>;
+
+#[derive(Debug)]
+struct Node<T> {
+    parent: WeakLink<T>,
+    left: Link<T>,
+    right: Link<T>,
+    node: T,
+}
+
+impl<T> NodeRef<T> {
+	pub fn new(node: T) -> Self {
+		NodeRef(Rc::new(RefCell::new(
+			Node{
+				parent: None,
+				left: None,
+				right: None,
+				node: node
+			}
+		)))
+	}
+
+	pub fn getParent(&self) -> Option<NodeRef<T>> {
+        Some(NodeRef(self.0.borrow().parent.as_ref().unwrap().upgrade().unwrap()))
+	}
+}
+
+
+fn is<T>(a: &Rc<T>, b: &Rc<T>) -> bool {
+    let a = &**a as *const T;
+    let b = &**b as *const T;
+    a == b
+}
+
+impl<T> Clone for NodeRef<T> {
+    fn clone(&self) -> NodeRef<T> {
+        NodeRef(self.0.clone())
+    }
+}
+
+impl<T: fmt::Debug> fmt::Debug for NodeRef<T> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        fmt::Debug::fmt(&*self.0.borrow(), f)
+    }
+}
 
 pub fn check_collision(a: &CollisionObject, b: &CollisionObject) -> bool {
 	if let CollisionObjectType::HurtBox = a.obj_type {
@@ -102,29 +157,25 @@ impl Empty<CollisionObject> for CollisionObject {
 	}
 }
 
-// Link type for child nodes
-type Link<T> = Option<Box<T>>;
-
 trait Refer<T> {
 	fn refer<'a>(&'a self) -> &'a T;
 }
 
 impl<T> Refer<T> for Link<T> {
 	fn refer<'a>(&'a self) -> &'a T {
-		self.as_ref().unwrap()
+		
 	}
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug)]
 pub struct BVHNode {
-	children: (Link<BVHNode>, Link<BVHNode>),
 	obj: Link<CollisionObject>,
 	area: Rect,
 }
 
 impl BVHNode {
 	fn new(children: (Link<BVHNode>, Link<BVHNode>), obj: Link<CollisionObject>, area: Rect) -> BVHNode {
-		let mut node = BVHNode{children: children, obj: obj, area: area};
+		let mut node = BVHNode{obj: obj, area: area};
 		node.calculateArea();
 		node
 	}
