@@ -1,6 +1,8 @@
 use std::net::{SocketAddr, UdpSocket};
-use std::time::Instant;
-use std::{io, str};
+use std::{io, str}; // For input 
+
+use bincode::{serialize, deserialize};
+use serde_derive::{Serialize, Deserialize}; 
 
 pub fn main() -> std::io::Result<()> {
 
@@ -19,16 +21,16 @@ pub fn main() -> std::io::Result<()> {
     let mut socket = UdpSocket::bind(&client_addresses[..]).expect("couldn't bind to address");
     socket.connect(&server_addresses[..]).expect("connect function failed");
 
-
     // SENDING
-	// socket.send(&[1,6,6,6]).expect("couldn't send message"); // Test message
-    'sending: loop { // sending client side
-    	println!("input: ");
-        let mut input = String::new();
-        io::stdin().read_line(&mut input)?;
-        socket.send(input.as_bytes())?;	
-        // note: use ctrl+c to exit
-      } // close sending loop
+    let envelope = serialize(&client_addresses); // creates a Vec
+
+    match envelope {
+      Ok(encoded_message) => {
+        let message = encoded_message.as_slice(); // changes from Vec to &[u8]
+        socket.send(message);
+      },
+        Err(e) => panic!("oh nos! No message"),
+    }
 
     Ok(())
 } // close main fn

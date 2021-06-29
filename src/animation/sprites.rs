@@ -1,7 +1,7 @@
 use crate::characters; // to reference Character
 
 use sdl2::rect::Rect;
-
+use serde_derive::{Serialize, Deserialize}; // NOT YET OFFICIALLY AUTHORIZED
 // EDIT: update based on moves to characterAbstract
 
 // constants based on current sprite sheets 150ppi
@@ -10,7 +10,7 @@ const H: u32 = 300;
 const Y: i32 = 0;
 
 // enumeration of the various states
-#[derive(Hash, Eq, PartialEq, Debug)]
+#[derive(Hash, Eq, PartialEq, Debug, Serialize, Deserialize)]
 pub enum State {
     Idle,
     Walk,
