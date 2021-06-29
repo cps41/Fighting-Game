@@ -71,10 +71,10 @@ impl<'a, T> Deref for Ref<'a, T> {
     fn deref(&self) -> &T { &self._ref.bv.as_deref().unwrap() }
 }
 
-impl<'a, T> Deref for RefMut<'a, T> {
-    type Target = T;
-    fn deref(&self) -> &T { &self._ref.bv.as_deref().unwrap() }
-}
+// impl<'a, T> Deref for RefMut<'a, T> {
+//     type Target = T;
+//     fn deref(&self) -> &T { &self._ref.bv.as_deref_mut().unwrap() }
+// }
 
 trait Unbox<T> {
 	fn unbox<'a> (&'a self) -> &'a mut T;
@@ -95,6 +95,13 @@ impl NodeRef<CollisionObject> {
 		node.calculateArea();
 		node
 	}
+
+    pub fn replace(&self, bv: &mut CollisionObject) {
+        std::mem::swap(self.0.borrow_mut().deref_mut().bv.as_deref_mut().unwrap(), bv);
+        self.getMut().left.take();
+        self.getMut().right.take();
+        self.calculateArea();
+    }
 
 	pub fn getParent(&self) -> Option<NodeRef<CollisionObject>> {
 		match &self.get().parent {
@@ -204,9 +211,12 @@ impl NodeRef<CollisionObject> {
 	pub fn remove(&mut self) {
 		if let Some(parent) = self.getParent() {
 			let mut sibling: Link<CollisionObject>;
-			if is(&parent.getLeftChild().0, &self.0) {parent.0.deref().replace(parent.getRightChild().0.deref().into_inner());}
-			else {parent.0.deref().replace(parent.getLeftChild().0.deref().into_inner());}
-            parent.calculateArea();
+			if is(&parent.getLeftChild().0, &self.0) {
+                parent.replace(parent.getRightChild().0.borrow_mut().deref_mut().bv.as_deref_mut().unwrap());
+            }
+			else {
+                parent.replace(parent.getLeftChild().0.borrow_mut().deref_mut().bv.as_deref_mut().unwrap());
+            }
 		}
 
 		self.0.borrow_mut().detatch();

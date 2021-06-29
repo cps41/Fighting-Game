@@ -134,7 +134,7 @@ impl Node<CollisionObject> {
 	}
 }
 
-/*
+
 #[cfg(test)]
 mod test {
 	use super::*;
@@ -157,7 +157,6 @@ mod test {
 		assert_eq!(node.get().bv, co);
 		assert_eq!(node.get().area, Rect::new(0,2,3,3));
 	}
-/*
 	#[test]
 	fn testBVHNodeInsert() {
 		let mut node = BVHNode::new((None, None), 
@@ -192,6 +191,5 @@ mod test {
 		assert_eq!(*cur.right.refer(), BVHNode{children: (None, None),
 													obj: Some(Box::new(CollisionObject::new(CollisionObjectType::Hazard, 5,8,2,12))), 
 													area: Rect::new(5,8,2,12)});
-	}*/
+	}
 }
-*/
