@@ -25,7 +25,7 @@ pub fn main() -> Result<(), String>{
     let socket = UdpSocket::bind(&server_addresses[..]).expect("couldn't bind to address");
 
     // LISTENING
-    'listening: loop { // listening loop
+    // 'listening: loop { // listening loop
 
         let mut buffer = [0u8; 4096]; // a buffer than accepts 4096 
 
@@ -41,7 +41,7 @@ pub fn main() -> Result<(), String>{
         } // deal with Result that's recieved from the buffer
 
         // note: use ctrl+c to exit
-    } // close listening loop
+    // } // close listening loop
 
     Ok(())
 } // close main fn

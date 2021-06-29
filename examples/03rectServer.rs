@@ -47,10 +47,10 @@ fn server_rect(socket: &UdpSocket) -> Rect {
     r
 } // close server fn
 
-pub fn wait(seconds: u64) {
-	let time_to_wait = time::Duration::from_secs(seconds);
-	thread::sleep(time_to_wait);
-}
+// pub fn wait(seconds: u64) {
+// 	let time_to_wait = time::Duration::from_secs(seconds);
+// 	thread::sleep(time_to_wait);
+// }
 
 
 // Creating new Rectangle struct, since Rect isn't serialized (for testing purposes :)
