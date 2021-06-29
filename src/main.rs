@@ -21,9 +21,11 @@ pub mod view; // for core
 pub mod input; // for inputHandler and movement
 pub mod animation;
 pub mod networking;
+pub mod physics;
+
 //use crate::view::core; // need for SDLCore and TextureManager
 //use crate::view::core::Demo; // need for SDLCore's Demo
-// use crate::view::loads; 
+// use crate::view::loads;
 
 const TITLE: &str = "Street Code Fighter";
 const TIMEOUT: u64 = 5000;
@@ -52,7 +54,9 @@ pub fn run_game() -> Result<(), String>{
 
     // Creating initial character state
     let fighter = characters::characterAbstract::CharacterState::new();
+
     let mut fighter = characters::characterAbstract::Fighter::new(fighter);
+    let mut hazard = physics::hazard::Hazard::new();
 
     let texture_creator = game_window.wincan.texture_creator();
 
@@ -70,8 +74,9 @@ pub fn run_game() -> Result<(), String>{
     let lkick = texture_creator.load_texture("src/assets/images/characters/python/lkick-outline.png")?;
     let hkick = texture_creator.load_texture("src/assets/images/characters/python/hkick-outline.png")?;
     let block = texture_creator.load_texture("src/assets/images/characters/python/block-outline.png")?;
+    let hazard_texture = texture_creator.load_texture("src/assets/images/hazards/stalactite100x100.png")?;
 
-    python_textures.insert(animation::sprites::State::Idle, idle); 
+    python_textures.insert(animation::sprites::State::Idle, idle);
     python_textures.insert(animation::sprites::State::Walk, walk);
     python_textures.insert(animation::sprites::State::Jump, jump);
     python_textures.insert(animation::sprites::State::FJump, fjump);
@@ -95,7 +100,7 @@ pub fn run_game() -> Result<(), String>{
                 _ => { input::inputHandler::keyboard_input(&event, &mut fighter); }
             }
         }
-    
+
         // get the proper texture within the game
         let texture = match python_textures.get(&fighter.char_state.state) {
             Some(text) => text,
@@ -105,7 +110,7 @@ pub fn run_game() -> Result<(), String>{
         // movement direction occurs here
 
         // render canvas
-        game_window.render(Color::RGB(222,222,222), &texture, &fighter);
+        game_window.render(Color::RGB(222,222,222), &texture, &fighter, &hazard, &hazard_texture);
 
         //advance frame
         fighter.char_state.advance_frame();
@@ -120,32 +125,32 @@ pub fn run_game() -> Result<(), String>{
                                             fighter.char_state.position = fighter.char_state.position.offset(-fighter.speed, -fighter.speed);
                                         } else if fighter.char_state.current_frame < 5 { // account for starting at 0
                                             fighter.char_state.position = fighter.char_state.position.offset(-fighter.speed, fighter.speed);
-                                        } else if fighter.char_state.current_frame == 5 { 
-                                            fighter.char_state.position = fighter.char_state.position.offset(-fighter.speed, 0);
-                                            fighter.char_state.set_state(animation::sprites::State::Idle); 
-                                            fighter.char_state.set_current_frame(0);
+                                        } else if fighter.char_state.current_frame == 5 {
+                                            fighter.char_state.position = fighter.char_state.position.offset(-fighter.speed, fighter.speed);
+                                            fighter.char_state.state = animation::sprites::State::Idle;
+                                            fighter.char_state.current_frame = 0;
                                         }
                                     },
-                input::movement::Direction::Right => {   
+                input::movement::Direction::Right => {
                                         if fighter.char_state.current_frame < 4 {
                                             fighter.char_state.position = fighter.char_state.position.offset(fighter.speed, -fighter.speed);
                                         } else if fighter.char_state.current_frame < 6 {
                                             fighter.char_state.position = fighter.char_state.position.offset(fighter.speed, fighter.speed);
                                         } else if fighter.char_state.current_frame == 6 {
                                             fighter.char_state.position = fighter.char_state.position.offset(fighter.speed, fighter.speed);
-                                            fighter.char_state.set_state(animation::sprites::State::Idle); 
-                                            fighter.char_state.set_current_frame(0);
+                                            fighter.char_state.state = animation::sprites::State::Idle;
+                                            fighter.char_state.current_frame = 0;
                                         }
                                     },
-                input::movement::Direction::Up => { 
-                                        if fighter.char_state.current_frame < 3 { 
+                input::movement::Direction::Up => {
+                                        if fighter.char_state.current_frame < 3 {
                                             fighter.char_state.position = fighter.char_state.position.offset(0, -fighter.speed);
                                         } else if fighter.char_state.current_frame < 5 { // Note: works b/c there are 6x states in jump
                                             fighter.char_state.position = fighter.char_state.position.offset(0, fighter.speed);
-                                        } else if fighter.char_state.current_frame == 5 { 
-                                            fighter.char_state.position = fighter.char_state.position.offset(0, 0);
-                                            fighter.char_state.set_state(animation::sprites::State::Idle); 
-                                            fighter.char_state.set_current_frame(0);
+                                        } else if fighter.char_state.current_frame == 5 {
+                                            fighter.char_state.position = fighter.char_state.position.offset(0, fighter.speed);
+                                            fighter.char_state.state = animation::sprites::State::Idle;
+                                            fighter.char_state.current_frame = 0;
                                         }
                                     },
                 input::movement::Direction::Down => (),
@@ -156,8 +161,8 @@ pub fn run_game() -> Result<(), String>{
         // reset walking to idle
         if fighter.char_state.state == animation::sprites::State::Walk &&
            fighter.char_state.current_frame % 2 == 0 { // 3 is arbitary #
-            fighter.char_state.set_state(animation::sprites::State::Idle); 
-            fighter.char_state.set_current_frame(0);
+            fighter.char_state.state = animation::sprites::State::Idle;
+            fighter.char_state.current_frame = 0;
         }
 
         // reset direction to up
@@ -169,9 +174,9 @@ pub fn run_game() -> Result<(), String>{
          // println!("s: {:?}, cf: {}", fighter.char_state.state, fighter.char_state.current_frame);
 
         // resetting to idle, if reached max frames (since idle is our only auto repeat)
-        if fighter.char_state.state != animation::sprites::State::Idle && 
+        if fighter.char_state.state != animation::sprites::State::Idle &&
            fighter.char_state.current_frame == animation::sprites::get_frame_cnt(&fighter.char_state) - 1 { // we've hit the max frames
-            fighter.char_state.set_state(animation::sprites::State::Idle); 
+            fighter.char_state.set_state(animation::sprites::State::Idle);
             fighter.char_state.set_current_frame(0);
         }
 
@@ -189,17 +194,14 @@ pub fn run_game() -> Result<(), String>{
             thread::sleep(FRAME_TIME - end);
         }
         */
+        hazard.sprite.offset(0, 15);
     }
 
     Ok(())
 }
 
 pub fn run_server() -> Result<(), String>{
-    println!("Hello, World!");
-
     networking::chatServer::server_start();
-
-
     Ok(())
 }
 
@@ -238,7 +240,7 @@ pub fn run_server() -> Result<(), String>{
     canvas.set_draw_color(Color::RGBA(0, 128, 128, 255));
     canvas.clear();
 
-    /* loop to display each texture, making sure they fit within the 
+    /* loop to display each texture, making sure they fit within the
         window and are positioned at the center before displaying them */
     for t in textures {
         let mut img_h = t.query().height;
@@ -275,6 +277,6 @@ fn main() -> Result<(), String> {
     }
 
     // run_credits()?;
-    
+
     Ok(())
 }

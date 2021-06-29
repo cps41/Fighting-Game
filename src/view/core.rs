@@ -9,7 +9,7 @@ use sdl2::rect::Point;
 
 use crate::characters;
 use crate::animation;
-
+use crate::physics;
 
 pub struct SDLCore{
 	sdl_cxt: sdl2::Sdl,
@@ -56,22 +56,16 @@ impl SDLCore{
 				color: Color,
 				texture: &Texture,
 				fighter: &characters::characterAbstract::Fighter,
+				hazard: &physics::hazard::Hazard,
+				hazard_texture: &Texture
 				) -> Result<(), String>{
-		
+
 		// color
 		self.wincan.set_draw_color(color);
 		self.wincan.clear();
 
 		// set canvas height
 		let (width, height) = self.wincan.output_size()?;
-
-		//LINE TO SEE WHERE PLAYER SHOULD BE LANDING
-		//USED FOR DEBUGGING JUMPING, DELETE FROM FINAL GAME
-		/* self.wincan.set_draw_color(Color::RGBA(0, 128, 128, 255));
-    	self.wincan.draw_line(
-        	Point::new(0, 509),
-        	Point::new(width as i32, 509),
-    	)?; */
 
 		let (frame_width, frame_height) = fighter.char_state.sprite.size();
 
@@ -81,17 +75,25 @@ impl SDLCore{
             frame_width,
             frame_height,
         );
+		let hazard_frame = Rect::new(0, 0, 100, 100);
 
         // (0, 0) cordinate = center of the scren
+		// make new rect and screen pos //
         let screen_position = fighter.char_state.position + Point::new(width as i32 / 2, height as i32 / 2);
         let screen_rect = Rect::from_center(screen_position, frame_width, frame_height);
-        self.wincan.copy(texture, current_frame, screen_rect)?;
 
+		// hazard rectangle & position
+		let hazard_screen_position = hazard.position;
+		let hazard_screen_rectangle = hazard.sprite;
+
+		// copy textures
+        self.wincan.copy(texture, current_frame, screen_rect)?;
+		self.wincan.copy(hazard_texture, hazard_frame, hazard_screen_rectangle)?;
         self.wincan.present();
+
 
         Ok(())
 	} // closing render fun
-
 /*
     // NOT FUNCTIONING YET
     fn load_textures(texture_creator: &'t TextureCreator<WindowContext>,
@@ -102,8 +104,8 @@ impl SDLCore{
             // match idle {
             //     Ok(i) =>  { f.add_texture(animation::sprites::State::Idle, i); },
             //     Err(e) => { panic!("Nooo"); },
-            // }  
-            
+            // }
+
     } // close load_textures
 */
 
