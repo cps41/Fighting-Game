@@ -23,7 +23,7 @@ impl<T> PartialEq for NodeRef<T> {
 }
 
 
-fn is<T>(a: &Rc<T>, b: &Rc<T>) -> bool {
+pub fn is<T>(a: &Rc<T>, b: &Rc<T>) -> bool {
     let a = &**a as *const T;
     let b = &**b as *const T;
     a == b
@@ -42,7 +42,7 @@ impl<T: fmt::Debug> fmt::Debug for NodeRef<T> {
 }
 
 
-trait Refer<T> {
+pub trait Refer<T> {
 	fn get(&self) -> std::cell::Ref<Node<T>>;
     fn getMut(&self) -> std::cell::RefMut<Node<T>>;
 }
@@ -110,28 +110,25 @@ impl NodeRef<CollisionObject> {
 		}
 	}
 
+    pub fn hasParent(&self) -> bool {
+        match &self.getParent() {
+            Some(p) => true,
+            None => false
+        }
+    }
+
 	pub fn calculateArea(&self) {
-		if let None = self.get().left {
-			if let None = self.get().right {
-				if let None = self.get().bv {
-					// !!!!! shouldn't be possible in gameplay, here for testing !!!!!
-					self.getMut().area = Rect::new(0, 0, 0, 0); // area of 0 if node has no children and points to no collision object
-				}
-				else {
-					self.getMut().area = self.borrow().deref().rect.clone(); // area = area of collision object if node has no children but points to object
-				}
-			}
-			else {
-				self.getMut().area = self.getRightChild().get().area.clone(); // area = right if node has (None, Some)
-			}
+        let new_area: Rect;
+		if self.get().isLeaf() {
+            new_area = self.borrow().rect.clone(); // area = area of collision object if node has no children but points to object
 		}
 
-		else if let None = self.get().right {
-			self.getMut().area = self.getLeftChild().get().area.clone(); // area = left if node has (Some, None)
-		}
 		else {
-			self.getMut().area = self.getRightChild().get().area.union(self.getLeftChild().get().area); // area = smallest bounding box around both children if node has two children
-		}
+            new_area = self.getRightChild().get().area.union(self.getLeftChild().get().area); // area = smallest bounding box around both children if node has two children
+        }
+        self.getMut().area = new_area;
+
+        if self.hasParent() {self.getParent().unwrap().calculateArea()}
 	}
 
 	pub fn overlapsWith(&self, other: NodeRef<CollisionObject>) -> bool {
