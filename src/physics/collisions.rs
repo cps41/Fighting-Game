@@ -15,7 +15,6 @@ pub struct Node<T> {
 	pub area: Rect, // total bounding area of children
 }
 
-
 pub fn check_collision(a: &CollisionObject, b: &CollisionObject) -> bool {
 	if let CollisionObjectType::HurtBox = a.obj_type {
 		if let CollisionObjectType::HurtBox = b.obj_type {return false}
@@ -111,7 +110,7 @@ impl Node<CollisionObject> {
 			left: None,
 			right: None,
 			bv: boxUp(bv),
-			area: Rect::new(0,0,0,0),
+			area: bv.rect,
 		}
 	}
 
@@ -151,6 +150,30 @@ mod test {
 		assert_eq!(node.get().right.as_ref().map(|a| Some(false)), None);
 		assert_eq!(node.get().bv.as_ref().take(), Some(&Box::new(co)));
 		assert_eq!(node.get().area, Rect::new(0,2,3,3));
+	}
+
+	#[test]
+	fn testBVHNodeInsert() {
+		let co1 = CollisionObject::new(CollisionObjectType::HitBox, 0, 2, 3, 3);
+		let co2 = CollisionObject::new(CollisionObjectType::HitBox, 5, 0, 6, 2);
+		let co3 = CollisionObject::new(CollisionObjectType::HitBox, 20, 20, 2, 2);
+		let node = NodeRef::new(co1.clone());
+		let (left, right) = node.insert(co2.clone());
+
+		assert_eq!(node.getLeftChild(), left);
+		assert_eq!(node.getRightChild(), right);
+		assert_eq!(node.get().bv.as_ref().take(), None);
+		assert_eq!(node.get().area, Rect::new(0,0,11,5));
+
+		node.insert(co3.clone());
+		let l2 = NodeRef::new(co3);
+		l2.getMut().parent = Some(std::rc::Weak::new());
+
+		assert_eq!(node.getLeftChild(), left);
+		assert_eq!(node.getLeftChild().getRightChild().get().bv.as_deref().unwrap(), &co3.clone());
+		assert_eq!(node.getRightChild(), right);
+		assert_eq!(node.get().bv.as_ref().take(), None);
+		assert_eq!(node.get().area, Rect::new(0,0,22,22));
 	}
 	/*
 	#[test]

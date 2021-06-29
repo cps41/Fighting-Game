@@ -186,10 +186,13 @@ impl NodeRef<CollisionObject> {
 		self.getLeftChild().collidingWith(self.getRightChild(), potential, limit)
 	}
 
-	pub fn insert(&mut self, new_obj: CollisionObject) {
-		if self.get().isLeaf() {
-			self.getMut().left = Some(Rc::new(RefCell::new(Node::new(Some(Rc::downgrade(&self.0)), *self.borrow()._ref.bv.as_deref().unwrap()))));
-			self.getMut().right = Some(Rc::new(RefCell::new(Node::new(Some(Rc::downgrade(&self.0)), new_obj))));
+	pub fn insert(&self, new_obj: CollisionObject) -> (NodeRef<CollisionObject>, NodeRef<CollisionObject>){
+        let leaf = {self.get().isLeaf()};
+		if leaf {
+            let mut sm = self.getMut();
+			sm.left = Some(Rc::new(RefCell::new(Node::new(Some(Rc::downgrade(&self.0)), sm.bv.as_deref().unwrap().clone()))));
+			sm.right = Some(Rc::new(RefCell::new(Node::new(Some(Rc::downgrade(&self.0)), new_obj))));
+            sm.bv.take();
 		}
 
 		else {
@@ -203,11 +206,11 @@ impl NodeRef<CollisionObject> {
 			}
 		}
 		self.calculateArea();
+        (self.getLeftChild().clone(), self.getRightChild().clone())
 	}
 
 	pub fn remove(&mut self) {
 		if let Some(parent) = self.getParent() {
-			let mut sibling: Link<CollisionObject>;
 			if is(&parent.getLeftChild().0, &self.0) {
                 parent.replace(parent.getRightChild().0.borrow_mut().deref_mut().bv.as_deref_mut().unwrap());
             }
