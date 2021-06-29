@@ -19,12 +19,14 @@ pub struct CharacterState {
 	pub position: Point,
     pub state: animation::sprites::State,
 	pub frames_per_state: i32,
-	pub current_frame: i32, 
+	pub frame_count:	i32,
+	pub current_frame: i32,
 	pub sprite: Rect,
 	pub auto_repeat: bool,
 	pub direction: input::movement::Direction,
 	pub next_state: animation::sprites::State,	
 }
+//self.current_frame = (self.current_frame + 1) % self.frames_per_state; }
 
 // EDIT: consider updating integers to f64
 pub struct Fighter<'t> {
@@ -154,8 +156,9 @@ impl CharacterState {
 		CharacterState {
 			position: Point::new(0,0),
 			state: animation::sprites::State::Idle,
-			frames_per_state: 5,
+			frames_per_state: 30,
 			current_frame: 0, 
+			frame_count:	0,
 			sprite: Rect::new(0, 0, 210, 300),
 			auto_repeat: true,
 			next_state: animation::sprites::State::Idle,
@@ -171,8 +174,68 @@ impl CharacterState {
 	} 
 	
     // advancing frames
-    pub fn advance_frame(&mut self) { self.current_frame = (self.current_frame + 1) % self.frames_per_state; } // need to stay within # of frames
+    pub fn advance_frame(&mut self) {
+    	//self.frame_count = (self.frame_count + 1) % self.frames_per_state;
+    	//println!("Current State is {}", self.state);
+    	println!("Frame count is: {}    Frame Per State is: {}    Current Frame is: {}    State is: {:?}",
+    		 self.frame_count, self.frames_per_state, self.current_frame, self.state);
+    	match self.state{
+    		animation::sprites::State::Idle =>{
+    			if (self.frame_count % 6) == 0{
+    				self.current_frame = (self.current_frame + 1) % 5;
+    			}
+    		}
+    		animation::sprites::State::Walk =>{
+    			if (self.frame_count % 10) == 0{
+    				self.current_frame = (self.current_frame + 1) % 6;
+    			}
+    		}
+    		animation::sprites::State::Jump =>{
+    			if (self.frame_count % 5) == 0{
+    				self.current_frame = (self.current_frame + 1) % 6;
+    			}
+    		}
+    		animation::sprites::State::FJump =>{
+    			if (self.frame_count % 6) == 0{
+    				self.current_frame = (self.current_frame +1 ) % 6;
+    			}
+    		}
+    		animation::sprites::State::LPunch =>{
+    			if self.frame_count < 3 {
+    				self.current_frame = 0;
+    			}else if self.frame_count < 9 {
+    				self.current_frame = 1;
+    			}else if self.frame_count < 15 {
+    				self.current_frame = 2;
+    			}
+    		}
+    		animation::sprites::State::LKick =>{
+    			if self.frame_count < 3 {
+    				self.current_frame = 0;
+    			}else if self.frame_count < 9 {
+    				self.current_frame = 1;
+    			}else if self.frame_count < 12 {
+    				self.current_frame = 2;
+    			}
+    		}
+    		animation::sprites::State::HKick =>{
+    			if self.frame_count < 3 {
+    				self.current_frame = 0;
+    			}else if self.frame_count < 6 {
+    				self.current_frame = 1;
+    			}else if self.frame_count < 8{
+    				self.current_frame = 2;
+    			}else if self.frame_count < 14{
+    				self.current_frame = 3;
+    			}else if self.frame_count < 18{
+    				self.current_frame = 4
+    			}
+    		}
+    		animation::sprites::State::Block =>{}
+    	}
+    	self.frame_count = (self.frame_count + 1) % self.frames_per_state;
 
+    }
 	// convenience f(x)	
 	// getters
 	pub fn position(&self)  	-> &Point 						{ &self.position } 
@@ -193,11 +256,12 @@ impl CharacterState {
 																	  // println!("s: {:?}, cf: {}", self.state, self.current_frame);
 																	}
 	pub fn set_current_frame(&mut self, i: i32)						{ self.current_frame = (self.current_frame + i) % self.frames_per_state; } // need to stay within # of frames
+	pub fn reset_frame_count(&mut self)								{self.frame_count = 0}
 	pub fn set_sprite(&mut self, r: Rect)							{ self.sprite = r; }
 	pub fn set_auto_repeat(&mut self, b: bool)						{ self.auto_repeat = b; }
 	pub fn set_next_state(&mut self, s: animation::sprites::State)	{ self.next_state = s; }
 	pub fn set_direction(&mut self, d: input::movement::Direction)	{ self.direction = d; }
-	pub fn reset_current_frame(&mut self)							{ self.current_frame = 0; }
+	pub fn reset_current_frame(&mut self)							{ self.current_frame = 0;  self.frame_count = 0;}
 
 	pub fn isMoving(&self) -> bool {
 		if self.state == animation::sprites::State::Jump || self.state == animation::sprites::State::FJump 

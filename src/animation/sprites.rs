@@ -33,14 +33,15 @@ pub fn get_rectangle(f: u32) -> Rect { // current frame
 pub fn get_frame_cnt(c: &characters::characterAbstract::CharacterState) -> i32 {
 	// TODO: ensure every character has same # of animations/state
 			match c.state {
-				State::Idle => { return 5; },
-				State::Walk => { return 6; },
-				State::Jump => { return 6; },
-				State::FJump => { return 7; },
-				State::LPunch => { return 3; },
-				State::LKick => { return 3; },
-				State::HKick => { return 5; },
-				State::Block => { return 1; },
+				//Frames per Animation, Sprites per animation
+				State::Idle 	=> { return 30; },	//5
+				State::Walk 	=> { return 60; },	//6
+				State::Jump 	=> { return 30; },	//6
+				State::FJump 	=> { return 42; },	//7
+				State::LPunch 	=> { return 15; },	//3
+				State::LKick 	=> { return 13; },	//3
+				State::HKick 	=> { return 19; },	//5
+				State::Block 	=> { return 1; },	//1
 			}
 }
 
