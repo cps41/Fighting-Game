@@ -1,5 +1,19 @@
 #![allow(non_snake_case)]
 use sdl2::rect::Rect;
+use crate::physics::nodes::*;
+
+fn boxUp<T>(data: T) -> BoxRef<T>{
+	Some(Box::new(data))
+}
+
+#[derive(Debug)]
+pub struct Node<T> {
+    pub parent: WeakLink<T>,
+    pub left: Link<T>,
+    pub right: Link<T>,
+    pub bv: BoxRef<T>, // bounding volume
+	pub area: Rect, // total bounding area of children
+}
 
 pub fn check_collision(a: &CollisionObject, b: &CollisionObject) -> bool {
 	if let CollisionObjectType::HurtBox = a.obj_type {
@@ -16,9 +30,9 @@ fn reg_collision(a: &Rect, b: &Rect) -> bool {
 		{
 			false
 		}
-		else {
-			true
-		}
+	else {
+		true
+	}
 }
 
 pub fn resist(vel: i32, deltav: i32) -> i32 {
@@ -49,9 +63,9 @@ pub enum CollisionObjectType {
 	Empty,
 }
 
-type PotentialCollision = (CollisionObject, CollisionObject);
+pub type PotentialCollision = (CollisionObject, CollisionObject);
 
-trait Area {
+pub trait Area {
 	fn area(&self) -> u32;
 }
 
@@ -63,9 +77,9 @@ impl Area for Rect {
 
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub struct CollisionObject {
-    obj_type: CollisionObjectType,
-	area: u32,
-    rect: Rect,
+    pub obj_type: CollisionObjectType,
+	pub area: u32,
+    pub rect: Rect,
 }
 
 impl CollisionObject {
@@ -83,161 +97,37 @@ impl CollisionObject {
 	fn overlapsWith(&self, other: &CollisionObject) -> bool {
 		check_collision(self, other)
 	}
-
-	fn isEmpty(&self) -> bool {
-		match self.obj_type {
-			CollisionObjectType::Empty => true,
-			_ => false,
-		}
-	}
 }
 
-trait Empty<T> {
-	fn empty() -> T;
+trait Unbox<T> {
+	fn unbox<'a> (&'a self) -> &'a mut T;
 }
 
-impl Empty<CollisionObject> for CollisionObject {
-	fn empty() -> CollisionObject {
-		CollisionObject{obj_type: CollisionObjectType::Empty, area: 0, rect: Rect::new(0, 0, 0, 0)}
-	}
-}
-
-// Link type for child nodes
-type Link<T> = Option<Box<T>>;
-
-trait Refer<T> {
-	fn refer<'a>(&'a self) -> &'a T;
-}
-
-impl<T> Refer<T> for Link<T> {
-	fn refer<'a>(&'a self) -> &'a T {
-		self.as_ref().unwrap()
-	}
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub struct BVHNode {
-	children: (Link<BVHNode>, Link<BVHNode>),
-	obj: Link<CollisionObject>,
-	area: Rect,
-}
-
-impl BVHNode {
-	fn new(children: (Link<BVHNode>, Link<BVHNode>), obj: Link<CollisionObject>, area: Rect) -> BVHNode {
-		let mut node = BVHNode{children: children, obj: obj, area: area};
-		node.calculateArea();
-		node
-	}
-
-	fn calculateArea(&mut self) {
-		if let None = self.children.0 {
-			if let None = self.children.1 {
-				if let None = self.obj {
-					// !!!!! shouldn't be possible in gameplay, here for testing !!!!!
-					self.area = Rect::new(0, 0, 0, 0); // area of 0 if node has no children and points to no collision object
-				}
-				else {
-					self.area = self.obj.refer().rect.clone(); // area = area of collision object if node has no children but points to object
-				}
-			}
-			else {
-				self.area = self.children.1.refer().area.clone(); // area = children.1 if node has (None, Some)
-			}
-		}
-
-		else if let None = self.children.1 {
-			self.area = self.children.0.refer().area.clone(); // area = children.0 if node has (Some, None)
-		}
-		else {
-			self.area = self.children.1.refer().area.union(self.children.0.refer().area); // area = smallest bounding box around both children if node has two children
+impl Node<CollisionObject> {
+	pub fn new(parent: WeakLink<CollisionObject>, bv: CollisionObject) -> Self {
+		Node{
+			parent: parent,
+			left: None,
+			right: None,
+			bv: boxUp(bv),
+			area: bv.rect,
 		}
 	}
 
-	fn isLeaf(&self) -> bool {
-		if let None = self.obj {
+	pub fn isLeaf(&self) -> bool {
+		if let None = self.bv {
 			false // node is a leaf iff node points to collision object
 		}
 		else {true}
 	}
 
-	fn overlapsWith(&self, other: &BVHNode) -> bool {
-		self.area.has_intersection(other.area)
-	}
-
-	fn collidingWith(& self, other: & BVHNode, potential: &mut Option<PotentialCollision>, limit: i32) -> i32 {
-		if !self.overlapsWith(other) || limit == 0 {return 0;}
-
-		if self.isLeaf() && other.isLeaf() {
-			potential.as_mut().unwrap().0 = self.obj.refer().clone();
-			potential.as_mut().unwrap().1 = self.obj.refer().clone();
-			return 1;
-		}
-
-		if other.isLeaf() || (!self.isLeaf() && self.area.area() >= other.area.area()) {
-			let count = self.children.0.refer().collidingWith(self.children.1.refer(), potential, limit);
-
-			if limit > count {
-				return count + self.children.1.refer().collidingWith(other, potential, limit);
-			}
-
-			else {return count;}
-		}
-
-		else {
-			let count = self.collidingWith(self.children.0.refer(), potential, limit);
-
-			if limit > count {
-				return count + self.collidingWith(self.children.1.refer(), potential, limit);
-			}
-
-			else {return count;}
-		}
-	}
-
-	fn getPotentialCollsions(&self, potential: &mut Option<PotentialCollision>, limit: i32) -> i32{
-		if self.isLeaf() || limit == 0 {return 0;}
-		self.children.0.refer().collidingWith(self.children.1.refer(), potential, limit)
-	}
-
-	fn insert(&mut self, new_obj: CollisionObject) {
-		if self.isLeaf() {
-			self.children.0 = Some(Box::new(BVHNode::new((None, None), self.obj.take(), self.area)));
-			self.children.1 = Some(Box::new(BVHNode::new((None, None), Some(Box::new(new_obj)), Rect::new(0, 0, 0, 0))));
-		}
-
-		else {
-			let size0 = self.children.0.as_deref().map(|node| {
-				node.area.area()
-			});
-			let size1 = self.children.1.as_deref().map(|node| {
-				node.area.area()
-			});
-			if size0 <= size1 {
-				self.children.0.as_mut().unwrap().insert(new_obj);
-			}
-			else {
-				self.children.1.as_mut().unwrap().insert(new_obj);
-			}
-		}
-		self.calculateArea();
-	}
-
-	fn remove(&mut self, parent: &mut Link<BVHNode>) {
-		if let Some(parent_node) = parent {
-			let mut sibling: Link<BVHNode>;
-			if parent_node.children.0 == Some(Box::new(self.clone())) {sibling = parent_node.children.1.take();}
-			else {sibling = parent_node.children.0.take();}
-
-			*parent = sibling.take();
-			parent.as_deref_mut().map(|par| {
-				par.calculateArea();
-			});
-		}
-
-		self.children.0.as_deref_mut().take();
-		self.children.1.as_deref_mut().take();
+	pub fn detatch(&mut self) {
+		let parent = self.parent.take();
+		let left = self.left.take();
+		let right = self.right.take();
 	}
 }
+
 
 #[cfg(test)]
 mod test {
@@ -253,47 +143,53 @@ mod test {
 
 	#[test]
 	fn testBVHNodeInit() {
-		let mut node = BVHNode::new((None, None), None, Rect::new(0, 0, 0, 0));
+		let co = CollisionObject::new(CollisionObjectType::HitBox, 0, 2, 3, 3);
+		let node = NodeRef::new(co.clone());
 
-		assert_eq!(node.children.0, None);
-		assert_eq!(node.children.1, None);
-		assert_eq!(node.obj, None);
-		assert_eq!(node.area, Rect::new(0,0,0,0));
+		assert_eq!(node.get().left.as_ref().map(|a| Some(false)), None);
+		assert_eq!(node.get().right.as_ref().map(|a| Some(false)), None);
+		assert_eq!(node.get().bv.as_ref().take(), Some(&Box::new(co)));
+		assert_eq!(node.get().area, Rect::new(0,2,3,3));
 	}
 
 	#[test]
 	fn testBVHNodeInsert() {
-		let mut node = BVHNode::new((None, None), 
-									Some(Box::new(
-										CollisionObject::new(CollisionObjectType::HitBox, 
-										7, 5, 4, 7))), 
-										Rect::new(0, 0, 0, 0));
-		node.insert(CollisionObject::new(CollisionObjectType::HitBox, 5, 5, 4, 10));
+		let co1 = CollisionObject::new(CollisionObjectType::HitBox, 0, 2, 3, 3);
+		let co2 = CollisionObject::new(CollisionObjectType::HitBox, 5, 0, 6, 2);
+		let co3 = CollisionObject::new(CollisionObjectType::HitBox, 20, 20, 2, 2);
+		let node = NodeRef::new(co1.clone());
+		let (left, right) = node.insert(co2.clone());
 
-		assert_ne!(node.children.0, None);
-		assert_ne!(node.children.1, None);
-		assert_eq!(node.obj, None);
-		assert_eq!(node.area, Rect::new(5,5,6,10));
-		assert_eq!(*node.children.0.refer(), BVHNode{children: (None, None),
-													obj: Some(Box::new(CollisionObject::new(CollisionObjectType::HitBox, 7,5,4,7))), 
-													area: Rect::new(7,5,4,7)});
-		assert_eq!(*node.children.1.refer(), BVHNode{children: (None, None),
-													obj: Some(Box::new(CollisionObject::new(CollisionObjectType::HitBox, 5,5,4,10))), 
-													area: Rect::new(5,5,4,10)});
-													
-		node.insert(CollisionObject::new(CollisionObjectType::Hazard, 5, 8, 2, 12));
-		let cur = node.children.0.as_deref_mut().unwrap();
+		assert_eq!(node.getLeftChild(), left);
+		assert_eq!(node.getRightChild(), right);
+		assert_eq!(node.get().bv.as_ref().take(), None);
+		assert_eq!(node.get().area, Rect::new(0,0,11,5));
 
-		assert_ne!(cur.children.0, None);
-		assert_ne!(cur.children.1, None);
-		assert_eq!(cur.obj, None);
-		assert_eq!(cur.area, Rect::new(5,5,6,15));
-		assert_eq!(node.area, Rect::new(5,5,6,15));
-		assert_eq!(*cur.children.0.refer(), BVHNode{children: (None, None),
-													obj: Some(Box::new(CollisionObject::new(CollisionObjectType::HitBox, 7,5,4,7))), 
-													area: Rect::new(7,5,4,7)});
-		assert_eq!(*cur.children.1.refer(), BVHNode{children: (None, None),
-													obj: Some(Box::new(CollisionObject::new(CollisionObjectType::Hazard, 5,8,2,12))), 
-													area: Rect::new(5,8,2,12)});
+		node.insert(co3.clone());
+		let l2 = NodeRef::new(co3);
+		l2.getMut().parent = Some(std::rc::Weak::new());
+
+		assert_eq!(node.getLeftChild(), left);
+		assert_eq!(node.getLeftChild().getRightChild().get().bv.as_deref().unwrap(), &co3.clone());
+		assert_eq!(node.getRightChild(), right);
+		assert_eq!(node.get().bv.as_ref().take(), None);
+		assert_eq!(node.get().area, Rect::new(0,0,22,22));
 	}
+	/*
+	#[test]
+	fn testBVHNodeRemove() {
+		let co1 = CollisionObject::new(CollisionObjectType::HitBox, 0, 2, 3, 3);
+		let co2 = CollisionObject::new(CollisionObjectType::HitBox, 5, 0, 6, 2);
+		let co3 = CollisionObject::new(CollisionObjectType::HitBox, 20, 20, 2, 2);
+		let node = NodeRef::new(co1.clone());
+		let (left, right) = node.insert(co2.clone());
+		node.insert(co3.clone());
+		left.clone().remove();
+
+		assert_eq!(node.getLeftChild(), left);
+		assert_eq!(node.getLeftChild().getRightChild().get().bv.as_deref().unwrap(), &co3.clone());
+		assert_eq!(node.getRightChild(), right);
+		assert_eq!(node.get().bv.as_ref().take(), None);
+		assert_eq!(node.get().area, Rect::new(0,0,22,22));
+	}*/
 }
