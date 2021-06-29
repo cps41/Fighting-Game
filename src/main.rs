@@ -29,10 +29,7 @@ const TITLE: &str = "Street Code Fighter";
 const TIMEOUT: u64 = 5000;
 const CAM_W: u32 = 1280;
 const CAM_H: u32 = 720;
-
-//attempt to cap FPS
-//const FRAME_RATE: u32 = 1000/60;
-//const FRAME_TIME: Duration::from_millis(FRAME_RATE);
+const FRAME_RATE: f64 = 1.0/60.0;
 
 // TODO: FPS constants
 // // 5px / frame @60fps == 300 px/s
@@ -40,11 +37,12 @@ const CAM_H: u32 = 720;
 // // 1px / frame^2 @60fps == px/s^2
 // const ACCEL_RATE: f64 = 3600.0;
 
-// SDL structure
 
 pub fn run_game() -> Result<(), String>{
+    let frame_time = Duration::from_secs_f64(FRAME_RATE);
+    
     let mut game_window = {
-        match view::core::SDLCore::init(TITLE, true, CAM_W, CAM_H){
+        match view::core::SDLCore::init(TITLE, false, CAM_W, CAM_H){
             Ok(t) => t,
             Err(e) => panic!("{}", e),
         }
@@ -53,7 +51,7 @@ pub fn run_game() -> Result<(), String>{
     // Creating initial character state
     let fighter = characters::characterAbstract::CharacterState::new();
     let mut fighter = characters::characterAbstract::Fighter::new(fighter);
-
+    
     let texture_creator = game_window.wincan.texture_creator();
 
     //////////////////////////
@@ -87,7 +85,7 @@ pub fn run_game() -> Result<(), String>{
 
     //game loop
     'gameloop: loop{
-        let start = Instant::now();
+        let loop_time = Instant::now();
 
         for event in game_window.event_pump.poll_iter() {
             match event {
@@ -105,10 +103,12 @@ pub fn run_game() -> Result<(), String>{
         // movement direction occurs here
 
         // render canvas
-        game_window.render(Color::RGB(222,222,222), &texture, &fighter);
+//        game_window.render(Color::RGB(222,222,222), &texture, &fighter);
 
         //advance frame
         fighter.char_state.advance_frame();
+        game_window.render(Color::RGB(222,222,222), &texture, &fighter);
+
 
         //ANIMATION
         //Jumps
@@ -142,12 +142,15 @@ pub fn run_game() -> Result<(), String>{
                                             fighter.char_state.position = fighter.char_state.position.offset(0, -fighter.speed);
                                         } else if fighter.char_state.current_frame < 5 { // Note: works b/c there are 6x states in jump
                                             fighter.char_state.position = fighter.char_state.position.offset(0, fighter.speed);
-                                        } else if fighter.char_state.current_frame == 5 { 
-                                            fighter.char_state.position = fighter.char_state.position.offset(0, 0);
-                                            fighter.char_state.set_state(animation::sprites::State::Idle); 
-                                            fighter.char_state.set_current_frame(0);
-                                        }
+
+                                        } else if fighter.char_state.current_frame == 5{
+                                            fighter.char_state.position = fighter.char_state.position.offset(0, fighter.speed);
+                                            //not sure the purpose of these, they set it so they are considered idle while still jumping
+                                            //fighter.char_state.state = animation::sprites::State::Idle;                                            
+                                            //fighter.char_state.current_frame = 0;
+                                        } 
                                     },
+  
                 input::movement::Direction::Down => (),
              } // end direction jump match
         }  // end jump if
@@ -158,6 +161,7 @@ pub fn run_game() -> Result<(), String>{
            fighter.char_state.current_frame % 2 == 0 { // 3 is arbitary #
             fighter.char_state.set_state(animation::sprites::State::Idle); 
             fighter.char_state.set_current_frame(0);
+
         }
 
         // reset direction to up
@@ -170,25 +174,12 @@ pub fn run_game() -> Result<(), String>{
 
         // resetting to idle, if reached max frames (since idle is our only auto repeat)
         if fighter.char_state.state != animation::sprites::State::Idle && 
-           fighter.char_state.current_frame == animation::sprites::get_frame_cnt(&fighter.char_state) - 1 { // we've hit the max frames
+           fighter.char_state.frame_count == animation::sprites::get_frame_cnt(&fighter.char_state) -1 { // we've hit the max frames
             fighter.char_state.set_state(animation::sprites::State::Idle); 
-            fighter.char_state.set_current_frame(0);
+            fighter.char_state.reset_current_frame();
         }
 
-        // TODO: FPS stuff advancement
-        // Sleep
-        let ten_millis = std::time::Duration::from_millis(200); // arbitrary #
-        let now = std::time::Instant::now();
-
-        thread::sleep(ten_millis);
-
-        //attempt to cap at 60FPS
-        /*
-        let end = Instant::now() - start;
-        if end < FRAME_TIME {
-            thread::sleep(FRAME_TIME - end);
-        }
-        */
+        thread::sleep(frame_time - loop_time.elapsed());
     }
 
     Ok(())
@@ -271,7 +262,7 @@ fn main() -> Result<(), String> {
         run_server()?;
     }else{
         run_game()?;
-        networking::chatClient::server_connect();
+        //networking::chatClient::server_connect();
     }
 
     // run_credits()?;
