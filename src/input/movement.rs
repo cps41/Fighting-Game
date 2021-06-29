@@ -1,7 +1,10 @@
 use crate::characters; // used to get Fighter
 use crate::animation; // used to get States
 
+use serde_derive::{Serialize, Deserialize}; // NOT YET OFFICIALLY AUTHORIZED
+
 // direction enum
+#[derive(Hash, Eq, PartialEq, Debug, Serialize, Deserialize)]
 pub enum Direction {
     Left,
     Right,

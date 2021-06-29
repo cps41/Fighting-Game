@@ -121,9 +121,9 @@ pub fn run_game() -> Result<(), String>{
                                         } else if fighter.char_state.current_frame < 5 { // account for starting at 0
                                             fighter.char_state.position = fighter.char_state.position.offset(-fighter.speed, fighter.speed);
                                         } else if fighter.char_state.current_frame == 5 { 
-                                            fighter.char_state.position = fighter.char_state.position.offset(-fighter.speed, fighter.speed);
-                                            fighter.char_state.state = animation::sprites::State::Idle;
-                                            fighter.char_state.current_frame = 0;
+                                            fighter.char_state.position = fighter.char_state.position.offset(-fighter.speed, 0);
+                                            fighter.char_state.set_state(animation::sprites::State::Idle); 
+                                            fighter.char_state.set_current_frame(0);
                                         }
                                     },
                 input::movement::Direction::Right => {   
@@ -133,17 +133,17 @@ pub fn run_game() -> Result<(), String>{
                                             fighter.char_state.position = fighter.char_state.position.offset(fighter.speed, fighter.speed);
                                         } else if fighter.char_state.current_frame == 6 {
                                             fighter.char_state.position = fighter.char_state.position.offset(fighter.speed, fighter.speed);
-                                            fighter.char_state.state = animation::sprites::State::Idle;
-                                            fighter.char_state.current_frame = 0;
+                                            fighter.char_state.set_state(animation::sprites::State::Idle); 
+                                            fighter.char_state.set_current_frame(0);
                                         }
                                     },
-                input::movement::Direction::Up => {      
+                input::movement::Direction::Up => { 
                                         if fighter.char_state.current_frame < 3 { 
                                             fighter.char_state.position = fighter.char_state.position.offset(0, -fighter.speed);
                                         } else if fighter.char_state.current_frame < 5 { // Note: works b/c there are 6x states in jump
                                             fighter.char_state.position = fighter.char_state.position.offset(0, fighter.speed);
-                                        } else if fighter.char_state.current_frame == 5{ //&&
-                                        //fighter.char_state.frame_count == animation::sprites::get_frame_cnt(&fighter.char_state){ 
+
+                                        } else if fighter.char_state.current_frame == 5{
                                             fighter.char_state.position = fighter.char_state.position.offset(0, fighter.speed);
                                             //not sure the purpose of these, they set it so they are considered idle while still jumping
                                             //fighter.char_state.state = animation::sprites::State::Idle;                                            
@@ -157,10 +157,11 @@ pub fn run_game() -> Result<(), String>{
 
         // RESETS
         // reset walking to idle
-        if fighter.char_state.state == animation::sprites::State::Walk && 
-            fighter.char_state.current_frame % 2 == 0 { // 3 is arbitary #
-            fighter.char_state.state = animation::sprites::State::Idle;
-            fighter.char_state.current_frame = 0;
+        if fighter.char_state.state == animation::sprites::State::Walk &&
+           fighter.char_state.current_frame % 2 == 0 { // 3 is arbitary #
+            fighter.char_state.set_state(animation::sprites::State::Idle); 
+            fighter.char_state.set_current_frame(0);
+
         }
 
         // reset direction to up
