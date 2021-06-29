@@ -65,9 +65,19 @@ impl SDLCore{
 		// set canvas height
 		let (width, height) = self.wincan.output_size()?;
 
+		//LINE TO SEE WHERE PLAYER SHOULD BE LANDING
+		//USED FOR DEBUGGING JUMPING, DELETE FROM FINAL GAME
+		/* self.wincan.set_draw_color(Color::RGBA(0, 128, 128, 255));
+    	self.wincan.draw_line(
+        	Point::new(0, 509),
+        	Point::new(width as i32, 509),
+    	)?; */
+
 		let (frame_width, frame_height) = fighter.char_state.sprite.size();
 
+		//get curent chararcter state
         let current_frame = Rect::new(
+        	//determins which sprite to get, using current_frame as offset on sprite sheet
             fighter.char_state.sprite.x() + frame_width as i32 * fighter.char_state.current_frame,
             fighter.char_state.sprite.y(), // should always be 0, since y should remain consistent
             frame_width,
@@ -80,7 +90,6 @@ impl SDLCore{
         self.wincan.copy(texture, current_frame, screen_rect)?;
 
         self.wincan.present();
-
         Ok(())
 	} // closing render fun
 
