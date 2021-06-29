@@ -204,16 +204,11 @@ impl NodeRef<CollisionObject> {
 	pub fn remove(&mut self) {
 		if let Some(parent) = self.getParent() {
 			let mut sibling: Link<CollisionObject>;
-			if is(&parent.getLeftChild().0, &self.0) {sibling = parent.get().right.take();}
-			else {sibling = parent.get().left.take();}
-
-			parent.getMut().swap(sibling.take().unwrap());
-			parent.as_deref_mut().map(|par| {
-				par.calculateArea();
-			});
+			if is(&parent.getLeftChild().0, &self.0) {parent.0.deref().replace(parent.getRightChild().0.deref().into_inner());}
+			else {parent.0.deref().replace(parent.getLeftChild().0.deref().into_inner());}
+            parent.calculateArea();
 		}
 
-		self.getLeftChild().as_deref_mut().take();
-		self.getRightChild().as_deref_mut().take();
+		self.0.borrow_mut().detatch();
 	}
 }

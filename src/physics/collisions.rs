@@ -126,6 +126,12 @@ impl Node<CollisionObject> {
 		}
 		else {true}
 	}
+
+	pub fn detatch(&mut self) {
+		let parent = self.parent.take();
+		let left = self.left.take();
+		let right = self.right.take();
+	}
 }
 
 /*
