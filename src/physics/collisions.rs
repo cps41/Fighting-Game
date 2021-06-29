@@ -177,34 +177,19 @@ mod test {
 	}
 	/*
 	#[test]
-	fn testBVHNodeInsert() {
-		let mut node = NodeRef::new(CollisionObject::new(CollisionObjectType::HitBox, 7, 5, 4, 7));
-		node.insert(CollisionObject::new(CollisionObjectType::HitBox, 5, 5, 4, 10));
+	fn testBVHNodeRemove() {
+		let co1 = CollisionObject::new(CollisionObjectType::HitBox, 0, 2, 3, 3);
+		let co2 = CollisionObject::new(CollisionObjectType::HitBox, 5, 0, 6, 2);
+		let co3 = CollisionObject::new(CollisionObjectType::HitBox, 20, 20, 2, 2);
+		let node = NodeRef::new(co1.clone());
+		let (left, right) = node.insert(co2.clone());
+		node.insert(co3.clone());
+		left.clone().remove();
 
-		assert_ne!(node.get().left, None);
-		assert_ne!(node.get().right, None);
-		assert_eq!(node.get().bv, None);
-		assert_eq!(node.get().area, Rect::new(5,5,6,10));
-		assert_eq!(*node.get().left.refer(), BVHNode{children: (None, None),
-													obj: Some(Box::new(CollisionObject::new(CollisionObjectType::HitBox, 7,5,4,7))), 
-													area: Rect::new(7,5,4,7)});
-		assert_eq!(*node.right.refer(), BVHNode{children: (None, None),
-													obj: Some(Box::new(CollisionObject::new(CollisionObjectType::HitBox, 5,5,4,10))), 
-													area: Rect::new(5,5,4,10)});
-													
-		node.insert(CollisionObject::new(CollisionObjectType::Hazard, 5, 8, 2, 12));
-		let cur = node.left.as_deref_mut().unwrap();
-
-		assert_ne!(cur.left, None);
-		assert_ne!(cur.right, None);
-		assert_eq!(cur.bv, None);
-		assert_eq!(cur.area, Rect::new(5,5,6,15));
-		assert_eq!(node.area, Rect::new(5,5,6,15));
-		assert_eq!(*cur.left.refer(), BVHNode{children: (None, None),
-													obj: Some(Box::new(CollisionObject::new(CollisionObjectType::HitBox, 7,5,4,7))), 
-													area: Rect::new(7,5,4,7)});
-		assert_eq!(*cur.right.refer(), BVHNode{children: (None, None),
-													obj: Some(Box::new(CollisionObject::new(CollisionObjectType::Hazard, 5,8,2,12))), 
-													area: Rect::new(5,8,2,12)});
+		assert_eq!(node.getLeftChild(), left);
+		assert_eq!(node.getLeftChild().getRightChild().get().bv.as_deref().unwrap(), &co3.clone());
+		assert_eq!(node.getRightChild(), right);
+		assert_eq!(node.get().bv.as_ref().take(), None);
+		assert_eq!(node.get().area, Rect::new(0,0,22,22));
 	}*/
 }
