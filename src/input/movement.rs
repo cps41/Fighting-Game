@@ -12,12 +12,12 @@ pub enum Direction {
     Down,
 }
 
+
 pub fn walk(f: &mut characters::characterAbstract::Fighter) {
     f.char_state.set_state(animation::sprites::State::Walk);
-
     match &f.char_state.direction {
-        Direction::Left =>  { f.char_state.position = f.char_state.position.offset(-f.speed, 0); },
-        Direction::Right => { f.char_state.position = f.char_state.position.offset(f.speed, 0); },
+        Direction::Left =>  { f.char_state.update_position(vec![-f.speed, 0]); },
+        Direction::Right => { f.char_state.update_position(vec![f.speed, 0]); },
         Direction::Up => (),
         Direction::Down => (),
     }

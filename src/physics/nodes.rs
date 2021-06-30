@@ -96,8 +96,8 @@ impl NodeRef<CollisionObject> {
 		node
 	}
 
-    pub fn replace(&self, bv: &mut CollisionObject) {
-        std::mem::swap(self.0.borrow_mut().deref_mut().bv.as_deref_mut().unwrap(), bv);
+    pub fn replace(&self, bv: &mut Option<Box<CollisionObject>>) {
+        std::mem::swap(&mut self.0.borrow_mut().deref_mut().bv, bv);
         self.getMut().left.take();
         self.getMut().right.take();
         self.calculateArea();
@@ -212,13 +212,13 @@ impl NodeRef<CollisionObject> {
 	pub fn remove(&mut self) {
 		if let Some(parent) = self.getParent() {
 			if is(&parent.getLeftChild().0, &self.0) {
-                parent.replace(parent.getRightChild().0.borrow_mut().deref_mut().bv.as_deref_mut().unwrap());
+                parent.replace(&mut parent.getRightChild().0.borrow_mut().deref_mut().bv);
             }
 			else {
-                parent.replace(parent.getLeftChild().0.borrow_mut().deref_mut().bv.as_deref_mut().unwrap());
+                parent.replace(&mut parent.getLeftChild().0.borrow_mut().deref_mut().bv);
             }
 		}
 
-		self.0.borrow_mut().detatch();
+		// self.0.borrow_mut().detatch();
 	}
 }
