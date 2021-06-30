@@ -185,7 +185,7 @@ pub fn run_game() -> Result<(), String>{
             fighter.char_state.reset_current_frame();
         }
 
-        thread::sleep(frame_time - loop_time.elapsed());
+        thread::sleep(frame_time - loop_time.elapsed().clamp(Duration::new(0, 0), frame_time));
         hazard.sprite.offset(0, 15);
     }
 
