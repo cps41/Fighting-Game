@@ -176,7 +176,7 @@ mod test {
 		assert_eq!(node.get().bv.as_ref().take(), None);
 		assert_eq!(node.get().area, Rect::new(0,0,22,22));
 	}
-	/*
+	
 	#[test]
 	fn testBVHNodeRemove() {
 		let co1 = CollisionObject::new(CollisionObjectType::HitBox, 0, 2, 3, 3);
@@ -185,12 +185,12 @@ mod test {
 		let node = NodeRef::new(co1.clone());
 		let (left, right) = node.insert(co2.clone());
 		node.insert(co3.clone());
-		left.clone().remove();
+		left.getRightChild().clone().remove();
 
 		assert_eq!(node.getLeftChild(), left);
-		assert_eq!(node.getLeftChild().getRightChild().get().bv.as_deref().unwrap(), &co3.clone());
+		assert_eq!(node.getLeftChild().get().bv.as_deref().unwrap(), &co1.clone());
 		assert_eq!(node.getRightChild(), right);
 		assert_eq!(node.get().bv.as_ref().take(), None);
-		assert_eq!(node.get().area, Rect::new(0,0,22,22));
-	}*/
+		assert_eq!(node.get().area, Rect::new(0,0,11,5));
+	}
 }
