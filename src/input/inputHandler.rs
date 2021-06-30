@@ -10,9 +10,9 @@ pub fn keyboard_input(event: &Event, fighter: &mut characters::characterAbstract
             if !fighter.char_state.isMoving() {
                 match event {
                         Event::KeyDown{keycode: Some(Keycode::A), repeat:true, ..} => {
-                            if fighter.char_state.state != animation::sprites::State::Walk {
-                                fighter.char_state.reset_current_frame(); // reset frames to 0 every click
-                            } 
+                            // if fighter.char_state.state != animation::sprites::State::Walk {
+                            //     fighter.char_state.reset_current_frame(); // reset frames to 0 every click
+                            // } 
                             fighter.char_state.direction = input::movement::Direction::Left; // update direction left
                             if fighter.char_state.state != animation::sprites::State::FJump || 
                                 fighter.char_state.state != animation::sprites::State::Jump { // if we're idle, then walk
@@ -20,14 +20,17 @@ pub fn keyboard_input(event: &Event, fighter: &mut characters::characterAbstract
                             }
                         },
                         Event::KeyDown{keycode: Some(Keycode::D), repeat:true, ..} => {
-                            if fighter.char_state.state != animation::sprites::State::Walk {
-                                fighter.char_state.reset_current_frame(); // reset frames to 0 every click
-                            } 
+                            // if fighter.char_state.state != animation::sprites::State::Walk {
+                            //     fighter.char_state.reset_current_frame(); // reset frames to 0 every click
+                            // } 
                             fighter.char_state.direction = input::movement::Direction::Right; // update direction right 
                             if fighter.char_state.state != animation::sprites::State::FJump || 
                             fighter.char_state.state != animation::sprites::State::Jump { // if we're idle, then walk
                                 input::movement::walk(fighter); // character walks right
                             }
+                        },
+                        Event::KeyDown{keycode: Some(Keycode::Return), repeat:true, ..} => {
+                            input::movement::block(fighter); 
                         },
                         Event::KeyDown{keycode: Some(k), repeat:false, ..} => {
                             fighter.char_state.reset_current_frame(); // reset frames to 0 every click
@@ -35,7 +38,7 @@ pub fn keyboard_input(event: &Event, fighter: &mut characters::characterAbstract
                                 Keycode::W => { input::movement::jump(fighter); }, // jump                                                                                     
                                 Keycode::S => (), // crouch (stretch goal)
                                 Keycode::Space => (),
-                                Keycode::Return => { input::movement::block(fighter); }, 
+                                // Keycode::Return => { input::movement::block(fighter); }, 
                                 Keycode::J =>      { input::movement::lkick(fighter); }, 
                                 Keycode::I => { input::movement::hkick(fighter); }, 
                                 Keycode::K => { input::movement::lpunch(fighter); }, 
