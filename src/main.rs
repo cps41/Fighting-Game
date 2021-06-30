@@ -123,35 +123,35 @@ pub fn run_game() -> Result<(), String>{
                                         if fighter.char_state.current_frame < 3 { // Note: only works since there are 6x states in Jump.
                                             fighter.char_state.position = fighter.char_state.position.offset(-fighter.speed, -fighter.speed);
                                         } else if fighter.char_state.current_frame < 5 { // account for starting at 0
-                                            fighter.char_state.position = fighter.char_state.position.offset(-fighter.speed, fighter.speed);
+                                            fighter.char_state.position = fighter.char_state.position.offset(-fighter.speed, 28);
                                         } else if fighter.char_state.current_frame == 5 {
                                             fighter.char_state.position = fighter.char_state.position.offset(-fighter.speed, 0);
-                                            fighter.char_state.state = animation::sprites::State::Idle;
-                                            fighter.char_state.current_frame = 0;
+                                            fighter.char_state.set_state(animation::sprites::State::Idle); 
+                                            fighter.char_state.set_current_frame(0);
                                         }
                                     },
                 input::movement::Direction::Right => {
                                         if fighter.char_state.current_frame < 4 {
                                             fighter.char_state.position = fighter.char_state.position.offset(fighter.speed, -fighter.speed);
                                         } else if fighter.char_state.current_frame < 6 {
-                                            fighter.char_state.position = fighter.char_state.position.offset(fighter.speed, fighter.speed);
+                                            fighter.char_state.position = fighter.char_state.position.offset(fighter.speed, 28);
                                         } else if fighter.char_state.current_frame == 6 {
-                                            fighter.char_state.position = fighter.char_state.position.offset(fighter.speed, fighter.speed);
-                                            fighter.char_state.state = animation::sprites::State::Idle;
-                                            fighter.char_state.current_frame = 0;
+                                            fighter.char_state.position = fighter.char_state.position.offset(fighter.speed, 28);
+                                            fighter.char_state.set_state(animation::sprites::State::Idle); 
+                                            fighter.char_state.set_current_frame(0);
                                         }
                                     },
                 input::movement::Direction::Up => {
                                         if fighter.char_state.current_frame < 3 {
                                             fighter.char_state.position = fighter.char_state.position.offset(0, -fighter.speed);
                                         } else if fighter.char_state.current_frame < 5 { // Note: works b/c there are 6x states in jump
-                                            fighter.char_state.position = fighter.char_state.position.offset(0, fighter.speed);
+                                            fighter.char_state.position = fighter.char_state.position.offset(0, 28);
 
                                         } else if fighter.char_state.current_frame == 5{
                                             fighter.char_state.position = fighter.char_state.position.offset(0, 0);
                                             //not sure the purpose of these, they set it so they are considered idle while still jumping
-                                            //fighter.char_state.state = animation::sprites::State::Idle;                                            
-                                            //fighter.char_state.current_frame = 0;
+                                            // fighter.char_state.state = animation::sprites::State::Idle;                                            
+                                            // fighter.char_state.current_frame = 0;
                                         } 
 
                                     },
@@ -162,12 +162,11 @@ pub fn run_game() -> Result<(), String>{
 
         // RESETS
         // reset walking to idle
-        if fighter.char_state.state == animation::sprites::State::Walk &&
-           fighter.char_state.current_frame % 2 == 0 { // 3 is arbitary #
+        if fighter.char_state.state == animation::sprites::State::Walk //&&
+        { //  fighter.char_state.current_frame % 2 == 0 { // 3 is arbitary #
 
             fighter.char_state.set_state(animation::sprites::State::Idle); 
             fighter.char_state.set_current_frame(0);
-
         }
 
         // reset direction to up
@@ -179,7 +178,6 @@ pub fn run_game() -> Result<(), String>{
          // println!("s: {:?}, cf: {}", fighter.char_state.state, fighter.char_state.current_frame);
 
         // resetting to idle, if reached max frames (since idle is our only auto repeat)
-    
 
         if fighter.char_state.state != animation::sprites::State::Idle && 
            fighter.char_state.frame_count == animation::sprites::get_frame_cnt(&fighter.char_state) -1 { // we've hit the max frames
@@ -188,7 +186,7 @@ pub fn run_game() -> Result<(), String>{
         }
 
         thread::sleep(frame_time - loop_time.elapsed());
-       hazard.sprite.offset(0, 15);
+        hazard.sprite.offset(0, 15);
     }
 
     Ok(())

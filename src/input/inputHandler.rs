@@ -7,36 +7,40 @@ use crate::animation; // used to get States
 
 pub fn keyboard_input(event: &Event, fighter: &mut characters::characterAbstract::Fighter) {
 
-            if !fighter.char_state.isMoving() {
+            // if !fighter.char_state.isMoving() {
                 match event {
-                        Event::KeyDown{keycode: Some(Keycode::A), repeat:true, ..} => {
-                            if fighter.char_state.state != animation::sprites::State::Walk {
-                                fighter.char_state.reset_current_frame(); // reset frames to 0 every click
-                            } 
-                            fighter.char_state.direction = input::movement::Direction::Left; // update direction left
-                            if fighter.char_state.state != animation::sprites::State::FJump || 
-                                fighter.char_state.state != animation::sprites::State::Jump { // if we're idle, then walk
-                                    input::movement::walk(fighter); // character walks left
-                            }
-                        },
-                        Event::KeyDown{keycode: Some(Keycode::D), repeat:true, ..} => {
-                            if fighter.char_state.state != animation::sprites::State::Walk {
-                                fighter.char_state.reset_current_frame(); // reset frames to 0 every click
-                            } 
-                            fighter.char_state.direction = input::movement::Direction::Right; // update direction right 
-                            if fighter.char_state.state != animation::sprites::State::FJump || 
-                            fighter.char_state.state != animation::sprites::State::Jump { // if we're idle, then walk
-                                input::movement::walk(fighter); // character walks right
-                            }
+                        Event::KeyDown{keycode: Some(k), repeat:true, ..} => {
+                            match k {
+                                Keycode::A => {
+                                    fighter.char_state.direction = input::movement::Direction::Left; // update direction left
+                                    if fighter.char_state.state != animation::sprites::State::FJump || 
+                                       fighter.char_state.state != animation::sprites::State::Jump { // if we're idle, then walk
+                                        input::movement::walk(fighter); // character walks left
+                                    }
+                                },
+                                Keycode::D => {
+                                    fighter.char_state.direction = input::movement::Direction::Right; // update direction right 
+                                    if fighter.char_state.state != animation::sprites::State::FJump || 
+                                    fighter.char_state.state != animation::sprites::State::Jump { // if we're idle, then walk
+                                        input::movement::walk(fighter); // character walks right
+                                    }
+                                },
+                                Keycode::Return => { input::movement::block(fighter); },
+                                _ => {},
+                            } // end match
                         },
                         Event::KeyDown{keycode: Some(k), repeat:false, ..} => {
                             fighter.char_state.reset_current_frame(); // reset frames to 0 every click
                             match k {
-                                Keycode::W => { input::movement::jump(fighter); }, // jump                                                                                     
+                                Keycode::W => { 
+                                    if (fighter.char_state.state != animation::sprites::State::FJump && 
+                                        fighter.char_state.state != animation::sprites::State::Jump) {
+                                        input::movement::jump(fighter); 
+                                    }
+                                }, // jump                                                                                     
                                 Keycode::S => (), // crouch (stretch goal)
                                 Keycode::Space => (),
-                                Keycode::Return => { input::movement::block(fighter); }, 
-                                Keycode::J =>      { input::movement::lkick(fighter); }, 
+                                Keycode::J => { input::movement::lkick(fighter); }, 
                                 Keycode::I => { input::movement::hkick(fighter); }, 
                                 Keycode::K => { input::movement::lpunch(fighter); }, 
 
@@ -46,7 +50,7 @@ pub fn keyboard_input(event: &Event, fighter: &mut characters::characterAbstract
                         } // close KeyDown
                         _ => {},
                 } // close match event
-            } // close if stmt
+            // } // close if stmt
 } // close fn
 
 // *** ALL POSSIBLE KEYCODES AVAILABLE FOR KeyEvent *** //
