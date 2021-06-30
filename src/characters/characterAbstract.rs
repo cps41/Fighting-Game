@@ -167,10 +167,10 @@ impl CharacterState {
 	}
 	
 	// update Point position
-	pub fn update_position(&mut self, vel: i32) {
-		let mut x = (self.position.x() + vel).clamp(-640+self.sprite.width() as i32/2, 640-self.sprite.width() as i32/2);
-		let current_y = self.position.y();
-		self.position = Point::new(x, current_y);
+	pub fn update_position(&mut self, vel: Vec<i32>) {
+		let x = (self.position.x() + vel[0]).clamp(-640+self.sprite.width() as i32/2, 640-self.sprite.width() as i32/2);
+		let y = self.position.y() + vel[1];
+		self.position = Point::new(x, y);
 	} 
 	
     // advancing frames

@@ -16,8 +16,8 @@ pub enum Direction {
 pub fn walk(f: &mut characters::characterAbstract::Fighter) {
     f.char_state.set_state(animation::sprites::State::Walk);
     match &f.char_state.direction {
-        Direction::Left =>  { f.char_state.update_position(-f.speed); },
-        Direction::Right => { f.char_state.update_position(f.speed); },
+        Direction::Left =>  { f.char_state.update_position(vec![-f.speed, 0]); },
+        Direction::Right => { f.char_state.update_position(vec![f.speed, 0]); },
         Direction::Up => (),
         Direction::Down => (),
     }
