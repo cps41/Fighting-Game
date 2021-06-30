@@ -27,7 +27,7 @@ pub struct CharacterState {
 	pub sprite: Rect,
 	pub auto_repeat: bool,
 	pub direction: input::movement::Direction,
-	pub next_state: animation::sprites::State,	
+	pub next_state: animation::sprites::State,
 }
 //self.current_frame = (self.current_frame + 1) % self.frames_per_state; }
 
@@ -259,7 +259,7 @@ impl CharacterState {
 																	  // println!("s: {:?}, cf: {}", self.state, self.current_frame);
 																	}
 	pub fn set_current_frame(&mut self, i: i32)						{ self.current_frame = (self.current_frame + i) % self.frames_per_state; } // need to stay within # of frames
-	pub fn reset_frame_count(&mut self)								{self.frame_count = 0}
+	pub fn reset_frame_count(&mut self)								{ self.frame_count = 0}
 	pub fn set_sprite(&mut self, r: Rect)							{ self.sprite = r; }
 	pub fn set_auto_repeat(&mut self, b: bool)						{ self.auto_repeat = b; }
 	pub fn set_next_state(&mut self, s: animation::sprites::State)	{ self.next_state = s; }

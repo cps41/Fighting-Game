@@ -59,6 +59,7 @@ pub fn run_game() -> Result<(), String>{
 
     let texture_creator = game_window.wincan.texture_creator();
 
+
     //////////////////////////
     // FUNCTIONING
     // EDIT: Modularize. Challenge: figuring out how to deal with texture's + hashmap lifetime
