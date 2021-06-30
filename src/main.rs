@@ -126,8 +126,8 @@ pub fn run_game() -> Result<(), String>{
                                             fighter.char_state.position = fighter.char_state.position.offset(-fighter.speed, fighter.speed);
                                         } else if fighter.char_state.current_frame == 5 {
                                             fighter.char_state.position = fighter.char_state.position.offset(-fighter.speed, 0);
-                                            fighter.char_state.state = animation::sprites::State::Idle;
-                                            fighter.char_state.current_frame = 0;
+                                            fighter.char_state.set_state(animation::sprites::State::Idle); 
+                                            fighter.char_state.set_current_frame(0);
                                         }
                                     },
                 input::movement::Direction::Right => {
@@ -137,8 +137,8 @@ pub fn run_game() -> Result<(), String>{
                                             fighter.char_state.position = fighter.char_state.position.offset(fighter.speed, fighter.speed);
                                         } else if fighter.char_state.current_frame == 6 {
                                             fighter.char_state.position = fighter.char_state.position.offset(fighter.speed, fighter.speed);
-                                            fighter.char_state.state = animation::sprites::State::Idle;
-                                            fighter.char_state.current_frame = 0;
+                                            fighter.char_state.set_state(animation::sprites::State::Idle); 
+                                            fighter.char_state.set_current_frame(0);
                                         }
                                     },
                 input::movement::Direction::Up => {
