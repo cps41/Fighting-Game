@@ -91,7 +91,6 @@ impl SDLCore{
 		// copy textures
         self.wincan.copy(texture, current_frame, screen_rect)?;
 		self.wincan.copy(hazard_texture, hazard_frame, hazard_screen_rectangle)?;
-		self.wincan.fill_rect(platform)?;
         self.wincan.present();
         Ok(())
 	} // closing render fun
