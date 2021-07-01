@@ -1,10 +1,55 @@
 use sdl2::event::Event;
 use sdl2::EventPump;
 use sdl2::keyboard::Keycode;
+use std::collections::HashSet;
 use crate::characters; // use to get get acces to Fighter struct
 use crate::input; // add to use stuff in movement
 use crate::animation; // used to get States
 
+
+pub fn keyboard_input(keystate: &HashSet<Keycode>, fighter: &mut characters::characterAbstract::Fighter){
+    if fighter.char_state.state ==  animation::sprites::State::Idle
+       && !keystate.is_empty(){
+        for pressed in keystate.iter(){
+            match pressed{
+                Keycode::A =>       {fighter.char_state.direction = input::movement::Direction::Left;
+                                     input::movement::walk(fighter);},
+                Keycode::D =>       {fighter.char_state.direction = input::movement::Direction::Right;
+                                     input::movement::walk(fighter);},
+                Keycode::Return =>  {input::movement::block(fighter);},
+                Keycode::W =>       {input::movement::jump(fighter);},
+                Keycode::J =>       {input::movement::lkick(fighter);},
+                Keycode::I =>       {input::movement::hkick(fighter);},
+                Keycode::K =>       {input::movement::lpunch(fighter);},
+                _=> {},
+            }
+        }
+    }else if fighter.char_state.state == animation::sprites::State::Walk{
+        if keystate.is_empty(){
+            //reset to idle
+        }else{
+            for pressed in keystate.iter(){
+                match pressed{
+                    Keycode::A =>       {fighter.char_state.direction = input::movement::Direction::Left;
+                                         input::movement::walk(fighter);},
+                    Keycode::D =>       {fighter.char_state.direction = input::movement::Direction::Right;
+                                         input::movement::walk(fighter);},
+                    Keycode::Return =>  {input::movement::block(fighter);},
+                    Keycode::W =>       {input::movement::jump(fighter);},
+                    Keycode::J =>       {input::movement::lkick(fighter);},
+                    Keycode::I =>       {input::movement::hkick(fighter);},
+                    Keycode::K =>       {input::movement::lpunch(fighter);},
+                    _=> {},            
+                }
+            }
+        }
+    }else if fighter.char_state.state == animation::sprites::State::Block{
+
+    }
+}
+
+
+/*
 pub fn keyboard_input(event: &Event, fighter: &mut characters::characterAbstract::Fighter) {
 
             // if !fighter.char_state.isMoving() {
@@ -20,10 +65,13 @@ pub fn keyboard_input(event: &Event, fighter: &mut characters::characterAbstract
                                 },
                                 Keycode::D => {
                                     fighter.char_state.direction = input::movement::Direction::Right; // update direction right 
+                                    input::movement::walk(fighter);
+                                    /*
                                     if fighter.char_state.state != animation::sprites::State::FJump || 
                                     fighter.char_state.state != animation::sprites::State::Jump { // if we're idle, then walk
                                         input::movement::walk(fighter); // character walks right
                                     }
+                                    */
                                 },
                                 Keycode::Return => { input::movement::block(fighter); },
                                 _ => {},
@@ -52,6 +100,7 @@ pub fn keyboard_input(event: &Event, fighter: &mut characters::characterAbstract
                 } // close match event
             // } // close if stmt
 } // close fn
+*/
 
 // *** ALL POSSIBLE KEYCODES AVAILABLE FOR KeyEvent *** //
 // https://docs.rs/sdl2/0.9.0/sdl2/keyboard/enum.Keycode.html //

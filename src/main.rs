@@ -8,6 +8,7 @@ use sdl2::pixels::Color;
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use std::collections::HashMap;
+use std::collections::HashSet;
 use std::path::Path;
 use sdl2::render::Canvas;
 use sdl2::video::Window;
@@ -31,7 +32,7 @@ const TITLE: &str = "Street Code Fighter";
 const TIMEOUT: u64 = 5000;
 const CAM_W: u32 = 1280;
 const CAM_H: u32 = 720;
-const FRAME_RATE: f64 = 1.0/30.0;
+const FRAME_RATE: f64 = 1.0/60.0;
 
 // TODO: FPS constants
 // // 5px / frame @60fps == 300 px/s
@@ -89,32 +90,36 @@ pub fn run_game() -> Result<(), String>{
     // Self::load_textures(&texture_creator, &mut fighter);
     ////////
 
-    //game loop
+
+
+
+//################################################GAME LOOP##############################################
     'gameloop: loop{
         let loop_time = Instant::now();
+
+//################################################GET INPUT##############################################
+
+        
 
         for event in game_window.event_pump.poll_iter() {
             match event {
                 Event::Quit{..} | Event::KeyDown{keycode: Some(Keycode::Escape), ..} => break 'gameloop,
-                _ => { input::inputHandler::keyboard_input(&event, &mut fighter); }
+                //_ => { input::inputHandler::keyboard_input(&event, &mut fighter); }
+                _=> {},
             }
         }
 
-        // get the proper texture within the game
-        let texture = match python_textures.get(&fighter.char_state.state) {
-            Some(text) => text,
-            _=> panic!("No texture found for the state! Oh nos."),
-        };
+        let keystate: HashSet<Keycode> = game_window.event_pump
+            .keyboard_state()
+            .pressed_scancodes()
+            .filter_map(Keycode::from_scancode)
+            .collect();
+        input::inputHandler::keyboard_input(&keystate, &mut fighter);
 
-        // movement direction occurs here
 
-        // render canvas
-        game_window.render(Color::RGB(222,222,222), &texture, &fighter, &hazard, &hazard_texture);
-
-        //advance frame
-        fighter.char_state.advance_frame();
-
+//##############################################PROCESS INPUT#############################################
         //ANIMATION
+
         //Jumps
         if fighter.char_state.state == animation::sprites::State::Jump ||
            fighter.char_state.state == animation::sprites::State::FJump {
@@ -162,13 +167,14 @@ pub fn run_game() -> Result<(), String>{
 
         // RESETS
         // reset walking to idle
+/*     
         if fighter.char_state.state == animation::sprites::State::Walk //&&
         { //  fighter.char_state.current_frame % 2 == 0 { // 3 is arbitary #
 
             fighter.char_state.set_state(animation::sprites::State::Idle); 
             fighter.char_state.set_current_frame(0);
         }
-
+*/
         // reset direction to up
         if fighter.char_state.state != animation::sprites::State::Jump &&
            fighter.char_state.state != animation::sprites::State::FJump  {
@@ -185,8 +191,24 @@ pub fn run_game() -> Result<(), String>{
             fighter.char_state.reset_current_frame();
         }
 
-        thread::sleep(frame_time - loop_time.elapsed().clamp(Duration::new(0, 0), frame_time));
+
         hazard.sprite.offset(0, 15);
+
+//############################################RENDER############################################################
+       
+        //advance frame
+        fighter.char_state.advance_frame();
+
+        // get the proper texture within the game
+        let texture = match python_textures.get(&fighter.char_state.state) {
+            Some(text) => text,
+            _=> panic!("No texture found for the state! Oh nos."),
+        };
+
+
+        // render canvas
+        game_window.render(Color::RGB(222,222,222), &texture, &fighter, &hazard, &hazard_texture);
+        thread::sleep(frame_time - loop_time.elapsed().clamp(Duration::new(0, 0), frame_time));
     }
 
     Ok(())
