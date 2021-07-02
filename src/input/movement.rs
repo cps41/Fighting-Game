@@ -12,29 +12,79 @@ pub enum Direction {
     Down,
 }
 
+//moves character on first frame a sprite is loaded
 pub fn move_char(f: &mut characters::characterAbstract::Fighter){
     match f.char_state.state{
+        //walk right or left, depending
         animation::sprites::State::Walk => {
-            if ((f.char_state.frame_count - 1) % 6) == 0{
+            if f.char_state.frame_count == 1  ||
+               f.char_state.frame_count == 6  ||
+               f.char_state.frame_count == 11 ||
+               f.char_state.frame_count == 16 ||
+               f.char_state.frame_count == 21 ||
+               f.char_state.frame_count == 26 {
                 if f.char_state.direction == Direction::Right{
                     f.char_state.update_position(vec![f.speed, 0]);
                 }else{
                     f.char_state.update_position(vec![-f.speed, 0]);
-                }
-            }            
+                }             
+            }        
         },
+        
+        //jump or or left, depending on input
         animation::sprites::State::Jump => {
-            if ((f.char_state.frame_count -1) % 5) == 0{
-                if f.char_state.current_frame < 3{
-                    f.char_state.update_position;
-                }else if f.char_state.current_frame < 5{
-                    f.char_state.update_position(vec![0, -fighter.speed]);
-                }else if f.char_state.current_frame == 5{
-                    f.char_state.update_position(vec![0, -fighter.speed]);
+            if f.char_state.frame_count == 1 || 
+               f.char_state.frame_count == 6 ||
+               f.char_state.frame_count == 11{
+            
+                if f.char_state.direction == Direction::Left{
+                    f.char_state.position = f.char_state.position
+                      .offset(-f.speed, -f.jump_height*3);                    
+                }else{
+                    f.char_state.position = f.char_state.position
+                      .offset(0, -f.jump_height*3);
                 }
+            
+            }else if f.char_state.frame_count == 16 ||
+                     f.char_state.frame_count == 21 {
+            
+                if f.char_state.direction == Direction::Left{
+                    f.char_state.position = f.char_state.position
+                      .offset(-f.speed, (f.jump_height*3) + ((f.jump_height*3)/2));
+                }else{
+                    f.char_state.position = f.char_state.position
+                      .offset(0, (f.jump_height*3) + ((f.jump_height*3)/2));
+                }
+            
+            }else if f.char_state.frame_count == 24{
+               
+                if f.char_state.direction == Direction::Left{
+                    f.char_state.position = f.char_state.position
+                      .offset(-f.speed, 0);
+                }else{
+                    f.char_state.position = f.char_state.position
+                      .offset(0, 0);
+                }
+            
             }
         },
-        animation::sprites::State::FJump => {},
+        
+        //jump forward
+        animation::sprites::State::FJump => {
+            if f.char_state.frame_count == 1  ||
+               f.char_state.frame_count == 7  ||
+               f.char_state.frame_count == 13 ||
+               f.char_state.frame_count == 19 {
+                f.char_state.position = f.char_state.position.offset(f.speed/2, -f.jump_height*3);
+            }else if f.char_state.frame_count == 25 ||
+                     f.char_state.frame_count == 31 {
+                f.char_state.position = f.char_state.position.offset(f.speed/2, (f.jump_height*3)*2);
+
+            }else{
+                f.char_state.position = f.char_state.position.offset(f.speed/2, 0);
+            }
+        },
+        
         _=> {},
     }
 }
@@ -84,13 +134,6 @@ if fighter.char_state.state == animation::sprites::State::Jump ||
      } // end direction jump match
 }  // end jump if
 */
-
-
-
-
-
-
-
 
 /*
 pub fn walk(f: &mut characters::characterAbstract::Fighter) {

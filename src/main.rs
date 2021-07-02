@@ -84,6 +84,7 @@ pub fn run_game() -> Result<(), String>{
     // Self::load_textures(&texture_creator, &mut fighter);
     ////////
 
+    //load window before game starts with starting texture
     let texture = {
         match python_textures.get(&fighter.char_state.state) {
             Some(text) => text,
@@ -97,8 +98,8 @@ pub fn run_game() -> Result<(), String>{
     'gameloop: loop{
         let loop_time = Instant::now();
 
-//################################################-GET-INPUT-##############################################
-
+    //################################################-GET-INPUT-##########################################
+        //ceck if play quits
         for event in game_window.event_pump.poll_iter() {
             match event {
                 Event::Quit{..} | Event::KeyDown{keycode: Some(Keycode::Escape), ..} => break 'gameloop,
@@ -107,21 +108,28 @@ pub fn run_game() -> Result<(), String>{
             }
         }
 
+        //gather player input
         let player_input: HashSet<Keycode> = game_window.event_pump
             .keyboard_state()
             .pressed_scancodes()
             .filter_map(Keycode::from_scancode)
             .collect();
         
-//##############################################-PROCESS-EVENTS-###########################################
+    //##############################################-PROCESS-EVENTS-#######################################
+        //process player movement
         input::inputHandler::keyboard_input(&player_input, &mut fighter);
+        
+        //select frame to be rendered
         fighter.char_state.advance_frame();
+        
+        //move character based on current frame
         input::movement::move_char(&mut fighter);
 
         //##########-PROCESS-COLLISIONS-HERE-##########
 
+        //move hazard
         hazard.sprite.offset(0, 15);
-//##################################################-RENDER-###############################################
+    //##################################################-RENDER-###########################################
        
         // get the proper texture within the game
         let texture = {
@@ -133,17 +141,11 @@ pub fn run_game() -> Result<(), String>{
 
         // render canvas
         game_window.render(Color::RGB(222,222,222), &texture, &fighter, &hazard, &hazard_texture);
-//##################################################-SLEEP-#############################################        
+    //##################################################-SLEEP-############################################        
         thread::sleep(frame_time - loop_time.elapsed().clamp(Duration::new(0, 0), frame_time));
     }
-
     Ok(())
 }
-
-
-
-
-
 
 
 pub fn run_server() -> Result<(), String>{

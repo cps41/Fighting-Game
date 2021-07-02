@@ -179,23 +179,63 @@ impl CharacterState {
     	
     	match self.state{
     		animation::sprites::State::Idle =>{
-    			if ((self.frame_count-1) % 6) == 0{
-    				self.current_frame = (self.current_frame + 1) % 5;
+    			if self.frame_count < 7{
+    				self.current_frame = 0;
+    			}else if self.frame_count < 13 {
+    				self.current_frame = 1;
+    			}else if self.frame_count < 19 {
+    				self.current_frame = 2;
+    			}else if self.frame_count < 24 {
+    				self.current_frame = 3;
+    			}else{
+    				self.current_frame = 4;
     			}
     		}
     		animation::sprites::State::Walk =>{
-    			if (self.frame_count % 10) == 0{
-    				self.current_frame = (self.current_frame + 1) % 6;
+    			if self.frame_count < 6 {
+ 					self.current_frame = 0;
+    			}else if self.frame_count < 11{
+ 					self.current_frame = 1;
+    			}else if self.frame_count < 16{
+ 					self.current_frame = 2;
+    			}else if self.frame_count < 21{
+ 					self.current_frame = 3;
+    			}else if self.frame_count < 26{
+ 					self.current_frame = 4;
+    			}else{
+ 					self.current_frame = 5;
     			}
     		}
     		animation::sprites::State::Jump =>{
-    			if ((self.frame_count-1) % 5) == 0{
-    				self.current_frame = (self.current_frame + 1) % 6;
+    			if self.frame_count < 6{
+    				self.current_frame = 0;
+    			}else if self.frame_count < 11 {
+    				self.current_frame = 1;
+    			}else if self.frame_count < 16 {
+    				self.current_frame = 2;
+    			}else if self.frame_count < 21 {
+    				self.current_frame = 3;
+    			}else if self.frame_count < 26{
+    				self.current_frame = 4;
+    			}else{
+    				self.current_frame = 5;
     			}
     		}
     		animation::sprites::State::FJump =>{
-    			if ((self.frame_count-1) % 6) == 0{
-    				self.current_frame = (self.current_frame +1 ) % 6;
+    			if self.frame_count < 7 {
+ 					self.current_frame = 0;
+    			}else if self.frame_count < 13{
+ 					self.current_frame = 1;
+    			}else if self.frame_count < 19{
+ 					self.current_frame = 2;
+    			}else if self.frame_count < 25{
+ 					self.current_frame = 3;
+    			}else if self.frame_count < 31{
+ 					self.current_frame = 4;
+    			}else if self.frame_count < 37{
+ 					self.current_frame = 5;
+    			}else{
+    				self.current_frame = 6;
     			}
     		}
     		animation::sprites::State::LPunch =>{
@@ -208,11 +248,11 @@ impl CharacterState {
     			}
     		}
     		animation::sprites::State::LKick =>{
-    			if self.frame_count < 3 {
+    			if self.frame_count < 8 {
     				self.current_frame = 0;
-    			}else if self.frame_count < 9 {
+    			}else if self.frame_count < 14  {
     				self.current_frame = 1;
-    			}else if self.frame_count < 12 {
+    			}else{
     				self.current_frame = 2;
     			}
     		}

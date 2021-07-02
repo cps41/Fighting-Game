@@ -8,21 +8,14 @@ use crate::animation; // used to get States
 
 
 pub fn keyboard_input(player_input: &HashSet<Keycode>, fighter: &mut characters::characterAbstract::Fighter){
-/*    
-    if (fighter.char_state.state != animation::sprites::State::Idle
-       || fighter.char_state.state != animation::sprites::State::Walk)
-       && fighter.char_state.frame_count == animation::sprites::get_frame_cnt(&fighter.char_state){
-        fighter.char_state.set_state(animation::sprites::State::Idle);
-        fighter.char_state.reset_current_frame();
-        fighter.char_state.direction = input::movement::Direction::Up;
-    }
-*/
+    //if character animation is over, reset to idle
     if fighter.char_state.frame_count == animation::sprites::get_frame_cnt(&fighter.char_state){
         fighter.char_state.set_state(animation::sprites::State::Idle);
         fighter.char_state.reset_current_frame();
         fighter.char_state.direction = input::movement::Direction::Up;        
     }
 
+    //inputs accepted while idle
     if fighter.char_state.state ==  animation::sprites::State::Idle
        && !player_input.is_empty(){
         for pressed in player_input.iter(){
@@ -53,18 +46,26 @@ pub fn keyboard_input(player_input: &HashSet<Keycode>, fighter: &mut characters:
                 _=> {},
             }
         }
+    //inputs accepted while walking
     }else if fighter.char_state.state == animation::sprites::State::Walk{
+        //if no longer holding down, stop walking
         if player_input.is_empty(){
+            fighter.char_state.direction = input::movement::Direction::Up;
             fighter.char_state.set_state(animation::sprites::State::Idle); 
             fighter.char_state.reset_current_frame();
         }else{
+            //inputs that intterupt walk
             for pressed in player_input.iter(){
                 match pressed{
                     Keycode::Return =>  {fighter.char_state.set_state(animation::sprites::State::Block);   
                                          fighter.char_state.reset_current_frame();   
                                          return;},
-                    Keycode::W =>       {fighter.char_state.set_state(animation::sprites::State::Jump);
-                                         fighter.char_state.reset_current_frame();   
+                    Keycode::W =>       {if fighter.char_state.direction == input::movement::Direction::Right{
+                                            fighter.char_state.set_state(animation::sprites::State::FJump);
+                                         }else{
+                                             fighter.char_state.set_state(animation::sprites::State::Jump);
+                                         }
+                                         fighter.char_state.reset_current_frame();
                                          return;},
                     Keycode::J =>       {fighter.char_state.set_state(animation::sprites::State::LKick);   
                                          fighter.char_state.reset_current_frame();   
@@ -77,24 +78,24 @@ pub fn keyboard_input(player_input: &HashSet<Keycode>, fighter: &mut characters:
                                          return;},
                     _=> {},            
                 }
-
+                //if not trying to interrupt, keep walking
                 if fighter.char_state.direction == input::movement::Direction::Right {
                     if player_input.contains(&Keycode::A){
                         fighter.char_state.direction = input::movement::Direction::Left;
-                    }else if player_input.contains(&Keycode::D){
+                    }else{
                         fighter.char_state.direction = input::movement::Direction::Right;
                     }
                 }else if fighter.char_state.direction == input::movement::Direction::Left {
                     if player_input.contains(&Keycode::D){
                         fighter.char_state.direction = input::movement::Direction::Right;
-                    }else if player_input.contains(&Keycode::A){
+                    }else{
                         fighter.char_state.direction = input::movement::Direction::Left;
                     }
                 }
 
             }
         }
-
+    //TODO: handle block intterupts
     }else if fighter.char_state.state == animation::sprites::State::Block{
 
     }

@@ -93,10 +93,11 @@ impl SDLCore{
 		self.wincan.copy(hazard_texture, hazard_frame, hazard_screen_rectangle)?;
         self.wincan.present();
 
+        /*
         println!("Frame count is: {}    Frame Per State is: {}    Current Sprite is: {}    State is: {:?}",
         fighter.char_state.frame_count, fighter.char_state.frames_per_state, 
         fighter.char_state.current_frame, fighter.char_state.state);
-
+		*/
 
 
         Ok(())
