@@ -175,13 +175,11 @@ impl CharacterState {
 	
     // advancing frames
     pub fn advance_frame(&mut self) {
-    	//self.frame_count = (self.frame_count + 1) % self.frames_per_state;
-    	//println!("Current State is {}", self.state);
-    	println!("Frame count is: {}    Frame Per State is: {}    Current Frame is: {}    State is: {:?}",
-    		self.frame_count, self.frames_per_state, self.current_frame, self.state);
+		self.frame_count = (self.frame_count + 1) % (self.frames_per_state+1);
+    	
     	match self.state{
     		animation::sprites::State::Idle =>{
-    			if (self.frame_count % 6) == 0{
+    			if ((self.frame_count-1) % 6) == 0{
     				self.current_frame = (self.current_frame + 1) % 5;
     			}
     		}
@@ -191,21 +189,21 @@ impl CharacterState {
     			}
     		}
     		animation::sprites::State::Jump =>{
-    			if (self.frame_count % 5) == 0{
+    			if ((self.frame_count-1) % 5) == 0{
     				self.current_frame = (self.current_frame + 1) % 6;
     			}
     		}
     		animation::sprites::State::FJump =>{
-    			if (self.frame_count % 6) == 0{
+    			if ((self.frame_count-1) % 6) == 0{
     				self.current_frame = (self.current_frame +1 ) % 6;
     			}
     		}
     		animation::sprites::State::LPunch =>{
-    			if self.frame_count < 3 {
+    			if self.frame_count < 6 {
     				self.current_frame = 0;
-    			}else if self.frame_count < 9 {
+    			}else if self.frame_count < 11 {
     				self.current_frame = 1;
-    			}else if self.frame_count < 15 {
+    			}else if self.frame_count <= 17 {
     				self.current_frame = 2;
     			}
     		}
@@ -219,21 +217,23 @@ impl CharacterState {
     			}
     		}
     		animation::sprites::State::HKick =>{
-    			if self.frame_count < 3 {
+    			if self.frame_count < 6 {
     				self.current_frame = 0;
-    			}else if self.frame_count < 6 {
+    			}else if self.frame_count < 10{
     				self.current_frame = 1;
-    			}else if self.frame_count < 8{
-    				self.current_frame = 2;
     			}else if self.frame_count < 14{
+    				self.current_frame = 2;
+    			}else if self.frame_count < 21{
     				self.current_frame = 3;
-    			}else if self.frame_count < 18{
+    			}else if self.frame_count <= 35{
     				self.current_frame = 4
     			}
     		}
     		animation::sprites::State::Block =>{}
     	}
-    	self.frame_count = (self.frame_count + 1) % self.frames_per_state +1;
+    	//println!("Frame count is: {}    Frame Per State is: {}    Current Frame is: {}    State is: {:?}",
+    	//	self.frame_count, self.frames_per_state, self.current_frame, self.state);
+
 
     }
 	// convenience f(x)	

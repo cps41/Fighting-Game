@@ -38,9 +38,9 @@ pub fn get_frame_cnt(c: &characters::characterAbstract::CharacterState) -> i32 {
 				State::Walk 	=> { return 60; },	//6
 				State::Jump 	=> { return 30; },	//6
 				State::FJump 	=> { return 42; },	//7
-				State::LPunch 	=> { return 15; },	//3
+				State::LPunch 	=> { return 17; },	//3
 				State::LKick 	=> { return 13; },	//3
-				State::HKick 	=> { return 19; },	//5
+				State::HKick 	=> { return 35; },	//5
 				State::Block 	=> { return 1; },	//1
 			}
 }

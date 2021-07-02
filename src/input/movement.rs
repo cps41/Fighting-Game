@@ -12,15 +12,97 @@ pub enum Direction {
     Down,
 }
 
+pub fn move_char(f: &mut characters::characterAbstract::Fighter){
+    match f.char_state.state{
+        animation::sprites::State::Walk => {
+            if ((f.char_state.frame_count - 1) % 6) == 0{
+                if f.char_state.direction == Direction::Right{
+                    f.char_state.update_position(vec![f.speed, 0]);
+                }else{
+                    f.char_state.update_position(vec![-f.speed, 0]);
+                }
+            }            
+        },
+        animation::sprites::State::Jump => {
+            if ((f.char_state.frame_count -1) % 5) == 0{
+                if f.char_state.current_frame < 3{
+                    f.char_state.update_position;
+                }else if f.char_state.current_frame < 5{
+                    f.char_state.update_position(vec![0, -fighter.speed]);
+                }else if f.char_state.current_frame == 5{
+                    f.char_state.update_position(vec![0, -fighter.speed]);
+                }
+            }
+        },
+        animation::sprites::State::FJump => {},
+        _=> {},
+    }
+}
 
+/*//Jumps
+if fighter.char_state.state == animation::sprites::State::Jump ||
+   fighter.char_state.state == animation::sprites::State::FJump {
+    match &fighter.char_state.direction {
+        input::movement::Direction::Left => {
+                                if fighter.char_state.current_frame < 3 { // Note: only works since there are 6x states in Jump.
+                                    fighter.char_state.position = fighter.char_state.position.offset(-fighter.speed, -fighter.speed);
+                                } else if fighter.char_state.current_frame < 5 { // account for starting at 0
+                                    fighter.char_state.position = fighter.char_state.position.offset(-fighter.speed, 28);
+                                } else if fighter.char_state.current_frame == 5 {
+                                    fighter.char_state.position = fighter.char_state.position.offset(-fighter.speed, 0);
+                                    fighter.char_state.set_state(animation::sprites::State::Idle); 
+                                    fighter.char_state.set_current_frame(0);
+                                }
+                            },
+        input::movement::Direction::Right => {
+                                if fighter.char_state.current_frame < 4 {
+                                    fighter.char_state.position = fighter.char_state.position.offset(fighter.speed, -fighter.speed);
+                                } else if fighter.char_state.current_frame < 6 {
+                                    fighter.char_state.position = fighter.char_state.position.offset(fighter.speed, 28);
+                                } else if fighter.char_state.current_frame == 6 {
+                                    fighter.char_state.position = fighter.char_state.position.offset(fighter.speed, 28);
+                                    fighter.char_state.set_state(animation::sprites::State::Idle); 
+                                    fighter.char_state.set_current_frame(0);
+                                }
+                            },
+        input::movement::Direction::Up => {
+                                if fighter.char_state.current_frame < 3 {
+                                    fighter.char_state.position = fighter.char_state.position.offset(0, -fighter.speed);
+                                } else if fighter.char_state.current_frame < 5 { // Note: works b/c there are 6x states in jump
+                                    fighter.char_state.position = fighter.char_state.position.offset(0, 28);
+
+                                } else if fighter.char_state.current_frame == 5{
+                                    fighter.char_state.position = fighter.char_state.position.offset(0, 0);
+                                    //not sure the purpose of these, they set it so they are considered idle while still jumping
+                                    // fighter.char_state.state = animation::sprites::State::Idle;                                            
+                                    // fighter.char_state.current_frame = 0;
+                                } 
+
+                            },
+
+        input::movement::Direction::Down => (),
+     } // end direction jump match
+}  // end jump if
+*/
+
+
+
+
+
+
+
+
+/*
 pub fn walk(f: &mut characters::characterAbstract::Fighter) {
     f.char_state.set_state(animation::sprites::State::Walk);
+    /*
     match &f.char_state.direction {
         Direction::Left =>  { f.char_state.update_position(vec![-f.speed, 0]); },
         Direction::Right => { f.char_state.update_position(vec![f.speed, 0]); },
         Direction::Up => (),
         Direction::Down => (),
     }
+    */
 }
 
 pub fn jump(f: &mut characters::characterAbstract::Fighter) {
@@ -49,7 +131,7 @@ pub fn hkick(f: &mut characters::characterAbstract::Fighter) {
 pub fn lpunch(f: &mut characters::characterAbstract::Fighter) {
     f.char_state.set_state(animation::sprites::State::LPunch);
 } // close lpunch fn
-
+*/
 
 // EDIT: make functions public
 // EDIT: remove "player_"
