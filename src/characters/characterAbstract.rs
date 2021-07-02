@@ -1,5 +1,8 @@
 use crate::animation; // to reference sprite State
+use crate::animation::sprites::State;
 use crate::input; // use to reference Direction
+use crate::physics::collisions::*;
+use crate::physics::nodes::*;
 
 use sdl2::rect::{Point, Rect};
 use sdl2::render::Texture;
@@ -28,6 +31,9 @@ pub struct CharacterState {
 	pub auto_repeat: bool,
 	pub direction: input::movement::Direction,
 	pub next_state: animation::sprites::State,
+	pub hitbox: WeakLink<CollisionObject>,
+	pub hurtbox: WeakLink<CollisionObject>,
+	pub blockbox: WeakLink<CollisionObject>,
 }
 //self.current_frame = (self.current_frame + 1) % self.frames_per_state; }
 
@@ -58,7 +64,6 @@ pub struct Fighter<'t> {
     pub fastfall_multiplier: f32,
     pub shield_size: i32,
   	pub textures: HashMap<animation::sprites::State, Texture<'t>>,
-
 }
 
 impl <'t> Fighter <'t> {
@@ -88,7 +93,7 @@ impl <'t> Fighter <'t> {
 			heavy_land_lag: 2,
 			fastfall_multiplier: 1.25,
 			shield_size: 3,
-      	textures: HashMap::new(),
+      		textures: HashMap::new(),
 		}
 	} 
 	
@@ -166,13 +171,16 @@ impl CharacterState {
 			auto_repeat: true,
 			next_state: animation::sprites::State::Idle,
 			direction: input::movement::Direction::Up,
+			hitbox: None,
+			hurtbox: None,
+			blockbox: None,
 		}
 	}
 	
 	// update Point position
 	pub fn update_position(&mut self, vel: Vec<i32>) {
 		let x = (self.position.x() + vel[0]).clamp(-640+self.sprite.width() as i32/2, 640-self.sprite.width() as i32/2);
-		let y = self.position.y() + vel[1];
+		let y = self.position.y() + -vel[1];
 		self.position = Point::new(x, y);
 	} 
 	
@@ -273,6 +281,26 @@ impl CharacterState {
 			true
 		} else {
 			false
+		}
+	}
+	pub fn update_bounding_boxes(&mut self, bvh: &BVHierarchy) {
+		match &self.state {
+			State::Block => {
+				self.hitbox.take().map(|b| NodeRef(b.upgrade().unwrap()).remove());
+				self.hurtbox.take().map(|b| NodeRef(b.upgrade().unwrap()).remove());
+				self.blockbox = bvh.insert(CollisionObject::new(CollisionObjectType::BlockBox, self.x(), self.y(), 180, 280));
+			},
+			State::LPunch | State::HKick | State::LKick => {
+				self.blockbox.take().map(|b| NodeRef(b.upgrade().unwrap()).remove());
+				if let None = self.hurtbox {self.hurtbox = bvh.insert(CollisionObject::new(CollisionObjectType::BlockBox, self.x(), self.y(), 180, 280))};
+				self.hitbox.take().map(|b| NodeRef(b.upgrade().unwrap()).remove());
+				self.hitbox = bvh.insert(CollisionObject::new(CollisionObjectType::BlockBox, self.x()+70, self.y(), 90, 200));
+			},
+			_ => {
+				self.hitbox.take().map(|b| NodeRef(b.upgrade().unwrap()).remove());
+				self.blockbox.take().map(|b| NodeRef(b.upgrade().unwrap()).remove());
+				if let None = self.hurtbox {self.hurtbox = bvh.insert(CollisionObject::new(CollisionObjectType::HurtBox, self.x(), self.y(), 180, 280));}
+			},
 		}
 	}
 

@@ -57,7 +57,8 @@ impl SDLCore{
 				texture: &Texture,
 				fighter: &characters::characterAbstract::Fighter,
 				hazard: &physics::hazard::Hazard,
-				hazard_texture: &Texture
+				hazard_texture: &Texture,
+				platform: &Rect,
 				) -> Result<(), String>{
 
 		// color
@@ -91,6 +92,8 @@ impl SDLCore{
 		// copy textures
         self.wincan.copy(texture, current_frame, screen_rect)?;
 		self.wincan.copy(hazard_texture, hazard_frame, hazard_screen_rectangle)?;
+		self.wincan.set_draw_color(Color::CYAN);
+		self.wincan.fill_rect(platform.clone());
         self.wincan.present();
         Ok(())
 	} // closing render fun

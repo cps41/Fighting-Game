@@ -15,6 +15,7 @@ use sdl2::video::WindowContext;
 use std::time::{Instant, Duration}; // needed for FPS
 use std::thread;
 use std::env;
+use physics::collisions::*;
 
 pub mod characters; // for characterAbstract
 pub mod view; // for core
@@ -31,7 +32,7 @@ const TITLE: &str = "Street Code Fighter";
 const TIMEOUT: u64 = 5000;
 const CAM_W: u32 = 1280;
 const CAM_H: u32 = 720;
-const FRAME_RATE: f64 = 1.0/30.0;
+const FRAME_RATE: f64 = 1.0/60.0;
 
 // TODO: FPS constants
 // // 5px / frame @60fps == 300 px/s
@@ -58,6 +59,12 @@ pub fn run_game() -> Result<(), String>{
     let mut hazard = physics::hazard::Hazard::new();
 
     let texture_creator = game_window.wincan.texture_creator();
+
+    let platform = Rect::new(40, 620, 1200, 40);
+
+    let collisions = BVHierarchy::new(CollisionObject::new_from(CollisionObjectType::Platform, platform.clone()));
+    collisions.insert(CollisionObject::new_from(CollisionObjectType::HurtBox, hazard.sprite.clone()));
+    fighter.char_state.update_bounding_boxes(&collisions);
 
 
     //////////////////////////
@@ -110,7 +117,7 @@ pub fn run_game() -> Result<(), String>{
         // movement direction occurs here
 
         // render canvas
-        game_window.render(Color::RGB(222,222,222), &texture, &fighter, &hazard, &hazard_texture);
+        game_window.render(Color::RGB(222,222,222), &texture, &fighter, &hazard, &hazard_texture, &platform);
 
         //advance frame
         fighter.char_state.advance_frame();
@@ -165,7 +172,6 @@ pub fn run_game() -> Result<(), String>{
         // reset walking to idle
         if fighter.char_state.state == animation::sprites::State::Walk //&&
         { //  fighter.char_state.current_frame % 2 == 0 { // 3 is arbitary #
-
             fighter.char_state.set_state(animation::sprites::State::Idle); 
             fighter.char_state.set_current_frame(0);
         }
