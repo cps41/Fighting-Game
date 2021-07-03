@@ -11,6 +11,13 @@ pub fn keyboard_input(event: &Event, fighter: &mut characters::characterAbstract
                 match event {
                         Event::KeyDown{keycode: Some(k), repeat:true, ..} => {
                             match k {
+                                Keycode::Return => { input::movement::block(fighter); },
+                                _ => {},
+                            } // end match
+                        },
+                        Event::KeyDown{keycode: Some(k), repeat:false, ..} => {
+                            fighter.char_state.reset_current_frame(); // reset frames to 0 every click
+                            match k {
                                 Keycode::A => {
                                     fighter.char_state.direction = input::movement::Direction::Left; // update direction left
                                     if fighter.char_state.state != animation::sprites::State::FJump || 
