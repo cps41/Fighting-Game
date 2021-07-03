@@ -1,3 +1,4 @@
+use core::cell::RefCell;
 use crate::animation; // to reference sprite State
 use crate::animation::sprites::State;
 use crate::input; // use to reference Direction
@@ -29,9 +30,9 @@ pub struct CharacterState {
 	pub auto_repeat: bool,
 	pub direction: input::movement::Direction,
 	pub next_state: animation::sprites::State,
-	pub hitbox: WeakLink<CollisionObject>,
-	pub hurtbox: WeakLink<CollisionObject>,
-	pub blockbox: WeakLink<CollisionObject>,
+	pub hitbox: Option<RefCell<CollisionObject>>,
+	pub hurtbox: Option<RefCell<CollisionObject>>,
+	pub blockbox: Option<RefCell<CollisionObject>>,
 }
 //self.current_frame = (self.current_frame + 1) % self.frames_per_state; }
 
@@ -184,65 +185,105 @@ impl CharacterState {
 	
     // advancing frames
     pub fn advance_frame(&mut self) {
-    	//self.frame_count = (self.frame_count + 1) % self.frames_per_state;
-    	//println!("Current State is {}", self.state);
-    	// println!("Frame count is: {}    Frame Per State is: {}    Current Frame is: {}    State is: {:?}",
-    	// 	 self.frame_count, self.frames_per_state, self.current_frame, self.state);
+		self.frame_count = (self.frame_count + 1) % (self.frames_per_state+1);
+    	
     	match self.state{
     		animation::sprites::State::Idle =>{
-    			if (self.frame_count % 6) == 0{
-    				self.current_frame = (self.current_frame + 1) % 5;
+    			if self.frame_count < 7{
+    				self.current_frame = 0;
+    			}else if self.frame_count < 13 {
+    				self.current_frame = 1;
+    			}else if self.frame_count < 19 {
+    				self.current_frame = 2;
+    			}else if self.frame_count < 24 {
+    				self.current_frame = 3;
+    			}else{
+    				self.current_frame = 4;
     			}
     		}
     		animation::sprites::State::Walk =>{
-    			if (self.frame_count % 10) == 0{
-    				self.current_frame = (self.current_frame + 1) % 6;
+    			if self.frame_count < 6 {
+ 					self.current_frame = 0;
+    			}else if self.frame_count < 11{
+ 					self.current_frame = 1;
+    			}else if self.frame_count < 16{
+ 					self.current_frame = 2;
+    			}else if self.frame_count < 21{
+ 					self.current_frame = 3;
+    			}else if self.frame_count < 26{
+ 					self.current_frame = 4;
+    			}else{
+ 					self.current_frame = 5;
     			}
     		}
     		animation::sprites::State::Jump =>{
-    			if (self.frame_count % 5) == 0{
-    				self.current_frame = (self.current_frame + 1) % 6;
+    			if self.frame_count < 6{
+    				self.current_frame = 0;
+    			}else if self.frame_count < 11 {
+    				self.current_frame = 1;
+    			}else if self.frame_count < 16 {
+    				self.current_frame = 2;
+    			}else if self.frame_count < 21 {
+    				self.current_frame = 3;
+    			}else if self.frame_count < 26{
+    				self.current_frame = 4;
+    			}else{
+    				self.current_frame = 5;
     			}
     		}
     		animation::sprites::State::FJump =>{
-    			if (self.frame_count % 6) == 0{
-    				self.current_frame = (self.current_frame +1 ) % 6;
+    			if self.frame_count < 7 {
+ 					self.current_frame = 0;
+    			}else if self.frame_count < 13{
+ 					self.current_frame = 1;
+    			}else if self.frame_count < 19{
+ 					self.current_frame = 2;
+    			}else if self.frame_count < 25{
+ 					self.current_frame = 3;
+    			}else if self.frame_count < 31{
+ 					self.current_frame = 4;
+    			}else if self.frame_count < 37{
+ 					self.current_frame = 5;
+    			}else{
+    				self.current_frame = 6;
     			}
     		}
     		animation::sprites::State::LPunch =>{
-    			if self.frame_count < 3 {
+    			if self.frame_count < 6 {
     				self.current_frame = 0;
-    			}else if self.frame_count < 9 {
+    			}else if self.frame_count < 11 {
     				self.current_frame = 1;
-    			}else if self.frame_count < 15 {
+    			}else if self.frame_count <= 17 {
     				self.current_frame = 2;
     			}
     		}
     		animation::sprites::State::LKick =>{
-    			if self.frame_count < 3 {
+    			if self.frame_count < 8 {
     				self.current_frame = 0;
-    			}else if self.frame_count < 9 {
+    			}else if self.frame_count < 14  {
     				self.current_frame = 1;
-    			}else if self.frame_count < 12 {
+    			}else{
     				self.current_frame = 2;
     			}
     		}
     		animation::sprites::State::HKick =>{
-    			if self.frame_count < 3 {
+    			if self.frame_count < 6 {
     				self.current_frame = 0;
-    			}else if self.frame_count < 6 {
+    			}else if self.frame_count < 10{
     				self.current_frame = 1;
-    			}else if self.frame_count < 8{
-    				self.current_frame = 2;
     			}else if self.frame_count < 14{
+    				self.current_frame = 2;
+    			}else if self.frame_count < 21{
     				self.current_frame = 3;
-    			}else if self.frame_count < 18{
+    			}else if self.frame_count <= 35{
     				self.current_frame = 4
     			}
     		}
     		animation::sprites::State::Block =>{}
     	}
-    	self.frame_count = (self.frame_count + 1) % self.frames_per_state;
+    	//println!("Frame count is: {}    Frame Per State is: {}    Current Frame is: {}    State is: {:?}",
+    	//	self.frame_count, self.frames_per_state, self.current_frame, self.state);
+
 
     }
 	// convenience f(x)	
@@ -281,23 +322,48 @@ impl CharacterState {
 			false
 		}
 	}
+	pub fn remove(link: &mut Option<RefCell<CollisionObject>>) {
+		link.take().map(|l| {
+			l.borrow().getNodeRef().map(|n| n.remove());
+		});
+	}
+	pub fn insert_hit_box(&mut self, bvh: &BVHierarchy) {
+		CharacterState::remove(&mut self.hitbox);
+		self.hitbox = Some(bvh.insert(
+			CollisionObject::new(
+				CollisionObjectType::HitBox, self.x()+70, self.y(), 90, 200)
+		));
+	}
+	pub fn insert_hurt_box(&mut self, bvh: &BVHierarchy) {
+		CharacterState::remove(&mut self.hurtbox);
+		self.hitbox = Some(bvh.insert(
+			CollisionObject::new(
+				CollisionObjectType::HurtBox, self.x(), self.y(), 180, 280)
+		));
+	}
+	pub fn insert_block_box(&mut self, bvh: &BVHierarchy) {
+		CharacterState::remove(&mut self.blockbox);
+		self.hitbox = Some(bvh.insert(
+			CollisionObject::new(
+				CollisionObjectType::BlockBox, self.x(), self.y(), 180, 280)
+		));
+	}
 	pub fn update_bounding_boxes(&mut self, bvh: &BVHierarchy) {
 		match &self.state {
 			State::Block => {
-				self.hitbox.take().map(|b| NodeRef(b.upgrade().unwrap()).remove());
-				self.hurtbox.take().map(|b| NodeRef(b.upgrade().unwrap()).remove());
-				self.blockbox = bvh.insert(CollisionObject::new(CollisionObjectType::BlockBox, self.x(), self.y(), 180, 280));
+				CharacterState::remove(&mut self.hitbox);
+				CharacterState::remove(&mut self.hurtbox);
+				self.insert_block_box(&bvh);
 			},
 			State::LPunch | State::HKick | State::LKick => {
-				self.blockbox.take().map(|b| NodeRef(b.upgrade().unwrap()).remove());
-				if let None = self.hurtbox {self.hurtbox = bvh.insert(CollisionObject::new(CollisionObjectType::BlockBox, self.x(), self.y(), 180, 280))};
-				self.hitbox.take().map(|b| NodeRef(b.upgrade().unwrap()).remove());
-				self.hitbox = bvh.insert(CollisionObject::new(CollisionObjectType::BlockBox, self.x()+70, self.y(), 90, 200));
+				CharacterState::remove(&mut self.blockbox);
+				CharacterState::remove(&mut self.hurtbox);
+				self.insert_hit_box(&bvh);
 			},
 			_ => {
-				self.hitbox.take().map(|b| NodeRef(b.upgrade().unwrap()).remove());
-				self.blockbox.take().map(|b| NodeRef(b.upgrade().unwrap()).remove());
-				if let None = self.hurtbox {self.hurtbox = bvh.insert(CollisionObject::new(CollisionObjectType::HurtBox, self.x(), self.y(), 180, 280));}
+				CharacterState::remove(&mut self.hitbox);
+				CharacterState::remove(&mut self.blockbox);
+				self.insert_hurt_box(&bvh);
 			},
 		}
 		bvh.resolve_collisions();

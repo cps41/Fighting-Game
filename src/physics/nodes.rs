@@ -101,6 +101,7 @@ impl NodeRef<CollisionObject> {
     pub fn replace(&self, other: &NodeRef<CollisionObject>) {
         // std::mem::swap(self.0.deref().replace(), &mut otherbv.borrow_mut().deref_mut());
         self.getMut().bv = other.getMut().bv.take();
+		self.get().bv.as_ref().unwrap().borrow_mut().noderef = Some(Rc::downgrade(&self.0));
         self.getMut().left.take();
         self.getMut().right.take();
         self.calculateArea();
@@ -154,13 +155,6 @@ impl NodeRef<CollisionObject> {
 		NodeRef(self.get().left.as_ref().unwrap().clone())
 	}
 
-	pub fn getRightChildWeak(&self) -> WeakLink<CollisionObject> {
-		match &self.get().right {
-       		Some(p) => Some(Rc::downgrade(p)),
-			None => None
-		}
-	}
-
 	pub fn getRightChild(&self) -> NodeRef<CollisionObject> {
 		NodeRef(self.get().right.as_ref().unwrap().clone())
 	}
@@ -183,15 +177,17 @@ impl NodeRef<CollisionObject> {
 			else {return count;}
 		}
 
-		else {
+		else if !self.get().isLeaf() {
 			let count = self.collidingWith(self.getLeftChild(), potential, limit);
 
 			if limit > count {
-				return count + self.collidingWith(self.getLeftChild(), potential, limit);
+				return count + self.collidingWith(self.getRightChild(), potential, limit);
 			}
 
 			else {return count;}
 		}
+
+		else {return 0;}
 	}
 
 	pub fn getPotentialCollsions(&self, potential: &mut Vec<PotentialCollision>, limit: i32) -> i32{
@@ -199,7 +195,7 @@ impl NodeRef<CollisionObject> {
 		self.getLeftChild().collidingWith(self.getRightChild(), potential, limit)
 	}
 
-	pub fn insert(&self, new_obj: CollisionObject) -> WeakLink<CollisionObject> {
+	pub fn insert(&self, new_obj: CollisionObject) -> RefCell<CollisionObject> {
         let leaf = {self.get().isLeaf()};
 		if leaf {
             if leaf { // to deal w lifetime stuff
@@ -210,7 +206,9 @@ impl NodeRef<CollisionObject> {
             }
             self.calculateArea();
             // (Rc::downgrade(&Rc::new(self.getLeftChild())), Rc::downgrade(&Rc::new(self.getRightChild())))
-            self.getRightChildWeak()
+			self.getRightChild().get().bv.as_ref().unwrap().borrow_mut().noderef = Some(Rc::downgrade(&self.0));
+			println!("Inserted {:?}", self.getRightChild());
+            self.getRightChild().borrowbv()
 		}
 
 		else {
@@ -226,6 +224,7 @@ impl NodeRef<CollisionObject> {
 	}
 
 	pub fn remove(&self) {
+		println!("Removing {:?}", self);
 		if let Some(parent) = self.getParent() {
 			if is(&parent.getLeftChild().0, &self.0) {
                 parent.replace(&parent.getRightChild());

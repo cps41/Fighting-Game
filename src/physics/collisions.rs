@@ -12,7 +12,7 @@ impl BVHierarchy {
 	pub fn new(co: CollisionObject) -> BVHierarchy {
 		BVHierarchy{ head: NodeRef::new(co) }
 	}
-	pub fn insert(&self, co: CollisionObject) -> WeakLink<CollisionObject> {
+	pub fn insert(&self, co: CollisionObject) -> RefCell<CollisionObject> {
 		self.head.insert(co)
 	}
 	pub fn resolve_collisions(&self) {
@@ -94,34 +94,44 @@ impl Area for Rect {
 	}
 }
 
-#[derive(Copy, Clone, Debug, PartialEq)]
+#[derive(Clone, Debug)]
 pub struct CollisionObject {
     pub obj_type: CollisionObjectType,
 	pub area: u32,
     pub rect: Rect,
+	pub noderef: WeakLink<CollisionObject>,
 }
 
 impl CollisionObject {
     pub fn new(obj_type: CollisionObjectType, x: i32, y: i32, width: u32, height: u32) -> CollisionObject {
         let rect = Rect::new(x, y, width, height);
 		let area = rect.area();
+		let noderef: WeakLink<CollisionObject> = None;
 
         CollisionObject {
             obj_type,
 			area,
             rect,
+			noderef,
         }
     }
     pub fn new_from(obj_type: CollisionObjectType, rect: Rect) -> CollisionObject {
 		let area = rect.area();
+		let noderef: WeakLink<CollisionObject> = None;
 
         CollisionObject {
             obj_type,
 			area,
             rect,
+			noderef,
         }
     }
-
+	pub fn getNodeRef(&self) -> Option<NodeRef<CollisionObject>> {
+		match &self.noderef {
+       		Some(p) => p.upgrade().map(|u| NodeRef(u)),
+			None => None
+		}
+	}
 	pub fn update(&mut self, position: Point) {
 		self.rect.reposition(position);
 	}
@@ -137,12 +147,14 @@ trait Unbox<T> {
 
 impl Node<CollisionObject> {
 	pub fn new(parent: WeakLink<CollisionObject>, bv: CollisionObject) -> Self {
+		let area = bv.rect.clone();
+		let bv = boxUp(bv);
 		Node{
 			parent: parent,
 			left: None,
 			right: None,
-			bv: boxUp(bv),
-			area: bv.rect,
+			bv: bv,
+			area: area,
 		}
 	}
 
@@ -153,18 +165,17 @@ impl Node<CollisionObject> {
 		else {true}
 	}
 
-	pub fn detatch(&mut self) {
-		let parent = self.parent.take();
-		let left = self.left.take();
-		let right = self.right.take();
-	}
+	// pub fn detatch(&mut self) {
+	// 	let parent = self.parent.take();
+	// 	let left = self.left.take();
+	// 	let right = self.right.take();
+	// }
 }
 
 
 #[cfg(test)]
 mod test {
-	use std::rc::Rc;
-use super::*;
+	use super::*;
 
 	#[test]
 	fn testCollide() {
@@ -234,9 +245,8 @@ use super::*;
 		let co3 = CollisionObject::new(CollisionObjectType::HitBox, 20, 20, 2, 2);
 		let node = NodeRef::new(co1.clone());
 		node.insert(co2.clone());
-		let nodec3 = node.insert(co3.clone());
-		let removed = NodeRef(nodec3.unwrap().upgrade().unwrap());
-		removed.remove();
+		let mut nodec3 = node.insert(co3.clone());
+		nodec3.remove();
 
 		assert_eq!(node.getLeftChild().get().bv.as_ref().unwrap(), &RefCell::new(co1.clone()));
 		assert_eq!(node.getRightChild().get().bv.as_ref().unwrap(), &RefCell::new(co2.clone()));

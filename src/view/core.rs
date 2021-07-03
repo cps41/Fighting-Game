@@ -95,6 +95,14 @@ impl SDLCore{
 		self.wincan.set_draw_color(Color::CYAN);
 		self.wincan.fill_rect(platform.clone());
         self.wincan.present();
+
+        /*
+        println!("Frame count is: {}    Frame Per State is: {}    Current Sprite is: {}    State is: {:?}",
+        fighter.char_state.frame_count, fighter.char_state.frames_per_state, 
+        fighter.char_state.current_frame, fighter.char_state.state);
+		*/
+
+
         Ok(())
 	} // closing render fun
 /*

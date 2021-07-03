@@ -1,10 +1,108 @@
 use sdl2::event::Event;
 use sdl2::EventPump;
 use sdl2::keyboard::Keycode;
+use std::collections::HashSet;
 use crate::characters; // use to get get acces to Fighter struct
 use crate::input; // add to use stuff in movement
 use crate::animation; // used to get States
 
+
+pub fn keyboard_input(player_input: &HashSet<Keycode>, fighter: &mut characters::characterAbstract::Fighter){
+    //if character animation is over, reset to idle
+    if fighter.char_state.frame_count == animation::sprites::get_frame_cnt(&fighter.char_state){
+        fighter.char_state.set_state(animation::sprites::State::Idle);
+        fighter.char_state.reset_current_frame();
+        fighter.char_state.direction = input::movement::Direction::Up;        
+    }
+
+    //inputs accepted while idle
+    if fighter.char_state.state ==  animation::sprites::State::Idle
+       && !player_input.is_empty(){
+        for pressed in player_input.iter(){
+            match pressed{
+                Keycode::A =>       {fighter.char_state.direction = input::movement::Direction::Left;
+                                     fighter.char_state.set_state(animation::sprites::State::Walk);
+                                     fighter.char_state.reset_current_frame();   
+                                     break;},
+                Keycode::D =>       {fighter.char_state.direction = input::movement::Direction::Right;
+                                     fighter.char_state.set_state(animation::sprites::State::Walk);    
+                                     fighter.char_state.reset_current_frame();   
+                                     break;},
+                Keycode::Return =>  {fighter.char_state.set_state(animation::sprites::State::Block);    
+                                     fighter.char_state.reset_current_frame();   
+                                     break;},
+                Keycode::W =>       {fighter.char_state.set_state(animation::sprites::State::Jump);    
+                                     fighter.char_state.reset_current_frame();   
+                                     break;},
+                Keycode::J =>       {fighter.char_state.set_state(animation::sprites::State::LKick);    
+                                     fighter.char_state.reset_current_frame();   
+                                     break;},
+                Keycode::I =>       {fighter.char_state.set_state(animation::sprites::State::HKick);    
+                                     fighter.char_state.reset_current_frame();   
+                                     break;},
+                Keycode::K =>       {fighter.char_state.set_state(animation::sprites::State::LPunch);    
+                                     fighter.char_state.reset_current_frame();   
+                                     break;},
+                _=> {},
+            }
+        }
+    //inputs accepted while walking
+    }else if fighter.char_state.state == animation::sprites::State::Walk{
+        //if no longer holding down, stop walking
+        if player_input.is_empty(){
+            fighter.char_state.direction = input::movement::Direction::Up;
+            fighter.char_state.set_state(animation::sprites::State::Idle); 
+            fighter.char_state.reset_current_frame();
+        }else{
+            //inputs that intterupt walk
+            for pressed in player_input.iter(){
+                match pressed{
+                    Keycode::Return =>  {fighter.char_state.set_state(animation::sprites::State::Block);   
+                                         fighter.char_state.reset_current_frame();   
+                                         return;},
+                    Keycode::W =>       {if fighter.char_state.direction == input::movement::Direction::Right{
+                                            fighter.char_state.set_state(animation::sprites::State::FJump);
+                                         }else{
+                                             fighter.char_state.set_state(animation::sprites::State::Jump);
+                                         }
+                                         fighter.char_state.reset_current_frame();
+                                         return;},
+                    Keycode::J =>       {fighter.char_state.set_state(animation::sprites::State::LKick);   
+                                         fighter.char_state.reset_current_frame();   
+                                         return;},
+                    Keycode::I =>       {fighter.char_state.set_state(animation::sprites::State::HKick);
+                                         fighter.char_state.reset_current_frame();   
+                                         return;},
+                    Keycode::K =>       {fighter.char_state.set_state(animation::sprites::State::LPunch);
+                                         fighter.char_state.reset_current_frame();   
+                                         return;},
+                    _=> {},            
+                }
+                //if not trying to interrupt, keep walking
+                if fighter.char_state.direction == input::movement::Direction::Right {
+                    if player_input.contains(&Keycode::A){
+                        fighter.char_state.direction = input::movement::Direction::Left;
+                    }else{
+                        fighter.char_state.direction = input::movement::Direction::Right;
+                    }
+                }else if fighter.char_state.direction == input::movement::Direction::Left {
+                    if player_input.contains(&Keycode::D){
+                        fighter.char_state.direction = input::movement::Direction::Right;
+                    }else{
+                        fighter.char_state.direction = input::movement::Direction::Left;
+                    }
+                }
+
+            }
+        }
+    //TODO: handle block intterupts
+    }else if fighter.char_state.state == animation::sprites::State::Block{
+
+    }
+}
+
+
+/*
 pub fn keyboard_input(event: &Event, fighter: &mut characters::characterAbstract::Fighter) {
 
             // if !fighter.char_state.isMoving() {
@@ -20,10 +118,13 @@ pub fn keyboard_input(event: &Event, fighter: &mut characters::characterAbstract
                                 },
                                 Keycode::D => {
                                     fighter.char_state.direction = input::movement::Direction::Right; // update direction right 
+                                    input::movement::walk(fighter);
+                                    /*
                                     if fighter.char_state.state != animation::sprites::State::FJump || 
                                     fighter.char_state.state != animation::sprites::State::Jump { // if we're idle, then walk
                                         input::movement::walk(fighter); // character walks right
                                     }
+                                    */
                                 },
                                 Keycode::W => { 
                                     if (fighter.char_state.state != animation::sprites::State::FJump && 
@@ -45,6 +146,7 @@ pub fn keyboard_input(event: &Event, fighter: &mut characters::characterAbstract
                 } // close match event
             // } // close if stmt
 } // close fn
+*/
 
 // *** ALL POSSIBLE KEYCODES AVAILABLE FOR KeyEvent *** //
 // https://docs.rs/sdl2/0.9.0/sdl2/keyboard/enum.Keycode.html //
