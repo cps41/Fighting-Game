@@ -10,15 +10,16 @@ pub struct Particle {
 }
 
 impl Particle {
-    pub fn new(position: PhysVec, velocity: PhysVec, acceleration: PhysVec, damping: f32, mass: f32, force_accumulator: PhysVec) -> Self {
+    pub fn new(position: PhysVec, damping: f32, mass: f32) -> Self {
+        let zero = PhysVec::new(0f32, 0f32);
         let inverse_mass = 1f32/mass;
         Particle {
             position,
-            velocity,
-            acceleration,
+            velocity: zero.clone(),
+            acceleration: zero.clone(),
             damping,
             inverse_mass,
-            force_accumulator,
+            force_accumulator: zero.clone(),
         }
     }
     /*
@@ -28,7 +29,7 @@ impl Particle {
         x += v*t
     */
     pub fn update_position(&mut self, time: f32) {
-        self.position.addScalarProduct(&mut self.velocity, time); // x += v*t
+        self.position.add_scaled_product(&mut self.velocity, time); // x += v*t
     }
     /*
         Integrater to move the particle forward in time via the Newton-Euler method.
@@ -39,14 +40,18 @@ impl Particle {
 
         // update linear position
         self.update_position(duration);
+        println!("position: {:?}", self.position);
         // calculate acceleration
-        let mut acceleration = self.acceleration.clone();
-        acceleration.addScalarProduct(&self.force_accumulator, self.inverse_mass); // a += F/m
+        self.acceleration.add_scaled_product(&self.force_accumulator, self.inverse_mass); // a += F/m
+        println!("acceleration: {:?}", self.acceleration);
         // update linear velocity based on new acceleration
-        self.velocity.addScalarProduct(&acceleration, duration);
+        self.velocity.add_scaled_product(&self.acceleration, duration);
+        println!("velocity: {:?}", self.velocity);
         // account for drag
         let drag = self.damping.powf(duration);
-        self.velocity.replace(&self.velocity.add(&PhysVec::new(drag, drag)));
+        println!("drag: {:?}", drag);
+        self.velocity.dot_replace(drag);
+        println!("velocity again: {:?}", self.velocity);
         // reset force accumulator
         self.clear_forces();
     }
@@ -57,6 +62,70 @@ impl Particle {
     }
     // Add force to the accumulator
     pub fn add_force(&mut self, force: &PhysVec) {
-        self.force_accumulator.replace(&self.force_accumulator.add(&force));
+        self.force_accumulator.add_vec(force);
+    }
+}
+
+#[cfg(test)]
+pub mod test {
+    use super::*;
+
+    #[test]
+    pub fn testInit() {
+        let zero = PhysVec::new(0f32, 0f32);
+        let p = Particle::new(zero.clone(), 1f32, 5f32);
+
+        assert_eq!(p.position, zero);
+        assert_eq!(p.acceleration, zero);
+        assert_eq!(p.velocity, zero);
+        assert_eq!(p.force_accumulator, zero);
+        assert_eq!(p.damping, 1f32);
+        assert_eq!(p.inverse_mass, 0.2);
+    }
+
+    #[test]
+    pub fn testAddForce() {
+        let zero = PhysVec::new(0f32, 0f32);
+        let mut p = Particle::new(zero.clone(), 1f32, 5f32);
+        let force1 = PhysVec::new(5f32, 7f32);
+        let force2 = PhysVec::new(2f32, 2f32);
+        p.add_force(&force1);
+
+        assert_eq!(p.force_accumulator, force1);
+
+        p.add_force(&force2);
+
+        assert_eq!(p.force_accumulator, PhysVec::new(7f32, 9f32));
+    }
+
+    #[test]
+    pub fn testClearForce() {
+        let zero = PhysVec::new(0f32, 0f32);
+        let mut p = Particle::new(zero.clone(), 1f32, 5f32);
+        let force1 = PhysVec::new(5f32, 7f32);
+        let force2 = PhysVec::new(2f32, 2f32);
+        p.add_force(&force1);
+        p.add_force(&force2);
+        p.clear_forces();
+
+        assert_eq!(p.force_accumulator, zero);
+    }
+
+    #[test]
+    pub fn testIntegrate() {
+        let zero = PhysVec::new(0f32, 0f32);
+        let one = PhysVec::new(1f32, 1f32);
+        let mut p = Particle::new(zero.clone(), 0.5f32, 2f32);
+        let force1 = PhysVec::new(5f32, 7f32);
+        let force2 = PhysVec::new(2f32, 2f32);
+        p.velocity.replace(&one);
+        p.add_force(&force1);
+        p.add_force(&force2);
+        p.integrate(1f32);
+
+        assert_eq!(p.position, one);
+        assert_eq!(p.acceleration, PhysVec::new(3.5, 4.5));
+        assert_eq!(p.velocity, PhysVec::new(2.25, 2.75));
+        assert_eq!(p.force_accumulator, zero);
     }
 }

@@ -1,4 +1,4 @@
-#[derive(Clone)]
+#[derive(Clone, PartialEq, Debug)]
 pub struct PhysVec{pub x: f32, pub y: f32}
 
 impl PhysVec {
@@ -80,10 +80,18 @@ impl PhysVec {
         x*xp+y*yp
     }
     // calculate scalar product, add product to self, store
-    pub fn addScalarProduct(&mut self, other: &PhysVec, scale: f32) {
+    pub fn add_scaled_product(&mut self, other: &PhysVec, scale: f32) {
         let mut mutCopy = other.clone();
         mutCopy.dot_replace(scale); // other*scale
-        self.replace(&self.add(&mutCopy)) // self = self+(other*scale)
+        self.add_vec(&mutCopy); // self = self+(other*scale)
+    }
+    // add vector to self and store
+    pub fn add_vec(&mut self, other: &PhysVec) {
+        self.replace(&self.add(&other));
+    }
+    // add vector to self and store
+    pub fn add_scalar(&mut self, scalar: f32) {
+        self.replace(&self.add(&PhysVec::new(scalar, scalar)));
     }
 }
 
@@ -124,5 +132,26 @@ mod test {
     pub fn testMagnitude() {
         let mut vec = PhysVec::new(4f32, 0f32);
         assert_eq!(vec.magnitude(), 4f32);
+    }
+
+    #[test]
+    pub fn testAddScalar() {
+        let mut vec = PhysVec::new(4f32, 0f32);
+        vec.add_scalar(5.5);
+        assert_eq!(vec.raw(), (9.5, 5.5));
+    }
+
+    #[test]
+    pub fn testScalarProduct() {
+        let mut vec = PhysVec::new(4f32, 0f32);
+        let res = vec.scalar_product(&PhysVec::new(3f32,3f32));
+        assert_eq!(res, 12f32);
+    }
+
+    #[test]
+    pub fn testAddScalarProduct() {
+        let mut vec = PhysVec::new(4f32, 0f32);
+        vec.add_scaled_product(&PhysVec::new(3f32,3f32), 2f32);
+        assert_eq!(vec.raw(), (10f32, 6f32));
     }
 }
