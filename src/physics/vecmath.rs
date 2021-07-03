@@ -1,3 +1,4 @@
+#[derive(Clone)]
 pub struct PhysVec{x: f32, y: f32}
 
 impl PhysVec {
@@ -39,7 +40,7 @@ impl PhysVec {
         }
     }
     // replace values
-    pub fn replace(&mut self, other: PhysVec) {
+    pub fn replace(&mut self, other: &PhysVec) {
         self.x = other.x;
         self.y = other.y;
     }
@@ -50,33 +51,39 @@ impl PhysVec {
     }
     // perform magnitude product and place values into self
     pub fn dot_replace(&mut self, scalar: f32) {
-        self.replace(self.dot_product(scalar));
+        self.replace(&self.dot_product(scalar));
     }
     // multiply components
-    pub fn component_product(&self, other: PhysVec) -> PhysVec {
+    pub fn component_product(&self, other: &PhysVec) -> PhysVec {
         let (x, y) = self.raw();
         let (xp, yp) = other.raw();
         PhysVec{x: x*xp, y: y*yp}    
     }
     // perform component product and place values into self
-    pub fn component_replace(&mut self, other: PhysVec) {
-        self.replace(self.component_product(other));
+    pub fn component_replace(&mut self, other: &PhysVec) {
+        self.replace(&self.component_product(&other));
     }
     // perform vector addition
-    pub fn add(&self, other: PhysVec) -> PhysVec {
+    pub fn add(&self, other: &PhysVec) -> PhysVec {
         let (x, y) = self.raw();
         let (xp, yp) = other.raw();
         PhysVec{x: x+xp, y: y+yp}
     }
     // perform vector subtraction
-    pub fn sub(&self, other: PhysVec) -> PhysVec {
-        self.add(other.invert())
+    pub fn sub(&self, other: &PhysVec) -> PhysVec {
+        self.add(&other.invert())
     }
     // calculate scalar product
-    pub fn scalar_product(&self, other: PhysVec) -> f32 {
+    pub fn scalar_product(&self, other: &PhysVec) -> f32 {
         let (x, y) = self.raw();
         let (xp, yp) = other.raw();
         x*xp+y*yp
+    }
+    // calculate scalar product, add product to self, store
+    pub fn addScalarProduct(&mut self, other: &PhysVec, scale: f32) {
+        let mut mutCopy = other.clone();
+        mutCopy.dot_replace(scale); // other*scale
+        self.replace(&self.add(&mutCopy)) // self = self+(other*scale)
     }
 }
 
@@ -102,14 +109,14 @@ mod test {
     #[test]
     pub fn testAdd() {
         let mut vec = PhysVec::new(0f32, 0f32);
-        let add = vec.add(PhysVec::new(4.3, 7.987));
+        let add = vec.add(&PhysVec::new(4.3, 7.987));
         assert_eq!(add.raw(), (4.3, 7.987));
     }
 
     #[test]
     pub fn testSub() {
         let mut vec = PhysVec::new(0f32, 0f32);
-        let sub = vec.sub(PhysVec::new(4.3, 7.987));
+        let sub = vec.sub(&PhysVec::new(4.3, 7.987));
         assert_eq!(sub.raw(), (-4.3, -7.987));
     }
 
