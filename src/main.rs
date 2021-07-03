@@ -47,8 +47,12 @@ pub fn run_game() -> Result<(), String>{
 
     // Creating initial character state
     let fighter = characters::characterAbstract::CharacterState::new();
+    let fighter2 = characters::characterAbstract::CharacterState::new();
 
     let mut fighter = characters::characterAbstract::Fighter::new(fighter);
+    let mut fighter2 = characters::characterAbstract::Fighter::new(fighter2);
+    //this is just to make fighter2 spawn a little to the right of fighter
+    fighter2.char_state.position = fighter.char_state.position + Point::new(300, 0);
 
     let mut hazard = physics::hazard::Hazard::new();
 
@@ -91,7 +95,13 @@ pub fn run_game() -> Result<(), String>{
             _=> panic!("No texture found for the state! Oh nos."),
         }
     };
-    game_window.render(Color::RGB(222,222,222), &texture, &fighter, &hazard, &hazard_texture);
+    let texture2 = {
+        match python_textures.get(&fighter2.char_state.state) {
+            Some(text) => text,
+            _=> panic!("No texture found for the state! Oh nos."),
+        }
+    };
+    game_window.render(Color::RGB(222,222,222), &texture, &fighter, &texture2, &fighter2, &hazard, &hazard_texture);
 
 
 //################################################-GAME-LOOP###############################################
@@ -121,9 +131,11 @@ pub fn run_game() -> Result<(), String>{
         
         //select frame to be rendered
         fighter.char_state.advance_frame();
+        fighter2.char_state.advance_frame();
         
         //move character based on current frame
         input::movement::move_char(&mut fighter);
+        input::movement::move_char(&mut fighter2);
 
         //##########-PROCESS-COLLISIONS-HERE-##########
 
@@ -138,9 +150,15 @@ pub fn run_game() -> Result<(), String>{
                 _=> panic!("No texture found for the state! Oh nos."),
             }
         };
+        let texture2 = {
+            match python_textures.get(&fighter2.char_state.state) {
+                Some(text) => text,
+                _=> panic!("No texture found for the state! Oh nos."),
+            }
+        };
 
         // render canvas
-        game_window.render(Color::RGB(222,222,222), &texture, &fighter, &hazard, &hazard_texture);
+        game_window.render(Color::RGB(222,222,222), &texture, &fighter, &texture2, &fighter2, &hazard, &hazard_texture);
     //##################################################-SLEEP-############################################        
         thread::sleep(frame_time - loop_time.elapsed().clamp(Duration::new(0, 0), frame_time));
     }
