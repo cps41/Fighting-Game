@@ -14,12 +14,6 @@ pub fn main() -> Result<(), String>{
     // BINDING
     let socket = UdpSocket::bind(&server_addresses[..]).expect("couldn't bind to address");
 
-    // THREADS? Not sure if we need?
-    // thread::spawn(move || { // standard thread stuff
-    //     // some work here
-
-    // });
-
     // LISTENING
     'listening: loop { // listening loop
 
