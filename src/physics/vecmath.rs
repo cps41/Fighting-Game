@@ -1,5 +1,5 @@
 #[derive(Clone)]
-pub struct PhysVec{x: f32, y: f32}
+pub struct PhysVec{pub x: f32, pub y: f32}
 
 impl PhysVec {
     /*
