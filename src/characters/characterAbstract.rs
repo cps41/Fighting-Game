@@ -300,6 +300,7 @@ impl CharacterState {
 				if let None = self.hurtbox {self.hurtbox = bvh.insert(CollisionObject::new(CollisionObjectType::HurtBox, self.x(), self.y(), 180, 280));}
 			},
 		}
+		bvh.resolve_collisions();
 	}
 
 }
