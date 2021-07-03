@@ -15,7 +15,7 @@ use sdl2::video::WindowContext;
 use std::time::{Instant, Duration}; // needed for FPS
 use std::thread;
 use std::env;
-use crate::physics::collisions::*;
+use physics::collisions::{BVHierarchy, CollisionObject, CollisionObjectType};
 
 pub mod characters; // for characterAbstract
 pub mod view; // for core
