@@ -1,8 +1,6 @@
 use crate::animation; // to reference sprite State
 use crate::animation::sprites::State;
 use crate::input; // use to reference Direction
-use crate::physics::collisions::*;
-use crate::physics::nodes::*;
 
 use sdl2::rect::{Point, Rect};
 use sdl2::render::Texture;
