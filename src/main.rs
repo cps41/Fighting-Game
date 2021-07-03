@@ -62,10 +62,6 @@ pub fn run_game() -> Result<(), String>{
 
     let platform = Rect::new(40, 620, 1200, 40);
 
-    let collisions = BVHierarchy::new(CollisionObject::new_from(CollisionObjectType::Platform, platform.clone()));
-    collisions.insert(CollisionObject::new_from(CollisionObjectType::HurtBox, hazard.sprite.clone()));
-    fighter.char_state.update_bounding_boxes(&collisions);
-
 
     //////////////////////////
     // FUNCTIONING
@@ -99,6 +95,10 @@ pub fn run_game() -> Result<(), String>{
 
     //game loop
     'gameloop: loop{
+        let collisions = BVHierarchy::new(CollisionObject::new_from(CollisionObjectType::Platform, platform.clone()));
+        collisions.insert(CollisionObject::new_from(CollisionObjectType::HurtBox, hazard.sprite.clone()));
+        fighter.char_state.update_bounding_boxes(&collisions);
+
         let loop_time = Instant::now();
 
         for event in game_window.event_pump.poll_iter() {
