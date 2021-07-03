@@ -4,6 +4,9 @@ use crate::input; // use to reference Direction
 use sdl2::rect::{Point, Rect};
 use sdl2::render::Texture;
 use std::collections::HashMap;
+use crate::physics::collisions::*;
+use crate::physics::vecmath::*;
+use crate::physics::nodes::*;
 
 // Enums 
 // defines optional Characters
