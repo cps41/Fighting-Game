@@ -25,27 +25,6 @@ pub fn keyboard_input(event: &Event, fighter: &mut characters::characterAbstract
                                         input::movement::walk(fighter); // character walks right
                                     }
                                 },
-                                Keycode::Return => { input::movement::block(fighter); },
-                                _ => {},
-                            } // end match
-                        },
-                        Event::KeyDown{keycode: Some(k), repeat:false, ..} => {
-                            fighter.char_state.reset_current_frame(); // reset frames to 0 every click
-                            match k {
-                                Keycode::A => {
-                                    fighter.char_state.direction = input::movement::Direction::Left; // update direction left
-                                    if fighter.char_state.state != animation::sprites::State::FJump || 
-                                       fighter.char_state.state != animation::sprites::State::Jump { // if we're idle, then walk
-                                        input::movement::walk(fighter); // character walks left
-                                    }
-                                },
-                                Keycode::D => {
-                                    fighter.char_state.direction = input::movement::Direction::Right; // update direction right 
-                                    if fighter.char_state.state != animation::sprites::State::FJump || 
-                                    fighter.char_state.state != animation::sprites::State::Jump { // if we're idle, then walk
-                                        input::movement::walk(fighter); // character walks right
-                                    }
-                                },
                                 Keycode::W => { 
                                     if (fighter.char_state.state != animation::sprites::State::FJump && 
                                         fighter.char_state.state != animation::sprites::State::Jump) {
