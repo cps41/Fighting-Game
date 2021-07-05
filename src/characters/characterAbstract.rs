@@ -1,4 +1,6 @@
+use core::cell::RefCell;
 use crate::animation; // to reference sprite State
+use crate::animation::sprites::State;
 use crate::input; // use to reference Direction
 
 use sdl2::rect::{Point, Rect};
@@ -27,7 +29,10 @@ pub struct CharacterState {
 	pub sprite: Rect,
 	pub auto_repeat: bool,
 	pub direction: input::movement::Direction,
-	pub next_state: animation::sprites::State,	
+	pub next_state: animation::sprites::State,
+	pub hitbox: Option<RefCell<CollisionObject>>,
+	pub hurtbox: Option<RefCell<CollisionObject>>,
+	pub blockbox: Option<RefCell<CollisionObject>>,
 }
 //self.current_frame = (self.current_frame + 1) % self.frames_per_state; }
 
@@ -58,7 +63,6 @@ pub struct Fighter<'t> {
     pub fastfall_multiplier: f32,
     pub shield_size: i32,
   	pub textures: HashMap<animation::sprites::State, Texture<'t>>,
-
 }
 
 impl <'t> Fighter <'t> {
@@ -88,7 +92,7 @@ impl <'t> Fighter <'t> {
 			heavy_land_lag: 2,
 			fastfall_multiplier: 1.25,
 			shield_size: 3,
-      	textures: HashMap::new(),
+      		textures: HashMap::new(),
 		}
 	} 
 	
@@ -166,13 +170,16 @@ impl CharacterState {
 			auto_repeat: true,
 			next_state: animation::sprites::State::Idle,
 			direction: input::movement::Direction::Up,
+			hitbox: None,
+			hurtbox: None,
+			blockbox: None,
 		}
 	}
 	
 	// update Point position
 	pub fn update_position(&mut self, vel: Vec<i32>) {
 		let x = (self.position.x() + vel[0]).clamp(-640+self.sprite.width() as i32/2, 640-self.sprite.width() as i32/2);
-		let y = self.position.y() + vel[1];
+		let y = self.position.y() + -vel[1];
 		self.position = Point::new(x, y);
 	} 
 	
@@ -299,7 +306,7 @@ impl CharacterState {
 																	  // println!("s: {:?}, cf: {}", self.state, self.current_frame);
 																	}
 	pub fn set_current_frame(&mut self, i: i32)						{ self.current_frame = (self.current_frame + i) % self.frames_per_state; } // need to stay within # of frames
-	pub fn reset_frame_count(&mut self)								{self.frame_count = 0}
+	pub fn reset_frame_count(&mut self)								{ self.frame_count = 0}
 	pub fn set_sprite(&mut self, r: Rect)							{ self.sprite = r; }
 	pub fn set_auto_repeat(&mut self, b: bool)						{ self.auto_repeat = b; }
 	pub fn set_next_state(&mut self, s: animation::sprites::State)	{ self.next_state = s; }
@@ -314,6 +321,52 @@ impl CharacterState {
 		} else {
 			false
 		}
+	}
+	pub fn remove(link: &mut Option<RefCell<CollisionObject>>) {
+		link.take().map(|l| {
+			l.borrow().getNodeRef().map(|n| n.remove());
+		});
+	}
+	pub fn insert_hit_box(&mut self, bvh: &BVHierarchy) {
+		CharacterState::remove(&mut self.hitbox);
+		self.hitbox = Some(bvh.insert(
+			CollisionObject::new(
+				CollisionObjectType::HitBox, self.x()+70, self.y(), 90, 200)
+		));
+	}
+	pub fn insert_hurt_box(&mut self, bvh: &BVHierarchy) {
+		CharacterState::remove(&mut self.hurtbox);
+		self.hitbox = Some(bvh.insert(
+			CollisionObject::new(
+				CollisionObjectType::HurtBox, self.x(), self.y(), 180, 280)
+		));
+	}
+	pub fn insert_block_box(&mut self, bvh: &BVHierarchy) {
+		CharacterState::remove(&mut self.blockbox);
+		self.hitbox = Some(bvh.insert(
+			CollisionObject::new(
+				CollisionObjectType::BlockBox, self.x(), self.y(), 180, 280)
+		));
+	}
+	pub fn update_bounding_boxes(&mut self, bvh: &BVHierarchy) {
+		match &self.state {
+			State::Block => {
+				CharacterState::remove(&mut self.hitbox);
+				CharacterState::remove(&mut self.hurtbox);
+				self.insert_block_box(&bvh);
+			},
+			State::LPunch | State::HKick | State::LKick => {
+				CharacterState::remove(&mut self.blockbox);
+				CharacterState::remove(&mut self.hurtbox);
+				self.insert_hit_box(&bvh);
+			},
+			_ => {
+				CharacterState::remove(&mut self.hitbox);
+				CharacterState::remove(&mut self.blockbox);
+				self.insert_hurt_box(&bvh);
+			},
+		}
+		bvh.resolve_collisions();
 	}
 
 }

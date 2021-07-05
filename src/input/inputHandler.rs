@@ -126,13 +126,6 @@ pub fn keyboard_input(event: &Event, fighter: &mut characters::characterAbstract
                                     }
                                     */
                                 },
-                                Keycode::Return => { input::movement::block(fighter); },
-                                _ => {},
-                            } // end match
-                        },
-                        Event::KeyDown{keycode: Some(k), repeat:false, ..} => {
-                            fighter.char_state.reset_current_frame(); // reset frames to 0 every click
-                            match k {
                                 Keycode::W => { 
                                     if (fighter.char_state.state != animation::sprites::State::FJump && 
                                         fighter.char_state.state != animation::sprites::State::Jump) {
