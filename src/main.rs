@@ -42,7 +42,7 @@ const FRAME_RATE: f64 = 1.0/30.0;
 
 pub fn run_game() -> Result<(), String>{
     let frame_time = Duration::from_secs_f64(FRAME_RATE);
-    
+
     let mut game_window = {
         match view::core::SDLCore::init(TITLE, false, CAM_W, CAM_H){
             Ok(t) => t,
@@ -74,6 +74,7 @@ pub fn run_game() -> Result<(), String>{
     let hkick = texture_creator.load_texture("src/assets/images/characters/python/hkick-outline.png")?;
     let block = texture_creator.load_texture("src/assets/images/characters/python/block-outline.png")?;
     let hazard_texture = texture_creator.load_texture("src/assets/images/hazards/stalactite100x100.png")?;
+    let background = texture_creator.load_texture("src/assets/images/background/small_background.png")?;
 
     python_textures.insert(animation::sprites::State::Idle, idle);
     python_textures.insert(animation::sprites::State::Walk, walk);
@@ -109,7 +110,7 @@ pub fn run_game() -> Result<(), String>{
         // movement direction occurs here
 
         // render canvas
-        game_window.render(Color::RGB(222,222,222), &texture, &fighter, &hazard, &hazard_texture);
+        game_window.render(&background, &texture, &fighter, &hazard, &hazard_texture);
 
         //advance frame
         fighter.char_state.advance_frame();
@@ -150,12 +151,12 @@ pub fn run_game() -> Result<(), String>{
                                         } else if fighter.char_state.current_frame == 5{
                                             fighter.char_state.position = fighter.char_state.position.offset(0, fighter.speed);
                                             //not sure the purpose of these, they set it so they are considered idle while still jumping
-                                            //fighter.char_state.state = animation::sprites::State::Idle;                                            
+                                            //fighter.char_state.state = animation::sprites::State::Idle;
                                             //fighter.char_state.current_frame = 0;
-                                        } 
+                                        }
 
                                     },
-  
+
                 input::movement::Direction::Down => (),
              } // end direction jump match
         }  // end jump if
@@ -165,7 +166,7 @@ pub fn run_game() -> Result<(), String>{
         if fighter.char_state.state == animation::sprites::State::Walk &&
            fighter.char_state.current_frame % 2 == 0 { // 3 is arbitary #
 
-            fighter.char_state.set_state(animation::sprites::State::Idle); 
+            fighter.char_state.set_state(animation::sprites::State::Idle);
             fighter.char_state.set_current_frame(0);
 
         }
@@ -179,16 +180,23 @@ pub fn run_game() -> Result<(), String>{
          // println!("s: {:?}, cf: {}", fighter.char_state.state, fighter.char_state.current_frame);
 
         // resetting to idle, if reached max frames (since idle is our only auto repeat)
-    
 
-        if fighter.char_state.state != animation::sprites::State::Idle && 
+
+        if fighter.char_state.state != animation::sprites::State::Idle &&
            fighter.char_state.frame_count == animation::sprites::get_frame_cnt(&fighter.char_state) -1 { // we've hit the max frames
-            fighter.char_state.set_state(animation::sprites::State::Idle); 
+            fighter.char_state.set_state(animation::sprites::State::Idle);
             fighter.char_state.reset_current_frame();
         }
 
         thread::sleep(frame_time - loop_time.elapsed());
-       hazard.sprite.offset(0, 15);
+
+        if hazard.sprite.y() < 600 && hazard.fell == false {
+            hazard.sprite.offset(0, 10);
+            //println!("{}", hazard.sprite.y())
+        }
+        if hazard.sprite.y() >= 600 {
+            hazard.reset();
+        }
     }
 
     Ok(())

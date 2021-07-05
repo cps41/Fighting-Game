@@ -53,19 +53,19 @@ impl SDLCore{
 	}
 
 	pub fn render(&mut self,
-				color: Color,
+				background: &Texture,
 				texture: &Texture,
 				fighter: &characters::characterAbstract::Fighter,
 				hazard: &physics::hazard::Hazard,
 				hazard_texture: &Texture
 				) -> Result<(), String>{
 
-		// color
-		self.wincan.set_draw_color(color);
-		self.wincan.clear();
-
 		// set canvas height
 		let (width, height) = self.wincan.output_size()?;
+
+		// background
+		self.wincan.copy(background, None, None);
+		//self.wincan.clear();
 
 		let (frame_width, frame_height) = fighter.char_state.sprite.size();
 
