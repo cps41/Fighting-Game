@@ -2,19 +2,16 @@
 use sdl2::rect::Rect;
 use std::cell::{self, RefCell};
 use std::fmt;
-use std::ops::{Deref, DerefMut};
 use std::rc::{Rc, Weak};
-use crate::physics::collisions::{Node, CollisionObject, Area, PotentialCollision};
+use std::ops::Deref as Df;
+use std::ops::DerefMut as Dfm;
+use crate::physics::collisions::*;
 
-pub struct NodeRef<T>(Rc<RefCell<Node<T>>>);
+pub struct NodeRef<T>(pub Rc<RefCell<Node<T>>>);
 
 pub type Link<T> = Option<Rc<RefCell<Node<T>>>>;
 pub type WeakLink<T> = Option<Weak<RefCell<Node<T>>>>;
 pub type BoxRef<T> = Option<Box<T>>;
-
-fn boxUp<T>(data: T) -> BoxRef<T>{
-	Some(Box::new(data))
-}
 
 impl<T> PartialEq for NodeRef<T> {
 	fn eq(&self, other: &NodeRef<T>) -> bool {
@@ -41,7 +38,6 @@ impl<T: fmt::Debug> fmt::Debug for NodeRef<T> {
     }
 }
 
-
 pub trait Refer<T> {
 	fn get(&self) -> std::cell::Ref<Node<T>>;
     fn getMut(&self) -> std::cell::RefMut<Node<T>>;
@@ -66,14 +62,20 @@ pub struct RefMut<'a, T: 'a> {
     _ref: cell::RefMut<'a, Node<T>>
 }
 
-impl<'a, T> Deref for Ref<'a, T> {
-    type Target = T;
-    fn deref(&self) -> &T { &self._ref.bv.as_deref().unwrap() }
+trait Deref<T> {
+    fn deref(&self) -> std::cell::Ref<T>;
 }
 
-// impl<'a, T> Deref for RefMut<'a, T> {
-//     type Target = T;
-//     fn deref(&self) -> &T { &self._ref.bv.as_deref_mut().unwrap() }
+impl<'a, T> Deref<T> for Ref<'a, T> {
+    fn deref(&self) -> std::cell::Ref<T> { self._ref.bv.as_ref().unwrap().borrow() }
+}
+
+trait DerefMut<T> {
+    fn deref_mut(&self) -> std::cell::RefMut<T>;
+}
+
+// impl<'a, T> DerefMut<T> for RefMut<'a, T> {
+//     fn deref_mut(&self) -> std::cell::RefMut<T> { self._ref.bv.as_mut().unwrap().borrow_mut() }
 // }
 
 trait Unbox<T> {
@@ -96,8 +98,10 @@ impl NodeRef<CollisionObject> {
 		node
 	}
 
-    pub fn replace(&self, bv: &mut Option<Box<CollisionObject>>) {
-        std::mem::swap(&mut self.0.borrow_mut().deref_mut().bv, bv);
+    pub fn replace(&self, other: &NodeRef<CollisionObject>) {
+        // std::mem::swap(self.0.deref().replace(), &mut otherbv.borrow_mut().deref_mut());
+        self.getMut().bv = other.getMut().bv.take();
+		self.get().bv.as_ref().unwrap().borrow_mut().noderef = Some(Rc::downgrade(&self.0));
         self.getMut().left.take();
         self.getMut().right.take();
         self.calculateArea();
@@ -120,7 +124,7 @@ impl NodeRef<CollisionObject> {
 	pub fn calculateArea(&self) {
         let new_area: Rect;
 		if self.get().isLeaf() {
-            new_area = self.borrow().rect.clone(); // area = area of collision object if node has no children but points to object
+            new_area = self.borrow().deref().rect.clone(); // area = area of collision object if node has no children but points to object
 		}
 
 		else {
@@ -139,6 +143,10 @@ impl NodeRef<CollisionObject> {
 		Ref {_ref: self.0.borrow()}
 	}
 
+	pub fn borrowbv(&self) -> std::cell::RefCell<CollisionObject> {
+		self.0.borrow().bv.as_ref().unwrap().clone()
+	}
+
 	pub fn borrow_mut(&self) -> RefMut<CollisionObject> {
 		RefMut {_ref: self.0.borrow_mut()}
 	}
@@ -151,12 +159,11 @@ impl NodeRef<CollisionObject> {
 		NodeRef(self.get().right.as_ref().unwrap().clone())
 	}
 
-	pub fn collidingWith(& self, other: NodeRef<CollisionObject>, potential: &mut Option<PotentialCollision>, limit: i32) -> i32 {
+	pub fn collidingWith(& self, other: NodeRef<CollisionObject>, potential: &mut Vec<PotentialCollision>, limit: i32) -> i32 {
 		if !self.overlapsWith(other.clone()) || limit == 0 {return 0;}
 
 		if self.get().isLeaf() && other.get().isLeaf() {
-			potential.as_mut().unwrap().0 = self.borrow().deref().clone();
-			potential.as_mut().unwrap().1 = other.borrow().deref().clone();
+			potential.push((self.borrow().deref().clone(), other.borrow().deref().clone()));
 			return 1;
 		}
 
@@ -170,52 +177,60 @@ impl NodeRef<CollisionObject> {
 			else {return count;}
 		}
 
-		else {
+		else if !self.get().isLeaf() {
 			let count = self.collidingWith(self.getLeftChild(), potential, limit);
 
 			if limit > count {
-				return count + self.collidingWith(self.getLeftChild(), potential, limit);
+				return count + self.collidingWith(self.getRightChild(), potential, limit);
 			}
 
 			else {return count;}
 		}
+
+		else {return 0;}
 	}
 
-	pub fn getPotentialCollsions(&self, potential: &mut Option<PotentialCollision>, limit: i32) -> i32{
+	pub fn getPotentialCollsions(&self, potential: &mut Vec<PotentialCollision>, limit: i32) -> i32{
 		if self.get().isLeaf() || limit == 0 {return 0;}
 		self.getLeftChild().collidingWith(self.getRightChild(), potential, limit)
 	}
 
-	pub fn insert(&self, new_obj: CollisionObject) -> (NodeRef<CollisionObject>, NodeRef<CollisionObject>){
+	pub fn insert(&self, new_obj: CollisionObject) -> RefCell<CollisionObject> {
         let leaf = {self.get().isLeaf()};
 		if leaf {
+            if leaf { // to deal w lifetime stuff
             let mut sm = self.getMut();
-			sm.left = Some(Rc::new(RefCell::new(Node::new(Some(Rc::downgrade(&self.0)), sm.bv.as_deref().unwrap().clone()))));
+			sm.left = Some(Rc::new(RefCell::new(Node::new(Some(Rc::downgrade(&self.0)), sm.bv.take().unwrap().into_inner()))));
 			sm.right = Some(Rc::new(RefCell::new(Node::new(Some(Rc::downgrade(&self.0)), new_obj))));
             sm.bv.take();
+            }
+            self.calculateArea();
+            // (Rc::downgrade(&Rc::new(self.getLeftChild())), Rc::downgrade(&Rc::new(self.getRightChild())))
+			self.getRightChild().get().bv.as_ref().unwrap().borrow_mut().noderef = Some(Rc::downgrade(&self.0));
+			// println!("Inserted {:?}", self.getRightChild());
+            self.getRightChild().borrowbv()
 		}
 
 		else {
 			let size0 = self.getLeftChild().get().area.area();
 			let size1 = self.getRightChild().get().area.area();
 			if size0 <= size1 {
-				self.getLeftChild().insert(new_obj);
+				return self.getLeftChild().insert(new_obj);
 			}
 			else {
-				self.getRightChild().insert(new_obj);
+				return self.getRightChild().insert(new_obj);
 			}
 		}
-		self.calculateArea();
-        (self.getLeftChild().clone(), self.getRightChild().clone())
 	}
 
-	pub fn remove(&mut self) {
+	pub fn remove(&self) {
+		// // println!("Removing {:?}", self);
 		if let Some(parent) = self.getParent() {
 			if is(&parent.getLeftChild().0, &self.0) {
-                parent.replace(&mut parent.getRightChild().0.borrow_mut().deref_mut().bv);
+                parent.replace(&parent.getRightChild());
             }
 			else {
-                parent.replace(&mut parent.getLeftChild().0.borrow_mut().deref_mut().bv);
+                parent.replace(&parent.getLeftChild());
             }
 		}
 

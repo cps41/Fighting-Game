@@ -16,6 +16,7 @@ use sdl2::video::WindowContext;
 use std::time::{Instant, Duration}; // needed for FPS
 use std::thread;
 use std::env;
+use physics::collisions::{BVHierarchy, CollisionObject, CollisionObjectType};
 
 pub mod characters; // for characterAbstract
 pub mod view; // for core
@@ -54,6 +55,9 @@ pub fn run_game() -> Result<(), String>{
 
     let texture_creator = game_window.wincan.texture_creator();
 
+    let platform = Rect::new(40, 620, 1200, 40);
+
+
     //////////////////////////
     // FUNCTIONING
     // EDIT: Modularize. Challenge: figuring out how to deal with texture's + hashmap lifetime
@@ -91,11 +95,15 @@ pub fn run_game() -> Result<(), String>{
             _=> panic!("No texture found for the state! Oh nos."),
         }
     };
-    game_window.render(Color::RGB(222,222,222), &texture, &fighter, &hazard, &hazard_texture);
+    game_window.render(Color::RGB(222,222,222), &texture, &fighter, &hazard, &hazard_texture, &platform);
 
 
 //################################################-GAME-LOOP###############################################
     'gameloop: loop{
+        let collisions = BVHierarchy::new(CollisionObject::new_from(CollisionObjectType::Platform, platform.clone()));
+        collisions.insert(CollisionObject::new_from(CollisionObjectType::HurtBox, hazard.sprite.clone()));
+        fighter.char_state.update_bounding_boxes(&collisions);
+
         let loop_time = Instant::now();
 
     //################################################-GET-INPUT-##########################################
@@ -140,7 +148,7 @@ pub fn run_game() -> Result<(), String>{
         };
 
         // render canvas
-        game_window.render(Color::RGB(222,222,222), &texture, &fighter, &hazard, &hazard_texture);
+        game_window.render(Color::RGB(222,222,222), &texture, &fighter, &hazard, &hazard_texture, &platform);
     //##################################################-SLEEP-############################################        
         thread::sleep(frame_time - loop_time.elapsed().clamp(Duration::new(0, 0), frame_time));
     }
