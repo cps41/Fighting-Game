@@ -33,3 +33,4 @@ fn create_python_fighter() {
                                       short_hop_height, air_jump_height, heavy_land_lag, wavedash_lag, 
                                       fastfall_multiplier, hitstun_elasticity, shield_size };
 }
+
