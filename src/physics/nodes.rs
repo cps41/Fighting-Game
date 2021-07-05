@@ -207,7 +207,7 @@ impl NodeRef<CollisionObject> {
             self.calculateArea();
             // (Rc::downgrade(&Rc::new(self.getLeftChild())), Rc::downgrade(&Rc::new(self.getRightChild())))
 			self.getRightChild().get().bv.as_ref().unwrap().borrow_mut().noderef = Some(Rc::downgrade(&self.0));
-			println!("Inserted {:?}", self.getRightChild());
+			// println!("Inserted {:?}", self.getRightChild());
             self.getRightChild().borrowbv()
 		}
 
@@ -224,7 +224,7 @@ impl NodeRef<CollisionObject> {
 	}
 
 	pub fn remove(&self) {
-		println!("Removing {:?}", self);
+		// // println!("Removing {:?}", self);
 		if let Some(parent) = self.getParent() {
 			if is(&parent.getLeftChild().0, &self.0) {
                 parent.replace(&parent.getRightChild());
