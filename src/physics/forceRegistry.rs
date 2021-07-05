@@ -14,7 +14,7 @@ impl <'t> ParticleForceRegistration <'t> {
     * Registers the given force generator to apply to the
     * given particle.
     */
-	pub fn add(Particle* particle, ParticleForceGenerator *fg){
+	pub fn add(Particle* particle, ParticleForceGenerator *fg) {
 
 	} 
     /**
@@ -22,7 +22,7 @@ impl <'t> ParticleForceRegistration <'t> {
     * If the pair is not registered, this method will have
     * no effect.
     */
-    pub fn remove(Particle* particle, ParticleForceGenerator *fg){
+    pub fn remove(Particle* particle, ParticleForceGenerator *fg) {
 
 	}
     /**
@@ -30,14 +30,17 @@ impl <'t> ParticleForceRegistration <'t> {
     * not delete the particles or the force generators
     * themselves, just the records of their connection.
     */
-    pub fn clear(){
+    pub fn clear() {
 
 	}
     /**
     * Calls all the force generators to update the forces of
     * their corresponding particles.
     */
-    pub fn ParticleForceRegistry::updateForces(real duration){
-
-	} 
+    pub fn ParticleForceRegistry::updateForces(real duration) {
+        //Registry::iterator i = registrations.begin();
+        for item in Registry {
+            item->fg->updateForce(item->particle, duration);
+        }
+    }
 } // close ParticleForceRegistration impl
