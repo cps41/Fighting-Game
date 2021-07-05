@@ -81,7 +81,7 @@ impl SDLCore{
 
         // (0, 0) cordinate = center of the scren
 		// make new rect and screen pos //
-        let screen_position = fighter.char_state.position + Point::new(width as i32 / 2, height as i32 / 2);
+        let screen_position = fighter.char_state.position + Point::new(650, 590); // <-- hardcoded point of floor 
         let screen_rect = Rect::from_center(screen_position, frame_width, frame_height);
 
 		// hazard rectangle & position
