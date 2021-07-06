@@ -55,7 +55,7 @@ impl Particle {
         self.update_position(duration);
         // clamp position
 		self.position.x = self.position.x.clamp(-w_offset+SPRITE_W as f32/2.0, w_offset-SPRITE_W as f32/2.0);
-		self.position.y = self.position.y.clamp(-1000.0, h_offset - 130.0);
+		self.position.y = self.position.y.clamp(-1000.0, h_offset - 150.0);
         // calculate acceleration
         self.acceleration.add_scaled_product(&self.force_accumulator, self.inverse_mass); // a += F/m
         // update linear velocity based on new acceleration
@@ -64,7 +64,7 @@ impl Particle {
         let drag = self.damping.powf(duration);
         self.velocity.dot_replace(drag);
         // clamp velocity
-		self.velocity.x = self.velocity.x.clamp(-1000.0, 1000.0);
+		self.velocity.x = self.velocity.x.clamp(-2000.0, 2000.0);
 		self.velocity.y = self.velocity.y.clamp(-2500.0, 2500.0);
 
         // println!("integrated from {:?} to {:?}", old, self);
