@@ -56,6 +56,8 @@ impl SDLCore{
 				background: &Texture,
 				texture: &Texture,
 				fighter: &characters::characterAbstract::Fighter,
+				texture2: &Texture,
+				fighter2: &characters::characterAbstract::Fighter,
 				hazard: &physics::hazard::Hazard,
 				hazard_texture: &Texture,
 				) -> Result<(), String>{
@@ -77,12 +79,23 @@ impl SDLCore{
             frame_width,
             frame_height,
         );
+		let current_frame2 = Rect::new(
+        	//determins which sprite to get, using current_frame as offset on sprite sheet
+            fighter2.char_state.sprite.x() + frame_width as i32 * fighter2.char_state.current_frame,
+            fighter2.char_state.sprite.y(), // should always be 0, since y should remain consistent
+            frame_width,
+            frame_height,
+        );
 		let hazard_frame = Rect::new(0, 0, 100, 100);
 
         // (0, 0) cordinate = center of the scren
 		// make new rect and screen pos //
-    let screen_position = fighter.char_state.position.borrow().toPoint() + Point::new(width as i32 / 2, height as i32 / 2);
-    let screen_rect = Rect::from_center(screen_position, frame_width, frame_height);
+
+        let screen_position = fighter.char_state.position + Point::new(width as i32 / 2, height as i32 / 2);
+        let screen_rect = Rect::from_center(screen_position, frame_width, frame_height);
+		let screen_position2 = fighter2.char_state.position + Point::new(width as i32 / 2, height as i32 / 2);
+        let screen_rect2 = Rect::from_center(screen_position2, frame_width, frame_height);
+
 
 		// hazard rectangle & position
 		let hazard_screen_position = hazard.position;
@@ -90,6 +103,7 @@ impl SDLCore{
 
 		// copy textures
         self.wincan.copy(texture, current_frame, screen_rect)?;
+		self.wincan.copy_ex(texture2, current_frame2, screen_rect2, 0.0, None, true, false)?;
 		self.wincan.copy(hazard_texture, hazard_frame, hazard_screen_rectangle)?;
         self.wincan.present();
 
