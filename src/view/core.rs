@@ -99,10 +99,6 @@ impl SDLCore{
 		let hazard_screen_position = hazard.position;
 		let hazard_screen_rectangle = hazard.sprite;
 
-		//grey platform
-		self.wincan.set_draw_color(Color::RGB(100,100,100));
-		self.wincan.fill_rect(Rect::new(0, 420, width, 100))?;
-
 		// copy textures
         self.wincan.copy(texture, current_frame, screen_rect)?;
 		self.wincan.copy_ex(texture2, current_frame2, screen_rect2, 0.0, None, true, false)?;
