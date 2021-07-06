@@ -65,6 +65,7 @@ impl Particle {
         self.velocity.dot_replace(drag);
         // clamp velocity
 		self.velocity.x = self.velocity.x.clamp(-1000.0, 1000.0);
+		self.velocity.y = self.velocity.y.clamp(-2500.0, 2500.0);
 
         println!("integrated from {:?} to {:?}", old, self);
         // reset force accumulator
