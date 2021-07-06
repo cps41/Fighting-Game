@@ -160,7 +160,7 @@ pub fn run_game() -> Result<(), String>{
 
         //move hazard
         if hazard.sprite.y() < 600 && hazard.fell == false {
-           hazard.sprite.offset(0, 10);
+           hazard.sprite.offset(0, 7);
            //println!("{}", hazard.sprite.y())
        }
        if hazard.sprite.y() >= 600 {
