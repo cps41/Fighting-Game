@@ -53,21 +53,21 @@ impl SDLCore{
 	}
 
 	pub fn render(&mut self,
-				color: Color,
+				background: &Texture,
 				texture: &Texture,
 				fighter: &characters::characterAbstract::Fighter,
 				texture2: &Texture,
 				fighter2: &characters::characterAbstract::Fighter,
 				hazard: &physics::hazard::Hazard,
-				hazard_texture: &Texture
+				hazard_texture: &Texture,
 				) -> Result<(), String>{
-
-		// color
-		self.wincan.set_draw_color(color);
-		self.wincan.clear();
 
 		// set canvas height
 		let (width, height) = self.wincan.output_size()?;
+
+		// background
+		self.wincan.copy(background, None, None);
+		//self.wincan.clear();
 
 		let (frame_width, frame_height) = fighter.char_state.sprite.size();
 
@@ -90,10 +90,12 @@ impl SDLCore{
 
         // (0, 0) cordinate = center of the scren
 		// make new rect and screen pos //
+
         let screen_position = fighter.char_state.position + Point::new(width as i32 / 2, height as i32 / 2);
         let screen_rect = Rect::from_center(screen_position, frame_width, frame_height);
 		let screen_position2 = fighter2.char_state.position + Point::new(width as i32 / 2, height as i32 / 2);
         let screen_rect2 = Rect::from_center(screen_position2, frame_width, frame_height);
+
 
 		// hazard rectangle & position
 		let hazard_screen_position = hazard.position;
@@ -107,7 +109,7 @@ impl SDLCore{
 
         /*
         println!("Frame count is: {}    Frame Per State is: {}    Current Sprite is: {}    State is: {:?}",
-        fighter.char_state.frame_count, fighter.char_state.frames_per_state, 
+        fighter.char_state.frame_count, fighter.char_state.frames_per_state,
         fighter.char_state.current_frame, fighter.char_state.state);
 		*/
 

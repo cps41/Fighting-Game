@@ -9,6 +9,7 @@ use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use std::collections::HashMap;
 use std::collections::HashSet;
+use std::cell::RefCell;
 use std::path::Path;
 use sdl2::render::Canvas;
 use sdl2::video::Window;
@@ -16,6 +17,9 @@ use sdl2::video::WindowContext;
 use std::time::{Instant, Duration}; // needed for FPS
 use std::thread;
 use std::env;
+use physics::collisions::*;
+use physics::vecmath::*;
+use physics::particle::*;
 
 pub mod characters; // for characterAbstract
 pub mod view; // for core
@@ -37,7 +41,7 @@ const FRAME_RATE: f64 = 1.0/60.0;
 
 pub fn run_game() -> Result<(), String>{
     let frame_time = Duration::from_secs_f64(FRAME_RATE);
-    
+
     let mut game_window = {
         match view::core::SDLCore::init(TITLE, false, CAM_W, CAM_H){
             Ok(t) => t,
@@ -58,6 +62,9 @@ pub fn run_game() -> Result<(), String>{
 
     let texture_creator = game_window.wincan.texture_creator();
 
+    let platform = Rect::new(40, 620, CAM_W-80, CAM_H-680);
+
+
     //////////////////////////
     // FUNCTIONING
     // EDIT: Modularize. Challenge: figuring out how to deal with texture's + hashmap lifetime
@@ -73,6 +80,7 @@ pub fn run_game() -> Result<(), String>{
     let hkick = texture_creator.load_texture("src/assets/images/characters/python/hkick-outline.png")?;
     let block = texture_creator.load_texture("src/assets/images/characters/python/block-outline.png")?;
     let hazard_texture = texture_creator.load_texture("src/assets/images/hazards/stalactite100x100.png")?;
+    let background = texture_creator.load_texture("src/assets/images/background/small_background.png")?;
 
     python_textures.insert(animation::sprites::State::Idle, idle);
     python_textures.insert(animation::sprites::State::Walk, walk);
@@ -104,8 +112,18 @@ pub fn run_game() -> Result<(), String>{
     game_window.render(Color::RGB(222,222,222), &texture, &fighter, &texture2, &fighter2, &hazard, &hazard_texture);
 
 
+
 //################################################-GAME-LOOP###############################################
+    let collisions = BVHierarchy::new(CollisionObject::new_from(CollisionObjectType::Platform, platform.clone(),
+        RefCell::new(Particle::new(
+            PhysVec::new(platform.x as f32, platform.y as f32), 0.5, 2000000000.0))));
     'gameloop: loop{
+        collisions.insert(CollisionObject::new_from(CollisionObjectType::HurtBox, hazard.sprite.clone(),
+            RefCell::new(Particle::new(
+                PhysVec::new(hazard.position.x as f32, hazard.position.y as f32), 0.5, 200.0))));
+        fighter.char_state.update_bounding_boxes(&collisions);
+        collisions.resolve_collisions();
+
         let loop_time = Instant::now();
 
     //################################################-GET-INPUT-##########################################
@@ -118,17 +136,18 @@ pub fn run_game() -> Result<(), String>{
             }
         }
 
+
         //gather player input
         let player_input: HashSet<Keycode> = game_window.event_pump
             .keyboard_state()
             .pressed_scancodes()
             .filter_map(Keycode::from_scancode)
             .collect();
-        
+
     //##############################################-PROCESS-EVENTS-#######################################
         //process player movement
         input::inputHandler::keyboard_input(&player_input, &mut fighter);
-        
+
         //select frame to be rendered
         fighter.char_state.advance_frame();
         fighter2.char_state.advance_frame();
@@ -140,9 +159,15 @@ pub fn run_game() -> Result<(), String>{
         //##########-PROCESS-COLLISIONS-HERE-##########
 
         //move hazard
-        hazard.sprite.offset(0, 15);
+        if hazard.sprite.y() < 600 && hazard.fell == false {
+           hazard.sprite.offset(0, 10);
+           //println!("{}", hazard.sprite.y())
+       }
+       if hazard.sprite.y() >= 600 {
+           hazard.reset();
+       }
     //##################################################-RENDER-###########################################
-       
+
         // get the proper texture within the game
         let texture = {
             match python_textures.get(&fighter.char_state.state) {
@@ -158,8 +183,9 @@ pub fn run_game() -> Result<(), String>{
         };
 
         // render canvas
-        game_window.render(Color::RGB(222,222,222), &texture, &fighter, &texture2, &fighter2, &hazard, &hazard_texture);
+        game_window.render(&background, &texture, &fighter, &texture2, &fighter2, &hazard, &hazard_texture);
     //##################################################-SLEEP-############################################        
+
         thread::sleep(frame_time - loop_time.elapsed().clamp(Duration::new(0, 0), frame_time));
     }
     Ok(())
