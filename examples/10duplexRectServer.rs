@@ -61,9 +61,11 @@ fn server_rect(socket: &UdpSocket,
         r2.set_y(client_rect.y2());   
     }
     // // send to all addresses
-    // for client_address in client_addresses {
-    //     // socket.send_to(..., client_address).expect("couldn't send message"); 
-    // } // end sending for loop
+    for client_address in client_addresses.keys() {
+         if &src_addr != client_address { // DUPLEX, only send to other server
+            socket.send_to(serialize(&client_rect).unwrap().as_slice(), client_address).expect("couldn't send message"); 
+        }
+    } // end sending for loop
 } // close server fn
 
 pub fn wait(seconds: u64) {

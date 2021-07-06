@@ -13,7 +13,7 @@ use serde_derive::{Serialize, Deserialize};
 fn client_setup() -> (UdpSocket, u8) {
 	// ADDRESSING
 	let client_addresses: [SocketAddr; 1] = [
-	    SocketAddr::from(([127, 0, 0, 1], 1667)),
+	    SocketAddr::from(([127, 0, 0, 1], 1669)),
 	    // can add backup client IPs
 	];
 
@@ -46,7 +46,7 @@ fn client_setup() -> (UdpSocket, u8) {
     (socket, player_number)
 } // close client_setup
 
-fn client_rect(player_box: Rect, socket: &UdpSocket){
+fn client_rect(socket: &UdpSocket, player_box: Rect){
     let socket_clone = socket.try_clone().expect("couldn't clone the socket");
 
 	//send player box information
@@ -68,8 +68,13 @@ pub fn send(socket: &UdpSocket, player_box: &Rect){
      Err(e) => panic!("oh nos! No message"),
   	}
 }
-pub fn receive(socket: &UdpSocket){
-	// TODO
+pub fn receive(socket: &UdpSocket, enemy: &mut Rect){
+    let mut buffer = [0u8; 100]; // a buffer than accepts 4096 
+    let (number_of_bytes, src_addr) = socket.recv_from(&mut buffer).expect("Didn't receive data");
+
+    let client_rect = deserialize::<RectangleValues>(&buffer).expect("cannot crack ze coooode"); // print to console
+    enemy.set_x(client_rect.x1());
+    enemy.set_y(client_rect.y1()); 
 }
 
 // Creating new Rectangle struct, since Rect isn't serialized (for testing purposes :)
@@ -101,7 +106,7 @@ impl RectangleValues{
 
 /////// CODE from "SDL08 Rect Collisions" Example
 /////// Note: it's virtually the same, but sends information to client 
-const TITLE: &str = "CLIENT - CYAN - PLAYER 1";
+const TITLE: &str = "CLIENT - RED - PLAYER 2";
 const CAM_W: u32 = 640;
 const CAM_H: u32 = 480;
 const SPEED_LIMIT: i32 = 5;
@@ -185,12 +190,15 @@ impl Demo for SDL08 {
 			if player_number == 1 {
 				player_box.set_x(player_box.x() + x_vel); // horizontal movement
 				player_box.set_y(player_box.y() + y_vel); // vertical movement
-				client_rect(player_box, &socket); // Send data on where the rectangle is to server
+				client_rect(&socket, player_box); // Send data on where the rectangle is to server
+				receive(&socket, &mut player2_box);
 			} else { // player_number == 2
 				player2_box.set_x(player2_box.x() + x_vel); // horizontal movement
 				player2_box.set_y(player2_box.y() + y_vel); // vertical movement
-				client_rect(player2_box, &socket); // Send data on where the rectangle is to server
+				client_rect(&socket, player2_box); // Send data on where the rectangle is to server
+				receive(&socket, &mut player_box);
 			}
+
 
 			self.core.wincan.set_draw_color(Color::BLACK);
 			self.core.wincan.clear();
