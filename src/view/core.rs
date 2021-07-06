@@ -58,7 +58,6 @@ impl SDLCore{
 				fighter: &characters::characterAbstract::Fighter,
 				hazard: &physics::hazard::Hazard,
 				hazard_texture: &Texture,
-				platform: &Rect,
 				) -> Result<(), String>{
 
 		// set canvas height
@@ -92,13 +91,11 @@ impl SDLCore{
 		// copy textures
         self.wincan.copy(texture, current_frame, screen_rect)?;
 		self.wincan.copy(hazard_texture, hazard_frame, hazard_screen_rectangle)?;
-		self.wincan.set_draw_color(Color::CYAN);
-		self.wincan.fill_rect(platform.clone());
         self.wincan.present();
 
         /*
         println!("Frame count is: {}    Frame Per State is: {}    Current Sprite is: {}    State is: {:?}",
-        fighter.char_state.frame_count, fighter.char_state.frames_per_state, 
+        fighter.char_state.frame_count, fighter.char_state.frames_per_state,
         fighter.char_state.current_frame, fighter.char_state.state);
 		*/
 
