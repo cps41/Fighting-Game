@@ -11,6 +11,7 @@ pub struct Hazard {
     pub active: bool,
 	pub name: Types,
     pub falling: bool,
+	pub fell: bool,
     pub hit: bool,
     pub fall_speed: f64,
     pub damage: f64,
@@ -24,6 +25,7 @@ impl Hazard {
 			name: Types::Stalactites,
             active: false,
             falling: false,
+			fell: false,
             hit: false,
             fall_speed: 1.0, // idk something to start with
             damage: 5.0, // same as above ^^
@@ -32,6 +34,11 @@ impl Hazard {
 		}
     }
 
+	pub fn reset(&mut self) {
+		self.position = Point::new(0, 0);
+		self.sprite = Rect::new(0, 0, 0, 0);
+		self.fell = true;
+	}
         // // setters
         // pub fn set_active(&mut self) -> &mut bool { &mut self.active; }
         // pub fn set_falling(&mut self) -> &mut bool { &mut self.falling; }

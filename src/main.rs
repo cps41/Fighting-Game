@@ -41,7 +41,7 @@ const FRAME_RATE: f64 = 1.0/60.0;
 
 pub fn run_game() -> Result<(), String>{
     let frame_time = Duration::from_secs_f64(FRAME_RATE);
-    
+
     let mut game_window = {
         match view::core::SDLCore::init(TITLE, false, CAM_W, CAM_H){
             Ok(t) => t,
@@ -51,8 +51,12 @@ pub fn run_game() -> Result<(), String>{
 
     // Creating initial character state
     let fighter = characters::characterAbstract::CharacterState::new();
+    let fighter2 = characters::characterAbstract::CharacterState::new();
 
     let mut fighter = characters::characterAbstract::Fighter::new(fighter);
+    let mut fighter2 = characters::characterAbstract::Fighter::new(fighter2);
+    //this is just to make fighter2 spawn a little to the right of fighter
+    fighter2.char_state.position = fighter.char_state.position + Point::new(300, 0);
 
     let mut hazard = physics::hazard::Hazard::new();
 
@@ -76,6 +80,7 @@ pub fn run_game() -> Result<(), String>{
     let hkick = texture_creator.load_texture("src/assets/images/characters/python/hkick-outline.png")?;
     let block = texture_creator.load_texture("src/assets/images/characters/python/block-outline.png")?;
     let hazard_texture = texture_creator.load_texture("src/assets/images/hazards/stalactite100x100.png")?;
+    let background = texture_creator.load_texture("src/assets/images/background/small_background.png")?;
 
     python_textures.insert(animation::sprites::State::Idle, idle);
     python_textures.insert(animation::sprites::State::Walk, walk);
@@ -98,15 +103,22 @@ pub fn run_game() -> Result<(), String>{
             _=> panic!("No texture found for the state! Oh nos."),
         }
     };
-    game_window.render(Color::RGB(222,222,222), &texture, &fighter, &hazard, &hazard_texture, &platform);
+    let texture2 = {
+        match python_textures.get(&fighter2.char_state.state) {
+            Some(text) => text,
+            _=> panic!("No texture found for the state! Oh nos."),
+        }
+    };
+    game_window.render(Color::RGB(222,222,222), &texture, &fighter, &texture2, &fighter2, &hazard, &hazard_texture);
+
 
 
 //################################################-GAME-LOOP###############################################
-    let collisions = BVHierarchy::new(CollisionObject::new_from(CollisionObjectType::Platform, platform.clone(), 
+    let collisions = BVHierarchy::new(CollisionObject::new_from(CollisionObjectType::Platform, platform.clone(),
         RefCell::new(Particle::new(
             PhysVec::new(platform.x as f32, platform.y as f32), 0.5, 2000000000.0))));
     'gameloop: loop{
-        collisions.insert(CollisionObject::new_from(CollisionObjectType::HurtBox, hazard.sprite.clone(), 
+        collisions.insert(CollisionObject::new_from(CollisionObjectType::HurtBox, hazard.sprite.clone(),
             RefCell::new(Particle::new(
                 PhysVec::new(hazard.position.x as f32, hazard.position.y as f32), 0.5, 200.0))));
         fighter.char_state.update_bounding_boxes(&collisions);
@@ -124,29 +136,38 @@ pub fn run_game() -> Result<(), String>{
             }
         }
 
+
         //gather player input
         let player_input: HashSet<Keycode> = game_window.event_pump
             .keyboard_state()
             .pressed_scancodes()
             .filter_map(Keycode::from_scancode)
             .collect();
-        
+
     //##############################################-PROCESS-EVENTS-#######################################
         //process player movement
         input::inputHandler::keyboard_input(&player_input, &mut fighter);
-        
+
         //select frame to be rendered
         fighter.char_state.advance_frame();
+        fighter2.char_state.advance_frame();
         
         //move character based on current frame
         input::movement::move_char(&mut fighter);
+        input::movement::move_char(&mut fighter2);
 
         //##########-PROCESS-COLLISIONS-HERE-##########
 
         //move hazard
-        hazard.sprite.offset(0, 15);
+        if hazard.sprite.y() < 600 && hazard.fell == false {
+           hazard.sprite.offset(0, 10);
+           //println!("{}", hazard.sprite.y())
+       }
+       if hazard.sprite.y() >= 600 {
+           hazard.reset();
+       }
     //##################################################-RENDER-###########################################
-       
+
         // get the proper texture within the game
         let texture = {
             match python_textures.get(&fighter.char_state.state) {
@@ -154,10 +175,17 @@ pub fn run_game() -> Result<(), String>{
                 _=> panic!("No texture found for the state! Oh nos."),
             }
         };
+        let texture2 = {
+            match python_textures.get(&fighter2.char_state.state) {
+                Some(text) => text,
+                _=> panic!("No texture found for the state! Oh nos."),
+            }
+        };
 
         // render canvas
-        game_window.render(Color::RGB(222,222,222), &texture, &fighter, &hazard, &hazard_texture, &platform);
+        game_window.render(&background, &texture, &fighter, &texture2, &fighter2, &hazard, &hazard_texture);
     //##################################################-SLEEP-############################################        
+
         thread::sleep(frame_time - loop_time.elapsed().clamp(Duration::new(0, 0), frame_time));
     }
     Ok(())
