@@ -9,6 +9,7 @@ use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use std::collections::HashMap;
 use std::collections::HashSet;
+use std::cell::RefCell;
 use std::path::Path;
 use sdl2::render::Canvas;
 use sdl2::video::Window;
@@ -16,7 +17,9 @@ use sdl2::video::WindowContext;
 use std::time::{Instant, Duration}; // needed for FPS
 use std::thread;
 use std::env;
-use physics::collisions::{BVHierarchy, CollisionObject, CollisionObjectType};
+use physics::collisions::*;
+use physics::vecmath::*;
+use physics::particle::*;
 
 pub mod characters; // for characterAbstract
 pub mod view; // for core
@@ -55,7 +58,7 @@ pub fn run_game() -> Result<(), String>{
 
     let texture_creator = game_window.wincan.texture_creator();
 
-    let platform = Rect::new(40, 620, 1200, 40);
+    let platform = Rect::new(40, 620, CAM_W-80, CAM_H-680);
 
 
     //////////////////////////
@@ -99,10 +102,15 @@ pub fn run_game() -> Result<(), String>{
 
 
 //################################################-GAME-LOOP###############################################
+    let collisions = BVHierarchy::new(CollisionObject::new_from(CollisionObjectType::Platform, platform.clone(), 
+        RefCell::new(Particle::new(
+            PhysVec::new(platform.x as f32, platform.y as f32), 0.5, 2000000000.0))));
     'gameloop: loop{
-        let collisions = BVHierarchy::new(CollisionObject::new_from(CollisionObjectType::Platform, platform.clone()));
-        collisions.insert(CollisionObject::new_from(CollisionObjectType::HurtBox, hazard.sprite.clone()));
+        collisions.insert(CollisionObject::new_from(CollisionObjectType::HurtBox, hazard.sprite.clone(), 
+            RefCell::new(Particle::new(
+                PhysVec::new(hazard.position.x as f32, hazard.position.y as f32), 0.5, 200.0))));
         fighter.char_state.update_bounding_boxes(&collisions);
+        collisions.resolve_collisions();
 
         let loop_time = Instant::now();
 
