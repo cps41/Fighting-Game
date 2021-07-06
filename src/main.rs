@@ -56,7 +56,7 @@ pub fn run_game() -> Result<(), String>{
     let mut fighter = characters::characterAbstract::Fighter::new(fighter);
     let mut fighter2 = characters::characterAbstract::Fighter::new(fighter2);
     //this is just to make fighter2 spawn a little to the right of fighter
-    fighter2.char_state.position = fighter.char_state.position + Point::new(300, 0);
+    fighter2.char_state.position.borrow_mut().position.replace(&PhysVec::new(300.0, 0.0));
 
     let mut hazard = physics::hazard::Hazard::new();
 
@@ -109,7 +109,7 @@ pub fn run_game() -> Result<(), String>{
             _=> panic!("No texture found for the state! Oh nos."),
         }
     };
-    game_window.render(Color::RGB(222,222,222), &texture, &fighter, &texture2, &fighter2, &hazard, &hazard_texture);
+    game_window.render(&background, &texture, &fighter, &texture2, &fighter2, &hazard, &hazard_texture);
 
 
 
