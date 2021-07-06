@@ -28,11 +28,11 @@ pub fn move_char(f: &mut characters::characterAbstract::Fighter){
                f.char_state.frame_count == 26 {
                 if f.char_state.direction == Direction::Right {
                     f.char_state.position.borrow_mut().velocity.add_vec(&PhysVec::new(f.walk_speed as f32, 0.0));
-                    f.update_position(&PhysVec::new(1.0, 0.0));
+                    f.update_position(&PhysVec::new(0.0, 0.0));
                 }
                 else{
                     f.char_state.position.borrow_mut().velocity.add_vec(&PhysVec::new(-f.walk_speed as f32, 0.0));
-                    f.update_position(&PhysVec::new(-1.0, 0.0));
+                    f.update_position(&PhysVec::new(0.0, 0.0));
                 }         
             }    
         },
@@ -65,11 +65,11 @@ pub fn move_char(f: &mut characters::characterAbstract::Fighter){
                f.char_state.frame_count == 7  ||
                f.char_state.frame_count == 13 ||
                f.char_state.frame_count == 19 {
-                f.char_state.position.borrow_mut().velocity.replace(&PhysVec::new(200.0, -1500.0));
+                f.char_state.position.borrow_mut().velocity.replace(&PhysVec::new(200.0, -2000.0));
                 f.update_position(&PhysVec::new(0.0, 0.0));   
             }else if f.char_state.frame_count == 25 ||
                      f.char_state.frame_count == 31 {
-                        f.char_state.position.borrow_mut().velocity.replace(&PhysVec::new(200.0, -1500.0));
+                        f.char_state.position.borrow_mut().velocity.replace(&PhysVec::new(200.0, -2000.0));
                         f.update_position(&PhysVec::new(0.0, 0.0));   
             }else{
                 // f.update_position(&PhysVec::new(0f32, GRAVITY));
