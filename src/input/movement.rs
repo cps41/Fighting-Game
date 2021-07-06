@@ -34,8 +34,6 @@ pub fn move_char(f: &mut characters::characterAbstract::Fighter){
         
         //jump or or left, depending on input
         animation::sprites::State::Jump => {
-            let gravity = PhysVec::new(0f32, -9.8f32);
-            f.char_state.position.add_force(&gravity);
             if f.char_state.frame_count == 1 || 
                f.char_state.frame_count == 6 ||
                f.char_state.frame_count == 11{
@@ -74,8 +72,6 @@ pub fn move_char(f: &mut characters::characterAbstract::Fighter){
         
         //jump forward
         animation::sprites::State::FJump => {
-            let gravity = PhysVec::new(0f32, -9.8f32);
-            f.char_state.position.add_force(&gravity);
             if f.char_state.frame_count == 1  ||
                f.char_state.frame_count == 7  ||
                f.char_state.frame_count == 13 ||
