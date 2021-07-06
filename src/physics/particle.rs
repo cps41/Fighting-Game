@@ -1,12 +1,15 @@
 use crate::physics::vecmath::PhysVec;
+use crate::view::globals::*;
+use sdl2::rect::Point;
 
+#[derive(Debug, Clone)]
 pub struct Particle {
-    position: PhysVec,
-    velocity: PhysVec,
-    acceleration: PhysVec,
-    damping: f32,
-    inverse_mass: f32,
-    force_accumulator: PhysVec,
+    pub position: PhysVec,
+    pub velocity: PhysVec,
+    pub acceleration: PhysVec,
+    pub damping: f32,
+    pub inverse_mass: f32,
+    pub force_accumulator: PhysVec,
 }
 
 impl Particle {
@@ -22,6 +25,13 @@ impl Particle {
             force_accumulator: zero.clone(),
         }
     }
+
+    // Create Point struct out of position coordinates
+    pub fn toPoint(&self) -> Point {
+        let (x,y) = self.position.raw();
+        Point::new(x as i32, y as i32)
+    }
+
     /*
         updated x = a + v*t + (1/2)*x*t^2
         like in Physics 1!
@@ -36,22 +46,27 @@ impl Particle {
         Approximation of integral.
     */
     pub fn integrate(&mut self, duration: f32) {
+        let old = self.clone();
+		let w_offset = CAM_W as f32/2f32;
+		let h_offset = CAM_H as f32/2f32;
         if duration <= 0f32 { return }
 
         // update linear position
         self.update_position(duration);
-        println!("position: {:?}", self.position);
+        // clamp position
+		self.position.x = self.position.x.clamp(-w_offset+SPRITE_W as f32/2.0, w_offset-SPRITE_W as f32/2.0);
+		self.position.y = self.position.y.clamp(-1000.0, 300f32 - SPRITE_H as f32/2.0);
         // calculate acceleration
         self.acceleration.add_scaled_product(&self.force_accumulator, self.inverse_mass); // a += F/m
-        println!("acceleration: {:?}", self.acceleration);
         // update linear velocity based on new acceleration
         self.velocity.add_scaled_product(&self.acceleration, duration);
-        println!("velocity: {:?}", self.velocity);
         // account for drag
         let drag = self.damping.powf(duration);
-        println!("drag: {:?}", drag);
         self.velocity.dot_replace(drag);
-        println!("velocity again: {:?}", self.velocity);
+        // clamp velocity
+		self.velocity.x = self.velocity.x.clamp(-1000.0, 1000.0);
+
+        println!("integrated from {:?} to {:?}", old, self);
         // reset force accumulator
         self.clear_forces();
     }

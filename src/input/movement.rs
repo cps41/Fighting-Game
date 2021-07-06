@@ -1,5 +1,8 @@
 use crate::characters; // used to get Fighter
 use crate::animation; // used to get States
+use crate::physics::vecmath::PhysVec;
+use crate::physics::particle;
+use crate::view::globals::*;
 
 use serde_derive::{Serialize, Deserialize};
 
@@ -23,12 +26,15 @@ pub fn move_char(f: &mut characters::characterAbstract::Fighter){
                f.char_state.frame_count == 16 ||
                f.char_state.frame_count == 21 ||
                f.char_state.frame_count == 26 {
-                if f.char_state.direction == Direction::Right{
-                    f.char_state.update_position(vec![f.speed, 0]);
-                }else{
-                    f.char_state.update_position(vec![-f.speed, 0]);
-                }             
-            }        
+                if f.char_state.direction == Direction::Right {
+                    f.char_state.position.borrow_mut().velocity.add_vec(&PhysVec::new(f.walk_speed as f32, 0.0));
+                    f.update_position(&PhysVec::new(1.0, 0.0));
+                }
+                else{
+                    f.char_state.position.borrow_mut().velocity.add_vec(&PhysVec::new(-f.walk_speed as f32, 0.0));
+                    f.update_position(&PhysVec::new(-1.0, 0.0));
+                }         
+            }    
         },
         
         //jump or or left, depending on input
@@ -36,34 +42,18 @@ pub fn move_char(f: &mut characters::characterAbstract::Fighter){
             if f.char_state.frame_count == 1 || 
                f.char_state.frame_count == 6 ||
                f.char_state.frame_count == 11{
-            
-                if f.char_state.direction == Direction::Left{
-                    f.char_state.position = f.char_state.position
-                      .offset(-f.speed, -f.jump_height*3);                    
-                }else{
-                    f.char_state.position = f.char_state.position
-                      .offset(0, -f.jump_height*3);
-                }
-            
+                f.char_state.position.borrow_mut().velocity.add_vec(&PhysVec::new(0.0, -20.0));
+                f.update_position(&PhysVec::new(0.0, 0.0));      
             }else if f.char_state.frame_count == 16 ||
                      f.char_state.frame_count == 21 {
-            
-                if f.char_state.direction == Direction::Left{
-                    f.char_state.position = f.char_state.position
-                      .offset(-f.speed, (f.jump_height*3) + ((f.jump_height*3)/2));
-                }else{
-                    f.char_state.position = f.char_state.position
-                      .offset(0, (f.jump_height*3) + ((f.jump_height*3)/2));
-                }
-            
+                        f.char_state.position.borrow_mut().velocity.add_vec(&PhysVec::new(0.0, -20.0));
+                        f.update_position(&PhysVec::new(0.0, 0.0));            
             }else if f.char_state.frame_count == 24{
-               
+            
                 if f.char_state.direction == Direction::Left{
-                    f.char_state.position = f.char_state.position
-                      .offset(-f.speed, 0);
+                    f.update_position(&PhysVec::new(-f.speed as f32, GRAVITY));
                 }else{
-                    f.char_state.position = f.char_state.position
-                      .offset(0, 0);
+                    f.update_position(&PhysVec::new(0.0, GRAVITY));
                 }
             
             }
@@ -75,17 +65,24 @@ pub fn move_char(f: &mut characters::characterAbstract::Fighter){
                f.char_state.frame_count == 7  ||
                f.char_state.frame_count == 13 ||
                f.char_state.frame_count == 19 {
-                f.char_state.position = f.char_state.position.offset(f.speed/2, -f.jump_height*3);
+                f.update_position(&PhysVec::new((f.speed/2) as f32, -(f.speed) as f32));
             }else if f.char_state.frame_count == 25 ||
                      f.char_state.frame_count == 31 {
-                f.char_state.position = f.char_state.position.offset(f.speed/2, (f.jump_height*3)*2);
-
+                        f.update_position(&PhysVec::new((f.speed/2) as f32, -(f.speed) as f32));
             }else{
-                f.char_state.position = f.char_state.position.offset(f.speed/2, 0);
+                f.update_position(&PhysVec::new(0f32, GRAVITY));
             }
         },
         
-        _=> {},
+        _=> {
+            let mut force = PhysVec::new(0.0, GRAVITY);
+            let (x, y) = f.char_state.velocity();
+            match x {
+                x if x != 0.0 => f.char_state.position.borrow_mut().velocity.x = 0.0,
+                _ => {}
+            }
+            f.update_position(&force);
+        },
     }
 }
 

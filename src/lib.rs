@@ -6,4 +6,4 @@ pub mod characters;
 pub mod physics;
 // don't need these mods yet:
 // pub mod physics;
-// pub mod view; 
+pub mod view; 
