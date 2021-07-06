@@ -41,7 +41,7 @@ const FRAME_RATE: f64 = 1.0/60.0;
 
 pub fn run_game() -> Result<(), String>{
     let frame_time = Duration::from_secs_f64(FRAME_RATE);
-    
+
     let mut game_window = {
         match view::core::SDLCore::init(TITLE, false, CAM_W, CAM_H){
             Ok(t) => t,
@@ -76,6 +76,7 @@ pub fn run_game() -> Result<(), String>{
     let hkick = texture_creator.load_texture("src/assets/images/characters/python/hkick-outline.png")?;
     let block = texture_creator.load_texture("src/assets/images/characters/python/block-outline.png")?;
     let hazard_texture = texture_creator.load_texture("src/assets/images/hazards/stalactite100x100.png")?;
+    let background = texture_creator.load_texture("src/assets/images/background/small_background.png")?;
 
     python_textures.insert(animation::sprites::State::Idle, idle);
     python_textures.insert(animation::sprites::State::Walk, walk);
@@ -124,6 +125,7 @@ pub fn run_game() -> Result<(), String>{
             }
         }
 
+
         //gather player input
         let player_input: HashSet<Keycode> = game_window.event_pump
             .keyboard_state()
@@ -140,7 +142,6 @@ pub fn run_game() -> Result<(), String>{
         
         //move character based on current frame
         input::movement::move_char(&mut fighter);
-
         //##########-PROCESS-COLLISIONS-HERE-##########
 
         //move hazard
@@ -156,7 +157,7 @@ pub fn run_game() -> Result<(), String>{
         };
 
         // render canvas
-        game_window.render(Color::RGB(222,222,222), &texture, &fighter, &hazard, &hazard_texture, &platform);
+        game_window.render(&background, &texture, &fighter, &hazard, &hazard_texture);
     //##################################################-SLEEP-############################################        
         thread::sleep(frame_time - loop_time.elapsed().clamp(Duration::new(0, 0), frame_time));
     }

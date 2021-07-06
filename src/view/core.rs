@@ -53,7 +53,7 @@ impl SDLCore{
 	}
 
 	pub fn render(&mut self,
-				color: Color,
+				background: &Texture,
 				texture: &Texture,
 				fighter: &characters::characterAbstract::Fighter,
 				hazard: &physics::hazard::Hazard,
@@ -61,12 +61,12 @@ impl SDLCore{
 				platform: &Rect,
 				) -> Result<(), String>{
 
-		// color
-		self.wincan.set_draw_color(color);
-		self.wincan.clear();
-
 		// set canvas height
 		let (width, height) = self.wincan.output_size()?;
+
+		// background
+		self.wincan.copy(background, None, None);
+		//self.wincan.clear();
 
 		let (frame_width, frame_height) = fighter.char_state.sprite.size();
 
@@ -82,8 +82,8 @@ impl SDLCore{
 
         // (0, 0) cordinate = center of the scren
 		// make new rect and screen pos //
-        let screen_position = fighter.char_state.position.borrow().toPoint() + Point::new(width as i32 / 2, height as i32 / 2);
-        let screen_rect = Rect::from_center(screen_position, frame_width, frame_height);
+    let screen_position = fighter.char_state.position.borrow().toPoint() + Point::new(width as i32 / 2, height as i32 / 2);
+    let screen_rect = Rect::from_center(screen_position, frame_width, frame_height);
 
 		// hazard rectangle & position
 		let hazard_screen_position = hazard.position;
