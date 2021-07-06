@@ -57,7 +57,8 @@ impl SDLCore{
 				texture: &Texture,
 				fighter: &characters::characterAbstract::Fighter,
 				hazard: &physics::hazard::Hazard,
-				hazard_texture: &Texture
+				hazard_texture: &Texture,
+				platform: &Rect,
 				) -> Result<(), String>{
 
 		// set canvas height
@@ -81,8 +82,8 @@ impl SDLCore{
 
         // (0, 0) cordinate = center of the scren
 		// make new rect and screen pos //
-        let screen_position = fighter.char_state.position + Point::new(650, 590); // <-- hardcoded point of floor 
-        let screen_rect = Rect::from_center(screen_position, frame_width, frame_height);
+    let screen_position = fighter.char_state.position.borrow().toPoint() + Point::new(width as i32 / 2, height as i32 / 2);
+    let screen_rect = Rect::from_center(screen_position, frame_width, frame_height);
 
 		// hazard rectangle & position
 		let hazard_screen_position = hazard.position;
@@ -91,7 +92,17 @@ impl SDLCore{
 		// copy textures
         self.wincan.copy(texture, current_frame, screen_rect)?;
 		self.wincan.copy(hazard_texture, hazard_frame, hazard_screen_rectangle)?;
+		self.wincan.set_draw_color(Color::CYAN);
+		self.wincan.fill_rect(platform.clone());
         self.wincan.present();
+
+        /*
+        println!("Frame count is: {}    Frame Per State is: {}    Current Sprite is: {}    State is: {:?}",
+        fighter.char_state.frame_count, fighter.char_state.frames_per_state, 
+        fighter.char_state.current_frame, fighter.char_state.state);
+		*/
+
+
         Ok(())
 	} // closing render fun
 /*

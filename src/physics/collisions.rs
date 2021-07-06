@@ -1,10 +1,39 @@
-
 #![allow(non_snake_case)]
-use sdl2::rect::Rect;
+use sdl2::rect::{Rect, Point};
+use std::cell::{RefCell, Ref};
+use std::ops::{Deref, DerefMut};
 use crate::physics::nodes::*;
+use crate::physics::particle::*;
+use crate::physics::vecmath::*;
 
-fn boxUp<T>(data: T) -> BoxRef<T>{
-	Some(Box::new(data))
+pub struct BVHierarchy {
+	pub head: NodeRef<CollisionObject>,
+}
+
+impl BVHierarchy {
+	pub fn new(co: CollisionObject) -> BVHierarchy {
+		BVHierarchy{ head: NodeRef::new(co) }
+	}
+	pub fn insert(&self, co: CollisionObject) -> RefCell<CollisionObject> {
+		self.head.insert(co)
+	}
+	pub fn resolve_collisions(&self) {
+		let mut potential_collisions: Vec<ParticleContact> = Vec::new();
+		self.head.getPotentialCollsions(&mut potential_collisions, 10);
+		for contact in potential_collisions.iter() {
+			let p0 = contact.particles[0].clone();
+			let p1 = contact.particles[1].clone();
+			if check_collision(p0.clone(), p1.clone()) {
+				println!("Contact between {:?} and {:?}", p0, p1);
+				contact.particles[0].particle.borrow_mut().velocity.y = 0.0;
+				contact.particles[1].particle.borrow_mut().velocity.y = 0.0;
+			}
+		}
+	}
+}
+
+pub fn boxUp<T>(data: T) -> Option<RefCell<T>>{
+	Some(RefCell::new(data))
 }
 
 #[derive(Debug)]
@@ -12,11 +41,11 @@ pub struct Node<T> {
     pub parent: WeakLink<T>,
     pub left: Link<T>,
     pub right: Link<T>,
-    pub bv: BoxRef<T>, // bounding volume
+    pub bv: Option<RefCell<T>>, // bounding volume
 	pub area: Rect, // total bounding area of children
 }
 
-pub fn check_collision(a: &CollisionObject, b: &CollisionObject) -> bool {
+pub fn check_collision(a: CollisionObject, b: CollisionObject) -> bool {
 	if let CollisionObjectType::HurtBox = a.obj_type {
 		if let CollisionObjectType::HurtBox = b.obj_type {return false}
 	}
@@ -64,7 +93,46 @@ pub enum CollisionObjectType {
 	Empty,
 }
 
-pub type PotentialCollision = (CollisionObject, CollisionObject);
+pub struct ParticleContact {
+	particles: Vec< CollisionObject>,
+	restitution: f32, // idek what this does yet
+	contact_normal: PhysVec,
+}
+
+impl ParticleContact {
+	pub fn new(p0:CollisionObject, p1: CollisionObject, restitution: f32) -> Self {
+		ParticleContact{
+			particles: vec![p0, p1],
+			restitution: restitution,
+			contact_normal: PhysVec::new(0.0, 0.0)
+		}
+	}
+	// fn separating_velocity(&self) -> f32 {
+	// 	let mut relative_velocity = self.particles[0].velocity.clone();
+	// 	relative_velocity.replace(&relative_velocity.sub(&self.particles[1].velocity));
+	// 	relative_velocity.scalar_product(&self.contact_normal)
+	// }
+	// fn resolve_velocity(&mut self, duration: f32) {
+	// 	let separating_velocity = self.separating_velocity();
+	// 	if separating_velocity > 0f32 { return } // contact is either separating or stationary, no impulse required
+
+	// 	let new_sep_velocity = -separating_velocity*self.restitution;
+	// 	let delta_velocity = new_sep_velocity - separating_velocity;
+
+	// 	let total_inv_mass = self.particles[0].inverse_mass + self.particles[1].inverse_mass;
+	// 	let impulse = delta_velocity / total_inv_mass;
+	// 	let impulse_per_mass = self.contact_normal.dot_product(impulse);
+
+	// 	let p0 = self.particles[0].clone();
+	// 	self.particles[0].velocity.replace(
+	// 		&p0.velocity.add(&impulse_per_mass.dot_product(p0.inverse_mass))
+	// 	);
+	// 	let p1 = self.particles[1].clone();
+	// 	self.particles[1].velocity.replace(
+	// 		&p1.velocity.add(&impulse_per_mass.dot_product(-p1.inverse_mass))
+	// 	);
+	// }
+}
 
 pub trait Area {
 	fn area(&self) -> u32;
@@ -76,27 +144,53 @@ impl Area for Rect {
 	}
 }
 
-#[derive(Copy, Clone, Debug, PartialEq)]
+#[derive(Clone, Debug)]
 pub struct CollisionObject {
     pub obj_type: CollisionObjectType,
 	pub area: u32,
     pub rect: Rect,
+	pub noderef: WeakLink<CollisionObject>,
+	pub particle: RefCell<Particle>
 }
 
 impl CollisionObject {
-    pub fn new(obj_type: CollisionObjectType, x: i32, y: i32, width: u32, height: u32) -> CollisionObject {
+    pub fn new(obj_type: CollisionObjectType, x: i32, y: i32, width: u32, height: u32, particle: RefCell<Particle>) -> CollisionObject {
         let rect = Rect::new(x, y, width, height);
 		let area = rect.area();
+		let noderef: WeakLink<CollisionObject> = None;
 
         CollisionObject {
             obj_type,
 			area,
             rect,
+			noderef,
+			particle,
         }
     }
+    pub fn new_from(obj_type: CollisionObjectType, rect: Rect, particle: RefCell<Particle>) -> CollisionObject {
+		let area = rect.area();
+		let noderef: WeakLink<CollisionObject> = None;
+
+        CollisionObject {
+            obj_type,
+			area,
+            rect,
+			noderef,
+			particle,
+        }
+    }
+	pub fn getNodeRef(&self) -> Option<NodeRef<CollisionObject>> {
+		match &self.noderef {
+       		Some(p) => Some(NodeRef(p.upgrade().unwrap())), //p.upgrade().map(|u| NodeRef(u)),
+			None => None
+		}
+	}
+	pub fn update(&mut self, position: Point) {
+		self.rect.reposition(position);
+	}
 
 	fn overlapsWith(&self, other: &CollisionObject) -> bool {
-		check_collision(self, other)
+		self.rect.has_intersection(other.rect)
 	}
 }
 
@@ -106,12 +200,14 @@ trait Unbox<T> {
 
 impl Node<CollisionObject> {
 	pub fn new(parent: WeakLink<CollisionObject>, bv: CollisionObject) -> Self {
+		let area = bv.rect.clone();
+		let bv = boxUp(bv);
 		Node{
 			parent: parent,
 			left: None,
 			right: None,
-			bv: boxUp(bv),
-			area: bv.rect,
+			bv: bv,
+			area: area,
 		}
 	}
 
@@ -122,14 +218,14 @@ impl Node<CollisionObject> {
 		else {true}
 	}
 
-	pub fn detatch(&mut self) {
-		let parent = self.parent.take();
-		let left = self.left.take();
-		let right = self.right.take();
-	}
+	// pub fn detatch(&mut self) {
+	// 	let parent = self.parent.take();
+	// 	let left = self.left.take();
+	// 	let right = self.right.take();
+	// }
 }
 
-
+/*
 #[cfg(test)]
 mod test {
 	use super::*;
@@ -143,26 +239,44 @@ mod test {
 	}
 
 	#[test]
+	fn testCollisionInitFrom() {
+		let r1 = Rect::new(0, 0, 3, 3);
+		let c1 = CollisionObject::new_from(CollisionObjectType::HitBox, r1);
+
+		assert_eq!(c1.rect, r1);
+	}
+
+	#[test]
+	fn testCollisionUpdate() {
+		let r1 = Rect::new(0, 0, 3, 3);
+		let mut c1 = CollisionObject::new_from(CollisionObjectType::HitBox, r1);
+		c1.update(Point::new(4, 4));
+
+		assert_eq!(c1.rect, Rect::new(4,4,3,3));
+	}
+
+	#[test]
 	fn testBVHNodeInit() {
 		let co = CollisionObject::new(CollisionObjectType::HitBox, 0, 2, 3, 3);
 		let node = NodeRef::new(co.clone());
 
 		assert_eq!(node.get().left.as_ref().map(|a| Some(false)), None);
 		assert_eq!(node.get().right.as_ref().map(|a| Some(false)), None);
-		assert_eq!(node.get().bv.as_ref().take(), Some(&Box::new(co)));
+		assert_eq!(node.get().bv.as_ref().take(), Some(&RefCell::new(co)));
 		assert_eq!(node.get().area, Rect::new(0,2,3,3));
 	}
-
+	
 	#[test]
 	fn testBVHNodeInsert() {
 		let co1 = CollisionObject::new(CollisionObjectType::HitBox, 0, 2, 3, 3);
 		let co2 = CollisionObject::new(CollisionObjectType::HitBox, 5, 0, 6, 2);
 		let co3 = CollisionObject::new(CollisionObjectType::HitBox, 20, 20, 2, 2);
 		let node = NodeRef::new(co1.clone());
-		let (left, right) = node.insert(co2.clone());
+		let l = node.clone();
+		let new = node.insert(co2.clone());
 
-		assert_eq!(node.getLeftChild(), left);
-		assert_eq!(node.getRightChild(), right);
+		assert_eq!(node.getLeftChild().get().bv.as_ref().unwrap(), &RefCell::new(co1.clone()));
+		assert_eq!(node.getRightChild().get().bv.as_ref().unwrap(), &RefCell::new(co2.clone()));
 		assert_eq!(node.get().bv.as_ref().take(), None);
 		assert_eq!(node.get().area, Rect::new(0,0,11,5));
 
@@ -170,27 +284,27 @@ mod test {
 		let l2 = NodeRef::new(co3);
 		l2.getMut().parent = Some(std::rc::Weak::new());
 
-		assert_eq!(node.getLeftChild(), left);
-		assert_eq!(node.getLeftChild().getRightChild().get().bv.as_deref().unwrap(), &co3.clone());
-		assert_eq!(node.getRightChild(), right);
+		assert_eq!(node.getLeftChild().getLeftChild().get().bv.as_ref().unwrap(), &RefCell::new(co1.clone()));
+		assert_eq!(node.getLeftChild().getRightChild().get().bv.as_ref().unwrap(), &RefCell::new(co3.clone()));
+		assert_eq!(node.getRightChild().get().bv.as_ref().unwrap(), &RefCell::new(co2.clone()));
 		assert_eq!(node.get().bv.as_ref().take(), None);
 		assert_eq!(node.get().area, Rect::new(0,0,22,22));
 	}
-	/*
-	#[test]
-	fn testBVHNodeRemove() {
-		let co1 = CollisionObject::new(CollisionObjectType::HitBox, 0, 2, 3, 3);
-		let co2 = CollisionObject::new(CollisionObjectType::HitBox, 5, 0, 6, 2);
-		let co3 = CollisionObject::new(CollisionObjectType::HitBox, 20, 20, 2, 2);
-		let node = NodeRef::new(co1.clone());
-		let (left, right) = node.insert(co2.clone());
-		node.insert(co3.clone());
-		left.clone().remove();
+	
+	// #[test]
+	// fn testBVHNodeRemove() {
+	// 	let co1 = CollisionObject::new(CollisionObjectType::HitBox, 0, 2, 3, 3);
+	// 	let co2 = CollisionObject::new(CollisionObjectType::HitBox, 5, 0, 6, 2);
+	// 	let co3 = CollisionObject::new(CollisionObjectType::HitBox, 20, 20, 2, 2);
+	// 	let node = NodeRef::new(co1.clone());
+	// 	node.insert(co2.clone());
+	// 	let mut nodec3 = node.insert(co3.clone());
+	// 	nodec3.remove();
 
-		assert_eq!(node.getLeftChild(), left);
-		assert_eq!(node.getLeftChild().getRightChild().get().bv.as_deref().unwrap(), &co3.clone());
-		assert_eq!(node.getRightChild(), right);
-		assert_eq!(node.get().bv.as_ref().take(), None);
-		assert_eq!(node.get().area, Rect::new(0,0,22,22));
-	}*/
+	// 	assert_eq!(node.getLeftChild().get().bv.as_ref().unwrap(), &RefCell::new(co1.clone()));
+	// 	assert_eq!(node.getRightChild().get().bv.as_ref().unwrap(), &RefCell::new(co2.clone()));
+	// 	assert_eq!(node.get().bv.as_ref().take(), None);
+	// 	assert_eq!(node.get().area, Rect::new(0,0,11,5));
+	// }
 }
+*/

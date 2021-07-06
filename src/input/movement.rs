@@ -1,5 +1,8 @@
 use crate::characters; // used to get Fighter
 use crate::animation; // used to get States
+use crate::physics::vecmath::PhysVec;
+use crate::physics::particle;
+use crate::view::globals::*;
 
 use serde_derive::{Serialize, Deserialize};
 
@@ -12,15 +15,136 @@ pub enum Direction {
     Down,
 }
 
+//moves character on first frame a sprite is loaded
+pub fn move_char(f: &mut characters::characterAbstract::Fighter){
+    match f.char_state.state{
+        //walk right or left, depending
+        animation::sprites::State::Walk => {
+            if f.char_state.frame_count == 1  ||
+               f.char_state.frame_count == 6  ||
+               f.char_state.frame_count == 11 ||
+               f.char_state.frame_count == 16 ||
+               f.char_state.frame_count == 21 ||
+               f.char_state.frame_count == 26 {
+                if f.char_state.direction == Direction::Right {
+                    f.char_state.position.borrow_mut().velocity.add_vec(&PhysVec::new(f.walk_speed as f32, 0.0));
+                    f.update_position(&PhysVec::new(1.0, 0.0));
+                }
+                else{
+                    f.char_state.position.borrow_mut().velocity.add_vec(&PhysVec::new(-f.walk_speed as f32, 0.0));
+                    f.update_position(&PhysVec::new(-1.0, 0.0));
+                }         
+            }    
+        },
+        
+        //jump or or left, depending on input
+        animation::sprites::State::Jump => {
+            if f.char_state.frame_count == 1 || 
+               f.char_state.frame_count == 6 ||
+               f.char_state.frame_count == 11{
+                f.char_state.position.borrow_mut().velocity.replace(&PhysVec::new(0.0, -2000.0));
+                f.update_position(&PhysVec::new(0.0, 0.0));     
+            }else if f.char_state.frame_count == 16 ||
+            f.char_state.frame_count == 21 {
+                f.char_state.position.borrow_mut().velocity.replace(&PhysVec::new(0.0, -2000.0));
+                f.update_position(&PhysVec::new(0.0, 0.0));            
+            }else if f.char_state.frame_count == 24{
+            
+                // if f.char_state.direction == Direction::Left{
+                //     f.update_position(&PhysVec::new(-f.speed as f32, GRAVITY));
+                // }else{
+                //     f.update_position(&PhysVec::new(0.0, GRAVITY));
+                // }
+            
+            }
+        },
+        
+        //jump forward
+        animation::sprites::State::FJump => {
+            if f.char_state.frame_count == 1  ||
+               f.char_state.frame_count == 7  ||
+               f.char_state.frame_count == 13 ||
+               f.char_state.frame_count == 19 {
+                f.char_state.position.borrow_mut().velocity.replace(&PhysVec::new(200.0, -1500.0));
+                f.update_position(&PhysVec::new(0.0, 0.0));   
+            }else if f.char_state.frame_count == 25 ||
+                     f.char_state.frame_count == 31 {
+                        f.char_state.position.borrow_mut().velocity.replace(&PhysVec::new(200.0, -1500.0));
+                        f.update_position(&PhysVec::new(0.0, 0.0));   
+            }else{
+                // f.update_position(&PhysVec::new(0f32, GRAVITY));
+            }
+        },
+        
+        _=> {
+            let mut force = PhysVec::new(0.0, GRAVITY);
+            let (x, y) = f.char_state.velocity();
+            match x {
+                x if x != 0.0 => f.char_state.position.borrow_mut().velocity.x = 0.0,
+                _ => {}
+            }
+            f.update_position(&force);
+        },
+    }
+}
+
+/*//Jumps
+if fighter.char_state.state == animation::sprites::State::Jump ||
+   fighter.char_state.state == animation::sprites::State::FJump {
+    match &fighter.char_state.direction {
+        input::movement::Direction::Left => {
+                                if fighter.char_state.current_frame < 3 { // Note: only works since there are 6x states in Jump.
+                                    fighter.char_state.position = fighter.char_state.position.offset(-fighter.speed, -fighter.speed);
+                                } else if fighter.char_state.current_frame < 5 { // account for starting at 0
+                                    fighter.char_state.position = fighter.char_state.position.offset(-fighter.speed, 28);
+                                } else if fighter.char_state.current_frame == 5 {
+                                    fighter.char_state.position = fighter.char_state.position.offset(-fighter.speed, 0);
+                                    fighter.char_state.set_state(animation::sprites::State::Idle); 
+                                    fighter.char_state.set_current_frame(0);
+                                }
+                            },
+        input::movement::Direction::Right => {
+                                if fighter.char_state.current_frame < 4 {
+                                    fighter.char_state.position = fighter.char_state.position.offset(fighter.speed, -fighter.speed);
+                                } else if fighter.char_state.current_frame < 6 {
+                                    fighter.char_state.position = fighter.char_state.position.offset(fighter.speed, 28);
+                                } else if fighter.char_state.current_frame == 6 {
+                                    fighter.char_state.position = fighter.char_state.position.offset(fighter.speed, 28);
+                                    fighter.char_state.set_state(animation::sprites::State::Idle); 
+                                    fighter.char_state.set_current_frame(0);
+                                }
+                            },
+        input::movement::Direction::Up => {
+                                if fighter.char_state.current_frame < 3 {
+                                    fighter.char_state.position = fighter.char_state.position.offset(0, -fighter.speed);
+                                } else if fighter.char_state.current_frame < 5 { // Note: works b/c there are 6x states in jump
+                                    fighter.char_state.position = fighter.char_state.position.offset(0, 28);
+
+                                } else if fighter.char_state.current_frame == 5{
+                                    fighter.char_state.position = fighter.char_state.position.offset(0, 0);
+                                    //not sure the purpose of these, they set it so they are considered idle while still jumping
+                                    // fighter.char_state.state = animation::sprites::State::Idle;                                            
+                                    // fighter.char_state.current_frame = 0;
+                                } 
+
+                            },
+
+        input::movement::Direction::Down => (),
+     } // end direction jump match
+}  // end jump if
+*/
+
+/*
 pub fn walk(f: &mut characters::characterAbstract::Fighter) {
     f.char_state.set_state(animation::sprites::State::Walk);
-
+    /*
     match &f.char_state.direction {
-        Direction::Left =>  { f.char_state.position = f.char_state.position.offset(-f.speed, 0); },
-        Direction::Right => { f.char_state.position = f.char_state.position.offset(f.speed, 0); },
+        Direction::Left =>  { f.char_state.update_position(vec![-f.speed, -10]); },
+        Direction::Right => { f.char_state.update_position(vec![f.speed, -10]); },
         Direction::Up => (),
         Direction::Down => (),
     }
+    */
 }
 
 pub fn jump(f: &mut characters::characterAbstract::Fighter) {
@@ -49,7 +173,7 @@ pub fn hkick(f: &mut characters::characterAbstract::Fighter) {
 pub fn lpunch(f: &mut characters::characterAbstract::Fighter) {
     f.char_state.set_state(animation::sprites::State::LPunch);
 } // close lpunch fn
-
+*/
 
 // EDIT: make functions public
 // EDIT: remove "player_"

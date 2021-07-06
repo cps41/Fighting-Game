@@ -8,6 +8,8 @@ use sdl2::pixels::Color;
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use std::collections::HashMap;
+use std::collections::HashSet;
+use std::cell::RefCell;
 use std::path::Path;
 use sdl2::render::Canvas;
 use sdl2::video::Window;
@@ -15,6 +17,9 @@ use sdl2::video::WindowContext;
 use std::time::{Instant, Duration}; // needed for FPS
 use std::thread;
 use std::env;
+use physics::collisions::*;
+use physics::vecmath::*;
+use physics::particle::*;
 
 pub mod characters; // for characterAbstract
 pub mod view; // for core
@@ -31,13 +36,7 @@ const TITLE: &str = "Street Code Fighter";
 const TIMEOUT: u64 = 5000;
 const CAM_W: u32 = 1280;
 const CAM_H: u32 = 720;
-const FRAME_RATE: f64 = 1.0/30.0;
-
-// TODO: FPS constants
-// // 5px / frame @60fps == 300 px/s
-// const SPEED_LIMIT: f64 = 300.0;
-// // 1px / frame^2 @60fps == px/s^2
-// const ACCEL_RATE: f64 = 3600.0;
+const FRAME_RATE: f64 = 1.0/60.0;
 
 
 pub fn run_game() -> Result<(), String>{
@@ -58,6 +57,9 @@ pub fn run_game() -> Result<(), String>{
     let mut hazard = physics::hazard::Hazard::new();
 
     let texture_creator = game_window.wincan.texture_creator();
+
+    let platform = Rect::new(40, 620, CAM_W-80, CAM_H-680);
+
 
     //////////////////////////
     // FUNCTIONING
@@ -90,123 +92,83 @@ pub fn run_game() -> Result<(), String>{
     // Self::load_textures(&texture_creator, &mut fighter);
     ////////
 
-    //game loop
+    //load window before game starts with starting texture
+    let texture = {
+        match python_textures.get(&fighter.char_state.state) {
+            Some(text) => text,
+            _=> panic!("No texture found for the state! Oh nos."),
+        }
+    };
+    game_window.render(Color::RGB(222,222,222), &texture, &fighter, &hazard, &hazard_texture, &platform);
+
+
+//################################################-GAME-LOOP###############################################
+    let collisions = BVHierarchy::new(CollisionObject::new_from(CollisionObjectType::Platform, platform.clone(), 
+        RefCell::new(Particle::new(
+            PhysVec::new(platform.x as f32, platform.y as f32), 0.5, 2000000000.0))));
     'gameloop: loop{
+        collisions.insert(CollisionObject::new_from(CollisionObjectType::HurtBox, hazard.sprite.clone(), 
+            RefCell::new(Particle::new(
+                PhysVec::new(hazard.position.x as f32, hazard.position.y as f32), 0.5, 200.0))));
+        fighter.char_state.update_bounding_boxes(&collisions);
+        collisions.resolve_collisions();
+
         let loop_time = Instant::now();
 
+    //################################################-GET-INPUT-##########################################
+        //ceck if play quits
         for event in game_window.event_pump.poll_iter() {
             match event {
                 Event::Quit{..} | Event::KeyDown{keycode: Some(Keycode::Escape), ..} => break 'gameloop,
-                _ => { input::inputHandler::keyboard_input(&event, &mut fighter); }
+                //_ => { input::inputHandler::keyboard_input(&event, &mut fighter); }
+                _=> {},
             }
         }
 
-        // get the proper texture within the game
-        let texture = match python_textures.get(&fighter.char_state.state) {
-            Some(text) => text,
-            _=> panic!("No texture found for the state! Oh nos."),
-        };
 
-        // movement direction occurs here
+        //gather player input
+        let player_input: HashSet<Keycode> = game_window.event_pump
+            .keyboard_state()
+            .pressed_scancodes()
+            .filter_map(Keycode::from_scancode)
+            .collect();
+        
+    //##############################################-PROCESS-EVENTS-#######################################
+        //process player movement
+        input::inputHandler::keyboard_input(&player_input, &mut fighter);
+        
+        //select frame to be rendered
+        fighter.char_state.advance_frame();
+        
+        //move character based on current frame
+        input::movement::move_char(&mut fighter);
+        //##########-PROCESS-COLLISIONS-HERE-##########
+
+        //move hazard
+        hazard.sprite.offset(0, 15);
+    //##################################################-RENDER-###########################################
+       
+        // get the proper texture within the game
+        let texture = {
+            match python_textures.get(&fighter.char_state.state) {
+                Some(text) => text,
+                _=> panic!("No texture found for the state! Oh nos."),
+            }
+        };
 
         // render canvas
         game_window.render(&background, &texture, &fighter, &hazard, &hazard_texture);
-
-        //advance frame
-        fighter.char_state.advance_frame();
-
-        //ANIMATION
-        //Jumps
-        if fighter.char_state.state == animation::sprites::State::Jump ||
-           fighter.char_state.state == animation::sprites::State::FJump {
-            match &fighter.char_state.direction {
-                input::movement::Direction::Left => {
-                                        if fighter.char_state.current_frame < 3 { // Note: only works since there are 6x states in Jump.
-                                            fighter.char_state.position = fighter.char_state.position.offset(-fighter.speed, -fighter.speed);
-                                        } else if fighter.char_state.current_frame < 5 { // account for starting at 0
-                                            fighter.char_state.position = fighter.char_state.position.offset(-fighter.speed, fighter.speed);
-                                        } else if fighter.char_state.current_frame == 5 {
-                                            fighter.char_state.position = fighter.char_state.position.offset(-fighter.speed, fighter.speed);
-                                            fighter.char_state.state = animation::sprites::State::Idle;
-                                            fighter.char_state.current_frame = 0;
-                                        }
-                                    },
-                input::movement::Direction::Right => {
-                                        if fighter.char_state.current_frame < 4 {
-                                            fighter.char_state.position = fighter.char_state.position.offset(fighter.speed, -fighter.speed);
-                                        } else if fighter.char_state.current_frame < 6 {
-                                            fighter.char_state.position = fighter.char_state.position.offset(fighter.speed, fighter.speed);
-                                        } else if fighter.char_state.current_frame == 6 {
-                                            fighter.char_state.position = fighter.char_state.position.offset(fighter.speed, fighter.speed);
-                                            fighter.char_state.state = animation::sprites::State::Idle;
-                                            fighter.char_state.current_frame = 0;
-                                        }
-                                    },
-                input::movement::Direction::Up => {
-                                        if fighter.char_state.current_frame < 3 {
-                                            fighter.char_state.position = fighter.char_state.position.offset(0, -fighter.speed);
-                                        } else if fighter.char_state.current_frame < 5 { // Note: works b/c there are 6x states in jump
-                                            fighter.char_state.position = fighter.char_state.position.offset(0, fighter.speed);
-
-                                        } else if fighter.char_state.current_frame == 5{
-                                            fighter.char_state.position = fighter.char_state.position.offset(0, fighter.speed);
-                                            //not sure the purpose of these, they set it so they are considered idle while still jumping
-                                            //fighter.char_state.state = animation::sprites::State::Idle;
-                                            //fighter.char_state.current_frame = 0;
-                                        }
-
-                                    },
-
-                input::movement::Direction::Down => (),
-             } // end direction jump match
-        }  // end jump if
-
-        // RESETS
-        // reset walking to idle
-        if fighter.char_state.state == animation::sprites::State::Walk &&
-           fighter.char_state.current_frame % 2 == 0 { // 3 is arbitary #
-
-            fighter.char_state.set_state(animation::sprites::State::Idle);
-            fighter.char_state.set_current_frame(0);
-
-        }
-
-        // reset direction to up
-        if fighter.char_state.state != animation::sprites::State::Jump &&
-           fighter.char_state.state != animation::sprites::State::FJump  {
-            fighter.char_state.direction = input::movement::Direction::Up;
-        }
-
-         // println!("s: {:?}, cf: {}", fighter.char_state.state, fighter.char_state.current_frame);
-
-        // resetting to idle, if reached max frames (since idle is our only auto repeat)
-
-
-        if fighter.char_state.state != animation::sprites::State::Idle &&
-           fighter.char_state.frame_count == animation::sprites::get_frame_cnt(&fighter.char_state) -1 { // we've hit the max frames
-            fighter.char_state.set_state(animation::sprites::State::Idle);
-            fighter.char_state.reset_current_frame();
-        }
-
-        thread::sleep(frame_time - loop_time.elapsed());
-
-        if hazard.sprite.y() < 600 && hazard.fell == false {
-            hazard.sprite.offset(0, 7);
-            //println!("{}", hazard.sprite.y())
-        }
-        if hazard.sprite.y() >= 600 {
-            hazard.reset();
-        }
+    //##################################################-SLEEP-############################################        
+        thread::sleep(frame_time - loop_time.elapsed().clamp(Duration::new(0, 0), frame_time));
     }
-
     Ok(())
 }
+
 
 pub fn run_server() -> Result<(), String>{
     networking::chatServer::server_start();
     Ok(())
 }
-
 
 /*
  // run credits
