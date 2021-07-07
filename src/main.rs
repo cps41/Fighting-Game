@@ -57,6 +57,7 @@ pub fn run_game() -> Result<(), String>{
     let mut fighter2 = characters::characterAbstract::Fighter::new(fighter2);
     //this is just to make fighter2 spawn a little to the right of fighter
     fighter2.char_state.position.borrow_mut().position.replace(&PhysVec::new(300.0, 0.0));
+    fighter2.name = characters::characterAbstract::Characters::Java;
 
     let mut hazard = physics::hazard::Hazard::new();
 
@@ -70,6 +71,7 @@ pub fn run_game() -> Result<(), String>{
     // EDIT: Modularize. Challenge: figuring out how to deal with texture's + hashmap lifetime
     // create HashMap of all textures
     let mut python_textures = HashMap::new();
+    let mut java_textures = HashMap::new();
 
     let idle = texture_creator.load_texture("src/assets/images/characters/python/idle.png")?;
     let walk = texture_creator.load_texture("src/assets/images/characters/python/walk.png")?;
@@ -82,6 +84,8 @@ pub fn run_game() -> Result<(), String>{
     let hazard_texture = texture_creator.load_texture("src/assets/images/hazards/stalactite100x100.png")?;
     let background = texture_creator.load_texture("src/assets/images/background/small_background.png")?;
 
+    let java_idle = texture_creator.load_texture("src/assets/images/characters/java/idle-outline.png")?;
+
     python_textures.insert(animation::sprites::State::Idle, idle);
     python_textures.insert(animation::sprites::State::Walk, walk);
     python_textures.insert(animation::sprites::State::Jump, jump);
@@ -91,6 +95,7 @@ pub fn run_game() -> Result<(), String>{
     python_textures.insert(animation::sprites::State::HKick, hkick);
     python_textures.insert(animation::sprites::State::Block, block);
 
+    java_textures.insert(animation::sprites::State::Idle, java_idle);
     ///////////////////////
     // NOT YET FUNCTIONING
     // Self::load_textures(&texture_creator, &mut fighter);
@@ -105,7 +110,7 @@ pub fn run_game() -> Result<(), String>{
     };
 
     let texture2 = {
-        match python_textures.get(&fighter2.char_state.state) {
+        match java_textures.get(&fighter2.char_state.state) {
             Some(text) => text,
             _=> panic!("No texture found for the state! Oh nos."),
         }
@@ -177,7 +182,7 @@ pub fn run_game() -> Result<(), String>{
             }
         };
         let texture2 = {
-            match python_textures.get(&fighter2.char_state.state) {
+            match java_textures.get(&fighter2.char_state.state) {
                 Some(text) => text,
                 _=> panic!("No texture found for the state! Oh nos."),
             }

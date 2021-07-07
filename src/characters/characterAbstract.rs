@@ -17,6 +17,7 @@ use crate::view::globals::*;
 #[derive(Hash, Eq, PartialEq, Debug)]
 pub enum Characters {
 	Python,
+	Java,
 	// Stretch goal: add more
 }
 
