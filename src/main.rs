@@ -73,14 +73,14 @@ pub fn run_game() -> Result<(), String>{
     let mut python_textures = HashMap::new();
     let mut java_textures = HashMap::new();
 
-    let idle = texture_creator.load_texture("src/assets/images/characters/python/idle-outline.png")?;
-    let walk = texture_creator.load_texture("src/assets/images/characters/python/walk-outline.png")?;
-    let jump = texture_creator.load_texture("src/assets/images/characters/python/jump-outline.png")?;
-    let fjump = texture_creator.load_texture("src/assets/images/characters/python/fjump-outline.png")?;
-    let lpunch = texture_creator.load_texture("src/assets/images/characters/python/lpunch-outline.png")?;
-    let lkick = texture_creator.load_texture("src/assets/images/characters/python/lkick-outline.png")?;
-    let hkick = texture_creator.load_texture("src/assets/images/characters/python/hkick-outline.png")?;
-    let block = texture_creator.load_texture("src/assets/images/characters/python/block-outline.png")?;
+    let idle = texture_creator.load_texture("src/assets/images/characters/python/idle.png")?;
+    let walk = texture_creator.load_texture("src/assets/images/characters/python/walk.png")?;
+    let jump = texture_creator.load_texture("src/assets/images/characters/python/jump.png")?;
+    let fjump = texture_creator.load_texture("src/assets/images/characters/python/fjump.png")?;
+    let lpunch = texture_creator.load_texture("src/assets/images/characters/python/lpunch.png")?;
+    let lkick = texture_creator.load_texture("src/assets/images/characters/python/lkick.png")?;
+    let hkick = texture_creator.load_texture("src/assets/images/characters/python/hkick.png")?;
+    let block = texture_creator.load_texture("src/assets/images/characters/python/block.png")?;
     let hazard_texture = texture_creator.load_texture("src/assets/images/hazards/stalactite100x100.png")?;
     let background = texture_creator.load_texture("src/assets/images/background/small_background.png")?;
 
