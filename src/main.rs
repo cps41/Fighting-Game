@@ -84,7 +84,7 @@ pub fn run_game() -> Result<(), String>{
     let hazard_texture = texture_creator.load_texture("src/assets/images/hazards/stalactite100x100.png")?;
     let background = texture_creator.load_texture("src/assets/images/background/small_background.png")?;
 
-    let java_idle = texture_creator.load_texture("src/assets/images/characters/java/idle-outline.png")?;
+    let java_idle = texture_creator.load_texture("src/assets/images/characters/java/idle.png")?;
 
     python_textures.insert(animation::sprites::State::Idle, idle);
     python_textures.insert(animation::sprites::State::Walk, walk);
