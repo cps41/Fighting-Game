@@ -1,13 +1,26 @@
 extern crate street_code_fighter as scf;
+use street_code_fighter::view::globals::{TITLE, CAM_W, CAM_H};
 
-use std::{thread, time};
+use std::path::Path;
+use sdl2::event::Event;
+use sdl2::keyboard::Keycode;
 
-fn main() {
-	scf::audio::audio::play(); // play audio
+fn main() -> Result<(), String>  {
+	// have to initialize audio in SDL2!!
+    let mut game_window = {
+        match scf::view::core::SDLCore::init(TITLE, false, CAM_W, CAM_H){
+            Ok(t) => t,
+            Err(e) => panic!("{}", e),
+        }
+    };
 
-	thread::sleep(time::Duration::from_secs(10)); // wait for 10 seconds
+    // play audio
+	scf::audio::audio::ko(&mut game_window.timer);
+	scf::audio::audio::hit(&mut game_window.timer);
+	scf::audio::audio::combat(&mut game_window.timer);
+	scf::audio::audio::opening(&mut game_window.timer);
 
-	scf::audio::audio::stop(); // stop playing audio
+	Ok(())
 }
 
 

@@ -1,5 +1,4 @@
 pub mod core;
-pub mod loads;
 
 pub mod globals {
     pub const TITLE: &str = "Street Code Fighter";
