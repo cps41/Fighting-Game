@@ -15,6 +15,8 @@ pub struct SDLCore{
 	sdl_cxt: sdl2::Sdl,
 	pub wincan: sdl2::render::WindowCanvas,
 	pub event_pump: sdl2::EventPump,
+	pub audio: sdl2::AudioSubsystem,
+	pub timer: sdl2::TimerSubsystem,
 }
 
 impl SDLCore{
@@ -27,6 +29,9 @@ impl SDLCore{
 		let sdl_cxt = sdl2::init()?;
 		let video_subsys = sdl_cxt.video()?;
 
+	// adding for audio	
+    let audio = sdl_cxt.audio()?;
+    let mut timer = sdl_cxt.timer()?;
 
 		let window = video_subsys.window(title, width, height).build().map_err(|e| e.to_string())?;
 		let wincan = window.into_canvas().accelerated();
@@ -49,6 +54,8 @@ impl SDLCore{
 			sdl_cxt,
 			wincan,
 			event_pump,
+			audio,
+			timer,
 		})
 	}
 
