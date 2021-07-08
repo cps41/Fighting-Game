@@ -36,7 +36,7 @@ pub fn play(music_file: &Path, timer: &mut TimerSubsystem, seconds: u32) -> Resu
     Ok(())
 }
 
-pub fn stop() {
+pub fn stop() { // kind of useless
 	println!("stop music");
 	sdl2::mixer::Music::halt();
 }
