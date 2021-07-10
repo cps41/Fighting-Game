@@ -330,31 +330,39 @@ impl CharacterState {
 	}
 	pub fn remove(link: &mut Option<RefCell<CollisionObject>>) {
 		link.take().map(|l| {
-			l.borrow().getNodeRef().map(|n| n.remove());
+			l.borrow().getNodeRef().map(|n| {
+				// println!("\nremoving {:?}\n", n);
+				n.remove()
+			});
 		});
 	}
 	pub fn insert_hit_box(&mut self, bvh: &BVHierarchy) {
+		// println!("inserting hit box...");
 		CharacterState::remove(&mut self.hitbox);
 		self.hitbox = Some(bvh.insert(
 			CollisionObject::new(
-				CollisionObjectType::HitBox, self.x()+70, self.y(), 90, 200, self.position.clone())
+				CollisionObjectType::HitBox, self.x(), self.y(), 180, 280, self.position.clone())
 		));
 	}
 	pub fn insert_hurt_box(&mut self, bvh: &BVHierarchy) {
+		// println!("inserting hurt box...");
 		CharacterState::remove(&mut self.hurtbox);
-		self.hitbox = Some(bvh.insert(
+		self.hurtbox = Some(bvh.insert(
 			CollisionObject::new(
 				CollisionObjectType::HurtBox, self.x(), self.y(), 180, 280, self.position.clone())
 		));
 	}
 	pub fn insert_block_box(&mut self, bvh: &BVHierarchy) {
+		// println!("inserting block box...");
 		CharacterState::remove(&mut self.blockbox);
-		self.hitbox = Some(bvh.insert(
+		self.blockbox = Some(bvh.insert(
 			CollisionObject::new(
 				CollisionObjectType::BlockBox, self.x(), self.y(), 180, 280, self.position.clone())
 		));
 	}
 	pub fn update_bounding_boxes(&mut self, bvh: &BVHierarchy) {
+		// println!("updating...");
+		// println!("\nUpdating Bounding Boxes {:?}", bvh.head);
 		match &self.state {
 			State::Block => {
 				CharacterState::remove(&mut self.hitbox);
@@ -372,7 +380,23 @@ impl CharacterState {
 				self.insert_hurt_box(&bvh);
 			},
 		}
-		bvh.resolve_collisions();
+		// println!("\nhitbox: {:?}\nblockbox: {:?}\nhurtbox: {:?}\n", self.hitbox, self.blockbox, self.hurtbox);
 	}
 
+}
+
+#[cfg(test)]
+pub mod test {
+	use super::*;
+	#[test]
+	pub fn testInsert() {
+		let mut f = Fighter::new(CharacterState::new());
+		let platform = Rect::new(40, 620, CAM_W-80, CAM_H-680);
+		let collisions = BVHierarchy::new(CollisionObject::new_from(CollisionObjectType::Platform, platform.clone(),
+		RefCell::new(Particle::new(
+			PhysVec::new(platform.x as f32, platform.y as f32), 0.5, 2000000000.0))));
+		f.char_state.update_bounding_boxes(&collisions);
+
+		assert_eq!(f.char_state.position().position.raw(), (0.0, 0.0));
+	}
 }
