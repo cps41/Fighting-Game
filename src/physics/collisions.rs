@@ -2,6 +2,7 @@
 use sdl2::rect::{Rect, Point};
 use std::cell::{RefCell, Ref};
 use std::ops::{Deref, DerefMut};
+use std::fmt;
 use crate::physics::nodes::*;
 use crate::physics::particle::*;
 use crate::physics::vecmath::*;
@@ -15,6 +16,7 @@ impl BVHierarchy {
 		BVHierarchy{ head: NodeRef::new(co) }
 	}
 	pub fn insert(&self, co: CollisionObject) -> RefCell<CollisionObject> {
+		// println!("inserting {:?}", co);
 		self.head.insert(co)
 	}
 	pub fn resolve_collisions(&self) {
@@ -24,9 +26,9 @@ impl BVHierarchy {
 			let p0 = contact.particles[0].clone();
 			let p1 = contact.particles[1].clone();
 			if check_collision(p0.clone(), p1.clone()) {
-				println!("Contact between {:?} and {:?}", p0, p1);
-				contact.particles[0].particle.borrow_mut().velocity.y = 0.0;
-				contact.particles[1].particle.borrow_mut().velocity.y = 0.0;
+				// println!("Contact between {:?} and {:?}", p0, p1);
+				contact.particles[0].particle.borrow_mut().velocity.x = 0.0;
+				contact.particles[1].particle.borrow_mut().velocity.x = 0.0;
 			}
 		}
 	}
@@ -36,7 +38,6 @@ pub fn boxUp<T>(data: T) -> Option<RefCell<T>>{
 	Some(RefCell::new(data))
 }
 
-#[derive(Debug)]
 pub struct Node<T> {
     pub parent: WeakLink<T>,
     pub left: Link<T>,
@@ -44,11 +45,20 @@ pub struct Node<T> {
     pub bv: Option<RefCell<T>>, // bounding volume
 	pub area: Rect, // total bounding area of children
 }
+impl<T: fmt::Debug> fmt::Debug for Node<T> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.debug_struct("\n\tNode")
+		.field("\n\tleft", &self.left)
+		.field("\n\tright", &self.right)
+		.field("\n\tbv", &self.bv)
+		.finish()
+    }
+}
 
 pub fn check_collision(a: CollisionObject, b: CollisionObject) -> bool {
-	if let CollisionObjectType::HurtBox = a.obj_type {
-		if let CollisionObjectType::HurtBox = b.obj_type {return false}
-	}
+	// if let CollisionObjectType::HurtBox = a.obj_type {
+	// 	if let CollisionObjectType::HurtBox = b.obj_type {return false}
+	// }
 	reg_collision(&a.rect, &b.rect)
 }
 
@@ -144,13 +154,25 @@ impl Area for Rect {
 	}
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct CollisionObject {
     pub obj_type: CollisionObjectType,
 	pub area: u32,
     pub rect: Rect,
 	pub noderef: WeakLink<CollisionObject>,
 	pub particle: RefCell<Particle>
+}
+
+
+impl fmt::Debug for CollisionObject {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.debug_struct("\n\t\tCollision Object")
+		.field("obj_type", &self.obj_type)
+		.field("area", &self.area)
+		.field("rect", &self.rect)
+		.field("position", &self.particle)
+		.finish()
+    }
 }
 
 impl CollisionObject {
@@ -181,7 +203,7 @@ impl CollisionObject {
     }
 	pub fn getNodeRef(&self) -> Option<NodeRef<CollisionObject>> {
 		match &self.noderef {
-       		Some(p) => Some(NodeRef(p.upgrade().unwrap())), //p.upgrade().map(|u| NodeRef(u)),
+       		Some(p) => p.upgrade().map(|up| NodeRef(up)), //p.upgrade().map(|u| NodeRef(u)),
 			None => None
 		}
 	}
@@ -212,17 +234,16 @@ impl Node<CollisionObject> {
 	}
 
 	pub fn isLeaf(&self) -> bool {
-		if let None = self.bv {
-			false // node is a leaf iff node points to collision object
-		}
-		else {true}
+		!self.bv.is_none()
 	}
 
-	// pub fn detatch(&mut self) {
-	// 	let parent = self.parent.take();
-	// 	let left = self.left.take();
-	// 	let right = self.right.take();
-	// }
+	pub fn detatch(&mut self) {
+		let parent = self.parent.take();
+		let left = self.left.take();
+		let right = self.right.take();
+		let mut bv = self.bv.take();
+		bv.take().map(|bv| bv.borrow_mut().noderef.take());
+	}
 }
 
 /*
