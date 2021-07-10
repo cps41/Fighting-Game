@@ -180,41 +180,47 @@ impl NodeRef<CollisionObject> {
 		NodeRef(self.get().right.as_ref().unwrap().clone())
 	}
 
-	pub fn getPotentialCollsions(&self, potential: &mut Vec<ParticleContact>, limit: i32) -> i32{
+	pub fn getPotentialCollisions(&self, potential: &mut Vec<ParticleContact>, limit: i32) -> i32{
 		if self.get().isLeaf() || limit == 0 {return 0;}
-		self.getLeftChild().collidingWith(self.getRightChild(), potential, limit)
+		self.getLeftChild().collidingWith(&self.getRightChild(), potential, limit)
 	}
 
-	pub fn collidingWith(& self, other: NodeRef<CollisionObject>, potential: &mut Vec<ParticleContact>, limit: i32) -> i32 {
+	pub fn collidingWith(&self, other: &NodeRef<CollisionObject>, potential: &mut Vec<ParticleContact>, limit: i32) -> i32 {
 		// println!("self:\n {:?}, \nother:\n {:?}", self, other);
-		if !self.overlapsWith(other.clone()) || limit == 0 {return 0;}
+		// return if there's no overlap
+		if !self.overlapsWith(other.clone()) || limit == 0 {0}
 
-		if self.get().isLeaf() && other.get().isLeaf() {
+		// collision if both are leaves
+		else if self.get().isLeaf() && other.get().isLeaf() {
 			potential.push(ParticleContact::new(self.borrow().deref().clone(), other.borrow().deref().clone(), 0.0));
-			return 1;
+			1
 		}
 
-		if !self.get().isLeaf() && self.get().area.area() >= other.get().area.area() {
-			let count = self.getLeftChild().collidingWith(self.getRightChild(), potential, limit);
+		// either descend into node that is not a leaf or the node that is larger
+		else if other.get().isLeaf() || (!self.get().isLeaf() && self.get().area.area() >= other.get().area.area()) {
+			let mut count = self.getLeftChild().collidingWith(&other, potential, limit);
 
 			if limit > count {
-				return count + self.getRightChild().collidingWith(other, potential, limit);
+				count += self.getRightChild().collidingWith(&other, potential, limit);
+				if limit > count {
+					count += self.getPotentialCollisions(potential, limit);
+				}
 			}
 
-			else {return count;}
+			count
 		}
 
-		else if !self.get().isLeaf() {
-			let count = self.collidingWith(self.getLeftChild(), potential, limit);
+		else {
+			let mut count = self.collidingWith(&other.getLeftChild(), potential, limit);
 
 			if limit > count {
-				return count + self.collidingWith(self.getRightChild(), potential, limit);
+				count += self.collidingWith(&other.getRightChild(), potential, limit);
+				if limit > count {
+					count += other.getPotentialCollisions(potential, limit);
+				}
 			}
-
-			else {return count;}
+			count
 		}
-
-		else {return 0;}
 	}
 
 	pub fn insert(&self, new_obj: CollisionObject) -> RefCell<CollisionObject> {

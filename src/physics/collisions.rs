@@ -22,7 +22,7 @@ impl BVHierarchy {
 	}
 	pub fn resolve_collisions(&self) {
 		let mut potential_collisions: Vec<ParticleContact> = Vec::new();
-		self.head.getPotentialCollsions(&mut potential_collisions, 100);
+		self.head.getPotentialCollisions(&mut potential_collisions, 100);
 		for contact in potential_collisions.iter() {
 			let p0 = contact.particles[0].clone();
 			let p1 = contact.particles[1].clone();
@@ -37,9 +37,8 @@ impl BVHierarchy {
 						contact.particles[0].particle.borrow_mut().velocity.y = 0.0;
 						contact.particles[0].particle.borrow_mut().add_force(&PhysVec::new(0.0, -GRAVITY));
 					},
-					_ => ()
+					_ => println!("Contact between {:?} and {:?}", contact.particles[0], contact.particles[1])
 				};
-				println!("Contact between {:?} and {:?}", contact.particles[0], contact.particles[1]);
 			}
 		}
 	}
