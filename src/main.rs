@@ -63,7 +63,7 @@ pub fn run_game() -> Result<(), String>{
 
     let texture_creator = game_window.wincan.texture_creator();
 
-    let platform = Rect::new(40, 620, CAM_W-80, CAM_H-680);
+    let platform = Rect::new(40, CAM_H as i32-60, CAM_W-80, 40);
 
 
     //////////////////////////
@@ -161,9 +161,9 @@ pub fn run_game() -> Result<(), String>{
         input::movement::move_char(&mut fighter);
         input::movement::move_char(&mut fighter2);
 
+        collisions.resolve_collisions();
         fighter.char_state.update_bounding_boxes(&collisions);
         fighter2.char_state.update_bounding_boxes(&collisions);
-        collisions.resolve_collisions();
         // println!("\nCollisions head: \n{:?}", collisions.head);
 
         //move hazard

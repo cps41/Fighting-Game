@@ -55,7 +55,7 @@ impl Particle {
         self.update_position(duration);
         // clamp position
 		self.position.x = self.position.x.clamp(-w_offset+SPRITE_W as f32/2.0, w_offset-SPRITE_W as f32/2.0);
-		self.position.y = self.position.y.clamp(-1000.0, h_offset - 150.0);
+		self.position.y = self.position.y.clamp(-1000.0, h_offset-SPRITE_H as f32/2.0);
         // calculate acceleration
         self.acceleration.add_scaled_product(&self.force_accumulator, self.inverse_mass); // a += F/m
         // update linear velocity based on new acceleration

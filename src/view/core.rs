@@ -86,6 +86,7 @@ impl SDLCore{
             frame_width,
             frame_height,
         );
+
 		let current_frame2 = Rect::new(
         	//determins which sprite to get, using current_frame as offset on sprite sheet
             fighter2.char_state.sprite.x() + frame_width as i32 * fighter2.char_state.current_frame,
@@ -112,6 +113,8 @@ impl SDLCore{
         self.wincan.copy(texture, current_frame, screen_rect)?;
 		self.wincan.copy_ex(texture2, current_frame2, screen_rect2, 0.0, None, true, false)?;
 		self.wincan.copy(hazard_texture, hazard_frame, hazard_screen_rectangle)?;
+		self.wincan.set_draw_color(Color::RED);
+		self.wincan.draw_rects(&[fighter.char_state.get_bb(), fighter2.char_state.get_bb()]);
         self.wincan.present();
 
         /*
