@@ -27,8 +27,8 @@ impl BVHierarchy {
 			let p1 = contact.particles[1].clone();
 			if check_collision(p0.clone(), p1.clone()) {
 				// println!("Contact between {:?} and {:?}", p0, p1);
-				contact.particles[0].particle.borrow_mut().velocity.x = 0.0;
-				contact.particles[1].particle.borrow_mut().velocity.x = 0.0;
+				contact.particles[0].particle.borrow_mut().velocity.y = 0.0;
+				contact.particles[1].particle.borrow_mut().velocity.y = 0.0;
 			}
 		}
 	}
@@ -55,11 +55,19 @@ impl<T: fmt::Debug> fmt::Debug for Node<T> {
     }
 }
 
+// pub fn check_collision(a: CollisionObject, b: CollisionObject) -> bool {
+// 	// if let CollisionObjectType::HurtBox = a.obj_type {
+// 	// 	if let CollisionObjectType::HurtBox = b.obj_type {return false}
+// 	// }
+// 	reg_collision(&a.rect, &b.rect)
+// }
+
 pub fn check_collision(a: CollisionObject, b: CollisionObject) -> bool {
-	// if let CollisionObjectType::HurtBox = a.obj_type {
-	// 	if let CollisionObjectType::HurtBox = b.obj_type {return false}
-	// }
-	reg_collision(&a.rect, &b.rect)
+	let types = (&a.obj_type, &b.obj_type);
+	match types {
+		(CollisionObjectType::HurtBox, CollisionObjectType::HurtBox) => false,
+		_ => a.rect.has_intersection(b.rect.clone())
+	}
 }
 
 fn reg_collision(a: &Rect, b: &Rect) -> bool {
@@ -170,7 +178,7 @@ impl fmt::Debug for CollisionObject {
 		.field("obj_type", &self.obj_type)
 		.field("area", &self.area)
 		.field("rect", &self.rect)
-		.field("position", &self.particle)
+		.field("position", &self.particle.borrow().position)
 		.finish()
     }
 }

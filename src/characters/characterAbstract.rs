@@ -341,7 +341,7 @@ impl CharacterState {
 		CharacterState::remove(&mut self.hitbox);
 		self.hitbox = Some(bvh.insert(
 			CollisionObject::new(
-				CollisionObjectType::HitBox, self.x()+70, self.y(), 90, 200, self.position.clone())
+				CollisionObjectType::HitBox, self.x(), self.y(), 180, 290, self.position.clone())
 		));
 	}
 	pub fn insert_hurt_box(&mut self, bvh: &BVHierarchy) {
@@ -359,6 +359,7 @@ impl CharacterState {
 			CollisionObject::new(
 				CollisionObjectType::BlockBox, self.x(), self.y(), 180, 280, self.position.clone())
 		));
+		println!("\nhitbox: {:?}\nblockbox: {:?}\nhurtbox: {:?}\n", self.hitbox, self.blockbox, self.hurtbox);
 	}
 	pub fn update_bounding_boxes(&mut self, bvh: &BVHierarchy) {
 		// println!("updating...");
