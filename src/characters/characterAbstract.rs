@@ -341,7 +341,7 @@ impl CharacterState {
 		CharacterState::remove(&mut self.hitbox);
 		self.hitbox = Some(bvh.insert(
 			CollisionObject::new(
-				CollisionObjectType::HitBox, self.x()+W_OFFSET+SPRITE_W as i32/2, self.y()+H_OFFSET, (SPRITE_W as f32*0.75) as u32, SPRITE_H/2, self.position.clone())
+				CollisionObjectType::HitBox, self.x()+W_OFFSET+SPRITE_W as i32/2, self.y()+H_OFFSET, SPRITE_W as u32, SPRITE_H/2, self.position.clone())
 		));
 	}
 	pub fn insert_hurt_box(&mut self, bvh: &BVHierarchy) {

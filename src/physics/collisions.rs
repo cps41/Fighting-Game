@@ -37,7 +37,7 @@ impl BVHierarchy {
 						contact.particles[0].particle.borrow_mut().velocity.y = 0.0;
 						contact.particles[0].particle.borrow_mut().add_force(&PhysVec::new(0.0, -GRAVITY));
 					},
-					_ => println!("Contact between {:?} and {:?}", contact.particles[0], contact.particles[1])
+					_ => () // println!("Contact between {:?} and {:?}", contact.particles[0], contact.particles[1])
 				};
 			}
 		}
