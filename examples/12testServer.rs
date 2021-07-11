@@ -1,5 +1,7 @@
 extern crate sdl2;
+extern crate street_code_fighter;
 
+use crate::street_code_fighter::*;
 use sdl2::image::{self, LoadTexture}; // InitFlag,
 use sdl2::render::{WindowCanvas, Texture, TextureCreator};
 use sdl2::rect::{Point, Rect};
@@ -7,39 +9,188 @@ use sdl2::pixels::Color;
 // use std::fs;
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
+
 use std::collections::HashMap;
 use std::collections::HashSet;
 use std::cell::RefCell;
 use std::path::Path;
+
 use sdl2::render::Canvas;
 use sdl2::video::Window;
 use sdl2::video::WindowContext;
+
 use std::time::{Instant, Duration}; // needed for FPS
 use std::thread;
 use std::env;
-use physics::collisions::*;
-use physics::vecmath::*;
-use physics::particle::*;
 
-pub mod characters; // for characterAbstract
-pub mod view; // for core
-pub mod input; // for inputHandler and movement
-pub mod animation;
-pub mod networking;
-pub mod physics;
+use street_code_fighter::physics::collisions::*;
+use street_code_fighter::physics::vecmath::*;
+use street_code_fighter::physics::particle::*;
+use street_code_fighter::input::*;
+use street_code_fighter::animation::*;
+use street_code_fighter::networking::*;
+use street_code_fighter::physics::*;
+
+use bincode::{serialize, deserialize}; 
+use serde_derive::{Serialize, Deserialize}; 
+use std::net::{SocketAddr, UdpSocket};
+use std::time::{SystemTime,UNIX_EPOCH};
+
+//pub mod characters; // for characterAbstract
+//pub mod view; // for core
+//pub mod input; // for inputHandler and movement
+//pub mod animation;
+//pub mod networking;
+//pub mod physics;
 
 //use crate::view::core; // need for SDLCore and TextureManager
 //use crate::view::core::Demo; // need for SDLCore's Demo
 // use crate::view::loads;
 
-const TITLE: &str = "Street Code Fighter";
+#[derive(Serialize, Deserialize, Debug)] 
+pub struct CharacterState {
+    pub position: RefCell<Particle>,
+    pub state: animation::sprites::State,
+    pub frames_per_state: i32,
+    pub current_frame: i32,
+    pub frame_count: i32,
+    pub auto_repeat: bool,
+    pub direction: input::movement::Direction,
+    pub next_state: animation::sprites::State,  
+}
+impl CharacterState {
+    pub fn new(position: RefCell<Particle>, 
+        state: animation::sprites::State, 
+        frames_per_state: i32,
+        current_frame: i32,
+        frame_count: i32,
+        auto_repeat: bool,
+        direction: input::movement::Direction,
+        next_state: animation::sprites::State) -> CharacterState {
+        CharacterState {position,state,frames_per_state,current_frame,frame_count,auto_repeat,direction,next_state}
+    }
+    pub fn position(&self) -> RefCell<Particle>{
+        return self.position.clone();
+    }
+    pub fn state(&self) -> animation::sprites::State{
+        self.state
+    }
+    pub fn frames_per_state(&self) -> i32{
+        self.frames_per_state
+    }
+    pub fn current_frame(&self) -> i32{
+        self.current_frame
+    }
+    pub fn frame_count(&self) -> i32{
+        self.frame_count
+    }
+    pub fn auto_repeat(&self) -> bool{
+        self.auto_repeat
+    }
+    pub fn direction(&self) -> input::movement::Direction{
+        self.direction
+    }
+    pub fn next_state(&self) -> animation::sprites::State{
+        self.next_state
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug)] 
+pub struct CharStates {
+    pub state1: CharacterState,
+    pub state2: CharacterState,
+}
+impl CharStates {
+    pub fn new(state1: CharacterState, state2: CharacterState) -> CharStates {
+        CharStates {state1,state2}
+    }
+}
+
+
+
+fn server_setup() -> UdpSocket{
+    // ADDRESSING
+    let server_addresses: [SocketAddr; 1] = [
+        SocketAddr::from(([127, 0, 0, 1], 1666)),
+        // can add backup IPs
+    ];
+
+    // BINDING
+    let socket = UdpSocket::bind(&server_addresses[..]).expect("couldn't bind to address");
+    
+    println!("CONNECTED");
+
+    socket
+}
+
+// first connect
+fn client_connect(socket: &UdpSocket, 
+                  client_addresses: &mut HashMap<SocketAddr,u8>,
+                  player_count: u8) -> u8 {
+    let mut buffer = [0u8; 500]; // a buffer than accepts 100
+    let (number_of_bytes, src_addr) = socket.recv_from(&mut buffer).expect("Didn't receive data");
+
+    // Client IPs and player #
+    if !client_addresses.contains_key(&src_addr) { // for first time
+        println!("First time connection to: {:?} > {:?}", src_addr, &buffer[0]); // test to print IP and initial info sent 
+        client_addresses.insert(src_addr, player_count); // add to set
+        socket.send_to(&[player_count], src_addr); // send player # 
+        return player_count + 1; // increment player #
+    } 
+
+    return player_count;
+}
+
+fn server_rect(socket: &UdpSocket, 
+               client_addresses: &HashMap<SocketAddr,u8>,
+               r: &mut characters::characterAbstract::Fighter, 
+               r2: &mut characters::characterAbstract::Fighter) {
+    let mut buffer = [0u8; 500]; // a buffer than accepts 4096 
+    let (number_of_bytes, src_addr) = socket.recv_from(&mut buffer).expect("Didn't receive data");
+
+    let client_rect = deserialize::<CharStates>(&buffer).expect("cannot crack ze coooode"); // print to console
+    if client_addresses.get(&src_addr).unwrap().eq(&1) {
+        r.char_state.position = client_rect.state1.position();
+        r.char_state.state = client_rect.state1.state();
+        r.char_state.frames_per_state = client_rect.state1.frames_per_state();
+        r.char_state.current_frame = client_rect.state1.current_frame();
+        r.char_state.frame_count = client_rect.state1.frame_count();
+        r.char_state.auto_repeat = client_rect.state1.auto_repeat();
+        r.char_state.direction = client_rect.state1.direction();
+        r.char_state.next_state = client_rect.state1.next_state(); 
+    } else {   
+        r2.char_state.position = client_rect.state2.position();
+        r2.char_state.state = client_rect.state2.state();
+        r2.char_state.frames_per_state = client_rect.state2.frames_per_state();
+        r2.char_state.current_frame = client_rect.state2.current_frame();
+        r2.char_state.frame_count = client_rect.state2.frame_count();
+        r2.char_state.auto_repeat = client_rect.state2.auto_repeat();
+        r2.char_state.direction = client_rect.state2.direction();
+        r2.char_state.next_state = client_rect.state2.next_state();  
+    }
+    // // send to all addresses
+    for client_address in client_addresses.keys() {
+         if &src_addr != client_address { // DUPLEX, only send to other server
+            socket.send_to(serialize(&client_rect).unwrap().as_slice(), client_address).expect("couldn't send message"); 
+        }
+    } // end sending for loop
+} // close server fn
+
+/* pub fn wait(seconds: u64) {
+ let time_to_wait = time::Duration::from_secs(seconds);
+ thread::sleep(time_to_wait);
+} */
+
+
+
+const TITLE: &str = "Street Code Fighter - Server";
 const TIMEOUT: u64 = 5000;
 const CAM_W: u32 = 1280;
 const CAM_H: u32 = 720;
 const FRAME_RATE: f64 = 1.0/60.0;
 
 
-pub fn run_game() -> Result<(), String>{
+pub fn run_game(socket: &UdpSocket, client_addresses: &HashMap<SocketAddr,u8>) -> Result<(), String>{
     let frame_time = Duration::from_secs_f64(FRAME_RATE);
 
     let mut game_window = {
@@ -165,8 +316,6 @@ pub fn run_game() -> Result<(), String>{
             .collect();
 
     //##############################################-PROCESS-EVENTS-#######################################
-        //process player movement
-        input::inputHandler::keyboard_input(&player_input, &mut fighter);
 
         //select frame to be rendered
         fighter.char_state.advance_frame();
@@ -189,6 +338,11 @@ pub fn run_game() -> Result<(), String>{
        if hazard.sprite.y() >= 600 {
            hazard.reset();
        }
+
+       server_rect(&socket, 
+        &client_addresses, 
+        &mut fighter, 
+        &mut fighter2);
     //##################################################-RENDER-###########################################
 
         // get the proper texture within the game
@@ -286,7 +440,21 @@ fn main() -> Result<(), String> {
     if args.len() > 1 && "server".eq(&args[1]){
         run_server()?;
     }else{
-        run_game()?;
+        let socket = server_setup(); // make connection w/ socket
+        let mut client_addresses = HashMap::new(); // store addresses
+        let mut player_count: u8 = 1;
+
+        // connecting before game loop!
+        'connecting: loop {
+            player_count = client_connect(&socket, &mut client_addresses, player_count);
+            // increments connection +1
+            if player_count == 3 { // if 3, two players are found
+                println!("Two players found!");
+                break 'connecting;
+            }
+        }
+
+        run_game(&socket, &client_addresses)?;
         //networking::chatClient::server_connect();
     }
 

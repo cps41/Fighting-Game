@@ -10,7 +10,7 @@ const H: u32 = 300;
 const Y: i32 = 0;
 
 // enumeration of the various states
-#[derive(Hash, Eq, PartialEq, Debug, Serialize, Deserialize)]
+#[derive(Hash, Eq, PartialEq, Debug, Serialize, Deserialize, Clone, Copy)]
 pub enum State {
     Idle,
     Walk,

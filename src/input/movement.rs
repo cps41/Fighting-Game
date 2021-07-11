@@ -7,7 +7,7 @@ use crate::view::globals::*;
 use serde_derive::{Serialize, Deserialize};
 
 // direction enum
-#[derive(Hash, Eq, PartialEq, Debug, Serialize, Deserialize)]
+#[derive(Hash, Eq, PartialEq, Debug, Serialize, Deserialize, Clone, Copy)]
 pub enum Direction {
     Left,
     Right,
