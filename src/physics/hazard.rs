@@ -40,7 +40,7 @@ impl Hazard {
 			println!("reached 200 mximum, x is now {}", self.sprite.x());
 		}
 		else {
-			self.sprite.offset(200, -600);
+			self.sprite.offset(350, -600);
 			//println!("reached 35 minimum, x is now {}", x);
 		}
 		//self.sprite = Rect::new(self.sprite.x() + x, 0, 100, 100);
