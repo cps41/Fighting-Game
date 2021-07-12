@@ -63,7 +63,7 @@ pub fn run_game() -> Result<(), String>{
 
     let texture_creator = game_window.wincan.texture_creator();
 
-    let platform = Rect::new(40, CAM_H as i32-60, CAM_W-80, 40);
+    let platform = Rect::new(40, 620, CAM_W-80, CAM_H-680);
 
 
     //////////////////////////
@@ -115,7 +115,7 @@ pub fn run_game() -> Result<(), String>{
             _=> panic!("No texture found for the state! Oh nos."),
         }
     };
-    
+
     game_window.render(&background, &texture, &fighter, &texture2, &fighter2, &hazard, &hazard_texture);
 
 
@@ -127,9 +127,10 @@ pub fn run_game() -> Result<(), String>{
         //     RefCell::new(Particle::new(
         //         PhysVec::new(hazard.position.x as f32, hazard.position.y as f32), 0.5, 200.0))));
 
+
 //################################################-GAME-LOOP###############################################
     'gameloop: loop{
-        let loop_time = Instant::now(); 
+        let loop_time = Instant::now();
     //################################################-GET-INPUT-##########################################
         //ceck if play quits
         for event in game_window.event_pump.poll_iter() {
@@ -155,7 +156,7 @@ pub fn run_game() -> Result<(), String>{
         //select frame to be rendered
         fighter.char_state.advance_frame();
         fighter2.char_state.advance_frame();
-        
+
         //move character based on current frame
         input::movement::move_char(&mut fighter);
         input::movement::move_char(&mut fighter2);
@@ -172,6 +173,7 @@ pub fn run_game() -> Result<(), String>{
        }
        if hazard.sprite.y() >= 600 {
            hazard.reset();
+           hazard.fell = false;
        }
     //##################################################-RENDER-###########################################
 
@@ -191,7 +193,8 @@ pub fn run_game() -> Result<(), String>{
 
         // render canvas
         game_window.render(&background, &texture, &fighter, &texture2, &fighter2, &hazard, &hazard_texture);
-    //##################################################-SLEEP-############################################        
+    //##################################################-SLEEP-############################################
+
         thread::sleep(frame_time - loop_time.elapsed().clamp(Duration::new(0, 0), frame_time));
     }
     Ok(())

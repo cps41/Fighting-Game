@@ -34,9 +34,17 @@ impl Hazard {
 		}
     }
 
-	pub fn reset(&mut self) {
-		self.position = Point::new(0, 0);
-		self.sprite = Rect::new(0, 0, 0, 0);
+	pub fn reset(&mut self, ) {
+		if self.sprite.x() > 800 {
+			self.sprite.offset(-650, -600);
+			println!("reached 200 mximum, x is now {}", self.sprite.x());
+		}
+		else {
+			self.sprite.offset(350, -600);
+			//println!("reached 35 minimum, x is now {}", x);
+		}
+		//self.sprite = Rect::new(self.sprite.x() + x, 0, 100, 100);
+		println!("x position is {}", self.sprite.x());
 		self.fell = true;
 	}
         // // setters
