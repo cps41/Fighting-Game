@@ -123,9 +123,9 @@ pub fn run_game() -> Result<(), String>{
         RefCell::new(Particle::new(
             PhysVec::new(platform.x as f32, platform.y as f32), 0.5, 2000000000.0))));
 
-        // collisions.insert(CollisionObject::new_from(CollisionObjectType::HurtBox, hazard.sprite.clone(),
-        //     RefCell::new(Particle::new(
-        //         PhysVec::new(hazard.position.x as f32, hazard.position.y as f32), 0.5, 200.0))));
+        collisions.insert(CollisionObject::new_from(CollisionObjectType::Hazard, hazard.sprite.clone(),
+            RefCell::new(Particle::new(
+                PhysVec::new(hazard.position.x as f32, hazard.position.y as f32), 0.5, 200.0))));
 
 
 //################################################-GAME-LOOP###############################################

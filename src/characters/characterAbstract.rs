@@ -341,7 +341,7 @@ impl CharacterState {
 		CharacterState::remove(&mut self.hitbox);
 		self.hitbox = Some(bvh.insert(
 			CollisionObject::new(
-				CollisionObjectType::HitBox, self.x(), self.y(), 180, 280, self.position.clone())
+				CollisionObjectType::HitBox, self.x()+W_OFFSET+SPRITE_W as i32/2, self.y()+H_OFFSET, SPRITE_W as u32, SPRITE_H/2, self.position.clone())
 		));
 	}
 	pub fn insert_hurt_box(&mut self, bvh: &BVHierarchy) {
@@ -349,7 +349,7 @@ impl CharacterState {
 		CharacterState::remove(&mut self.hurtbox);
 		self.hurtbox = Some(bvh.insert(
 			CollisionObject::new(
-				CollisionObjectType::HurtBox, self.x(), self.y(), 180, 280, self.position.clone())
+				CollisionObjectType::HurtBox, self.x()+W_OFFSET, self.y()+H_OFFSET, SPRITE_W, SPRITE_H, self.position.clone())
 		));
 	}
 	pub fn insert_block_box(&mut self, bvh: &BVHierarchy) {
@@ -357,7 +357,7 @@ impl CharacterState {
 		CharacterState::remove(&mut self.blockbox);
 		self.blockbox = Some(bvh.insert(
 			CollisionObject::new(
-				CollisionObjectType::BlockBox, self.x(), self.y(), 180, 280, self.position.clone())
+				CollisionObjectType::BlockBox, self.x()+W_OFFSET, self.y()+H_OFFSET, SPRITE_W, SPRITE_H, self.position.clone())
 		));
 	}
 	pub fn update_bounding_boxes(&mut self, bvh: &BVHierarchy) {
@@ -382,7 +382,18 @@ impl CharacterState {
 		}
 		// println!("\nhitbox: {:?}\nblockbox: {:?}\nhurtbox: {:?}\n", self.hitbox, self.blockbox, self.hurtbox);
 	}
-
+	pub fn get_bb(&self) -> Rect {
+		if self.hurtbox.is_some() {
+			self.hurtbox.clone().unwrap().borrow().rect.clone()
+		}
+		else if self.hitbox.is_some() {
+			self.hitbox.clone().unwrap().borrow().rect.clone()
+		}
+		else if self.blockbox.is_some(){
+			self.blockbox.clone().unwrap().borrow().rect.clone()
+		}
+		else {Rect::new(0,0,0,0)}
+	}
 }
 
 #[cfg(test)]
