@@ -31,7 +31,7 @@ pub fn play(music_file: &Path, timer: &mut TimerSubsystem, seconds: u32) -> Resu
 
     println!("play => {:?}", music.play(1));
 
-    timer.delay(seconds*1000); // to do, not sure how to not hardcode delay in
+    // timer.delay(seconds*1000); // to do, not sure how to not hardcode delay in
 
     Ok(())
 }
