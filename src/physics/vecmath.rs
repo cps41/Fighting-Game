@@ -1,4 +1,7 @@
-#[derive(Clone, PartialEq, Debug)]
+
+use serde_derive::{Serialize, Deserialize}; 
+
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub struct PhysVec{pub x: f32, pub y: f32}
 
 impl PhysVec {
