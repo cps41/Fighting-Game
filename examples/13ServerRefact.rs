@@ -173,7 +173,7 @@ const TITLE: &str = "Street Code Fighter - Server";
 const TIMEOUT: u64 = 5000;
 const CAM_W: u32 = 1280;
 const CAM_H: u32 = 720;
-const FRAME_RATE: f64 = 1.0/60.0;
+const FRAME_RATE: f64 = 1.0/90.0;
 
 
 pub fn run_game(socket: &UdpSocket, client_addresses: &HashMap<SocketAddr,u8>) -> Result<(), String>{
@@ -300,8 +300,8 @@ pub fn run_game(socket: &UdpSocket, client_addresses: &HashMap<SocketAddr,u8>) -
         fighter2.char_state.advance_frame();
         
         //move character based on current frame
-        input::movement::move_char(&mut fighter);
-        input::movement::move_char(&mut fighter2);
+        //input::movement::move_char(&mut fighter);
+        //input::movement::move_char(&mut fighter2);
 
         fighter.char_state.update_bounding_boxes(&collisions);
         fighter2.char_state.update_bounding_boxes(&collisions);

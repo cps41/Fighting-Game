@@ -175,7 +175,7 @@ const TITLE: &str = "Street Code Fighter - Client B";
 const TIMEOUT: u64 = 5000;
 const CAM_W: u32 = 1280;
 const CAM_H: u32 = 720;
-const FRAME_RATE: f64 = 1.0/60.0;
+const FRAME_RATE: f64 = 1.0/90.0;
 
 
 pub fn run_game(socket: &UdpSocket, player_number: u8) -> Result<(), String>{
