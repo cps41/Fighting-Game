@@ -1,4 +1,6 @@
-#[derive(Clone, PartialEq, Debug)]
+use serde_derive::{Serialize, Deserialize}; 
+
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub struct PhysVec{pub x: f32, pub y: f32}
 
 impl PhysVec {
@@ -94,60 +96,49 @@ impl PhysVec {
         self.replace(&self.add(&PhysVec::new(scalar, scalar)));
     }
 }
-
 #[cfg(test)]
 mod test {
     use super::*;
-
     #[test]
     pub fn testInit() {
         let vec = PhysVec::new(0f32, 0f32);
-
         assert_eq!(vec.x, 0f32);
         assert_eq!(vec.y, 0f32);
     }
-
     #[test]
     pub fn testRaw() {
         let vec = PhysVec::new(0f32, 0f32);
-
         assert_eq!(vec.raw(), (0f32, 0f32));
     }
-
     #[test]
     pub fn testAdd() {
         let mut vec = PhysVec::new(0f32, 0f32);
         let add = vec.add(&PhysVec::new(4.3, 7.987));
         assert_eq!(add.raw(), (4.3, 7.987));
     }
-
     #[test]
     pub fn testSub() {
         let mut vec = PhysVec::new(0f32, 0f32);
         let sub = vec.sub(&PhysVec::new(4.3, 7.987));
         assert_eq!(sub.raw(), (-4.3, -7.987));
     }
-
     #[test]
     pub fn testMagnitude() {
         let mut vec = PhysVec::new(4f32, 0f32);
         assert_eq!(vec.magnitude(), 4f32);
     }
-
     #[test]
     pub fn testAddScalar() {
         let mut vec = PhysVec::new(4f32, 0f32);
         vec.add_scalar(5.5);
         assert_eq!(vec.raw(), (9.5, 5.5));
     }
-
     #[test]
     pub fn testScalarProduct() {
         let mut vec = PhysVec::new(4f32, 0f32);
         let res = vec.scalar_product(&PhysVec::new(3f32,3f32));
         assert_eq!(res, 12f32);
     }
-
     #[test]
     pub fn testAddScalarProduct() {
         let mut vec = PhysVec::new(4f32, 0f32);
