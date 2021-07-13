@@ -1,9 +1,8 @@
 use crate::physics::vecmath::PhysVec;
 use crate::view::globals::*;
 use sdl2::rect::Point;
-use serde_derive::{Serialize, Deserialize}; 
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone)]
 pub struct Particle {
     pub position: PhysVec,
     pub velocity: PhysVec,
@@ -28,7 +27,7 @@ impl Particle {
     }
 
     // Create Point struct out of position coordinates
-    pub fn toPoint(&self) -> Point {
+    pub fn to_point(&self) -> Point {
         let (x,y) = self.position.raw();
         Point::new(x as i32, y as i32)
     }
@@ -56,7 +55,7 @@ impl Particle {
         self.update_position(duration);
         // clamp position
 		self.position.x = self.position.x.clamp(-w_offset+SPRITE_W as f32/2.0, w_offset-SPRITE_W as f32/2.0);
-		self.position.y = self.position.y.clamp(-1000.0, h_offset - 150.0);
+		self.position.y = self.position.y.clamp(-1000.0, h_offset-SPRITE_H as f32/2.0);
         // calculate acceleration
         self.acceleration.add_scaled_product(&self.force_accumulator, self.inverse_mass); // a += F/m
         // update linear velocity based on new acceleration
