@@ -293,14 +293,6 @@ pub fn run_game(socket: &UdpSocket, client_addresses: &HashMap<SocketAddr,u8>) -
             }
         }
 
-
-        //gather player input
-        let player_input: HashSet<Keycode> = game_window.event_pump
-            .keyboard_state()
-            .pressed_scancodes()
-            .filter_map(Keycode::from_scancode)
-            .collect();
-
     //##############################################-PROCESS-EVENTS-#######################################
 
         //select frame to be rendered
