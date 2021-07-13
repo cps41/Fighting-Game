@@ -6,6 +6,7 @@ use std::rc::{Rc, Weak};
 use std::ops::Deref as Df;
 use std::ops::DerefMut as Dfm;
 use crate::physics::collisions::*;
+use crate::physics::vecmath::PhysVec;
 
 // #[derive(Debug)]
 pub struct NodeRef<T>(pub Rc<RefCell<Node<T>>>);
@@ -156,10 +157,6 @@ impl NodeRef<CollisionObject> {
         if self.hasParent() {self.getParent().unwrap().calculateArea()}
 	}
 
-	pub fn overlapsWith(&self, other: NodeRef<CollisionObject>) -> bool {
-		self.get().area.has_intersection(other.get().area.clone())
-	}
-
 	pub fn borrow(&self) -> Ref<CollisionObject> {
 		Ref {_ref: self.0.borrow()}
 	}
@@ -180,41 +177,53 @@ impl NodeRef<CollisionObject> {
 		NodeRef(self.get().right.as_ref().unwrap().clone())
 	}
 
-	pub fn getPotentialCollsions(&self, potential: &mut Vec<ParticleContact>, limit: i32) -> i32{
+	pub fn getPotentialCollisions(&self, potential: &mut Vec<ParticleContact>, limit: i32) -> i32{
 		if self.get().isLeaf() || limit == 0 {return 0;}
-		self.getLeftChild().collidingWith(self.getRightChild(), potential, limit)
+		self.getLeftChild().collidingWith(&self.getRightChild(), potential, limit)
 	}
 
-	pub fn collidingWith(& self, other: NodeRef<CollisionObject>, potential: &mut Vec<ParticleContact>, limit: i32) -> i32 {
+	pub fn collidingWith(&self, other: &NodeRef<CollisionObject>, potential: &mut Vec<ParticleContact>, limit: i32) -> i32 {
 		// println!("self:\n {:?}, \nother:\n {:?}", self, other);
-		if !self.overlapsWith(other.clone()) || limit == 0 {return 0;}
+		// return if there's no overlap
+		let intersection = self.get().area.intersection(other.get().area.clone());
+		if intersection.is_none() || limit == 0 {0}
 
-		if self.get().isLeaf() && other.get().isLeaf() {
-			potential.push(ParticleContact::new(self.borrow().deref().clone(), other.borrow().deref().clone(), 0.0));
-			return 1;
+		// collision if both are leaves
+		else if self.get().isLeaf() && other.get().isLeaf() {
+			let mut overlap = PhysVec::new(intersection.unwrap().width() as f32, intersection.unwrap().height() as f32);
+			let s = self.get().bv.as_ref().unwrap().clone();
+			let o = other.get().bv.as_ref().unwrap().clone();
+			let interpenetration = overlap.magnitude();
+			overlap.normalize();
+			potential.push(ParticleContact::new(s, o, 0.0, interpenetration));
+			1
 		}
 
-		if !self.get().isLeaf() && self.get().area.area() >= other.get().area.area() {
-			let count = self.getLeftChild().collidingWith(self.getRightChild(), potential, limit);
+		// either descend into node that is not a leaf or the node that is larger
+		else if other.get().isLeaf() || (!self.get().isLeaf() && self.get().area.area() >= other.get().area.area()) {
+			let mut count = self.getLeftChild().collidingWith(&other, potential, limit);
 
 			if limit > count {
-				return count + self.getRightChild().collidingWith(other, potential, limit);
+				count += self.getRightChild().collidingWith(&other, potential, limit);
+				if limit > count {
+					count += self.getPotentialCollisions(potential, limit);
+				}
 			}
 
-			else {return count;}
+			count
 		}
 
-		else if !self.get().isLeaf() {
-			let count = self.collidingWith(self.getLeftChild(), potential, limit);
+		else {
+			let mut count = self.collidingWith(&other.getLeftChild(), potential, limit);
 
 			if limit > count {
-				return count + self.collidingWith(self.getRightChild(), potential, limit);
+				count += self.collidingWith(&other.getRightChild(), potential, limit);
+				if limit > count {
+					count += other.getPotentialCollisions(potential, limit);
+				}
 			}
-
-			else {return count;}
+			count
 		}
-
-		else {return 0;}
 	}
 
 	pub fn insert(&self, new_obj: CollisionObject) -> RefCell<CollisionObject> {
