@@ -6,6 +6,7 @@ use std::rc::{Rc, Weak};
 use std::ops::Deref as Df;
 use std::ops::DerefMut as Dfm;
 use crate::physics::collisions::*;
+use crate::physics::vecmath::PhysVec;
 
 // #[derive(Debug)]
 pub struct NodeRef<T>(pub Rc<RefCell<Node<T>>>);
@@ -156,10 +157,6 @@ impl NodeRef<CollisionObject> {
         if self.hasParent() {self.getParent().unwrap().calculateArea()}
 	}
 
-	pub fn overlapsWith(&self, other: NodeRef<CollisionObject>) -> bool {
-		self.get().area.has_intersection(other.get().area.clone())
-	}
-
 	pub fn borrow(&self) -> Ref<CollisionObject> {
 		Ref {_ref: self.0.borrow()}
 	}
@@ -188,11 +185,17 @@ impl NodeRef<CollisionObject> {
 	pub fn collidingWith(&self, other: &NodeRef<CollisionObject>, potential: &mut Vec<ParticleContact>, limit: i32) -> i32 {
 		// println!("self:\n {:?}, \nother:\n {:?}", self, other);
 		// return if there's no overlap
-		if !self.overlapsWith(other.clone()) || limit == 0 {0}
+		let intersection = self.get().area.intersection(other.get().area.clone());
+		if intersection.is_none() || limit == 0 {0}
 
 		// collision if both are leaves
 		else if self.get().isLeaf() && other.get().isLeaf() {
-			potential.push(ParticleContact::new(self.borrow().deref().clone(), other.borrow().deref().clone(), 0.0));
+			let mut overlap = PhysVec::new(intersection.unwrap().width() as f32, intersection.unwrap().height() as f32);
+			let s = self.get().bv.as_ref().unwrap().clone();
+			let o = other.get().bv.as_ref().unwrap().clone();
+			let interpenetration = overlap.magnitude();
+			overlap.normalize();
+			potential.push(ParticleContact::new(s, o, 0.0, interpenetration));
 			1
 		}
 

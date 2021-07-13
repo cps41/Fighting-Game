@@ -99,9 +99,9 @@ impl SDLCore{
         // (0, 0) cordinate = center of the scren
 		// make new rect and screen pos //
 
-        let screen_position = fighter.char_state.position.borrow().toPoint() + Point::new(width as i32 / 2, height as i32 / 2);
+        let screen_position = fighter.char_state.position.borrow().to_point() + Point::new(width as i32 / 2, height as i32 / 2);
         let screen_rect = Rect::from_center(screen_position, frame_width, frame_height);
-		let screen_position2 = fighter2.char_state.position.borrow().toPoint() + Point::new(width as i32 / 2, height as i32 / 2);
+		let screen_position2 = fighter2.char_state.position.borrow().to_point() + Point::new(width as i32 / 2, height as i32 / 2);
         let screen_rect2 = Rect::from_center(screen_position2, frame_width, frame_height);
 
 
@@ -114,7 +114,7 @@ impl SDLCore{
 		self.wincan.copy_ex(texture2, current_frame2, screen_rect2, 0.0, None, true, false)?;
 		self.wincan.copy(hazard_texture, hazard_frame, hazard_screen_rectangle)?;
 		self.wincan.set_draw_color(Color::RED);
-		self.wincan.draw_rects(&[fighter.char_state.get_bb(), fighter2.char_state.get_bb()]);
+		self.wincan.draw_rects(&[fighter.char_state.get_bb(), fighter2.char_state.get_bb()])?;
         self.wincan.present();
 
         /*

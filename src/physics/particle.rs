@@ -27,7 +27,7 @@ impl Particle {
     }
 
     // Create Point struct out of position coordinates
-    pub fn toPoint(&self) -> Point {
+    pub fn to_point(&self) -> Point {
         let (x,y) = self.position.raw();
         Point::new(x as i32, y as i32)
     }
