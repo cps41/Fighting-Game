@@ -52,7 +52,7 @@ impl <'t> ParticleForceRegistration <'t> {
     pub fn ParticleForceRegistry::updateForces(real duration) {
         //Registry::iterator i = registrations.begin();
         for item in Registry {
-            item->fg->updateForce(item->particle, duration);
+            item.fg.updateForce(item.particle, duration);
         }
     }
 } // close ParticleForceRegistration impl
@@ -63,9 +63,7 @@ impl <'t> ParticleForceGenerator <'t> {
     * given particle.
     */
 	pub fn ParticleGravity::updateForce(Particle* particle, real duration) {
-        // Check that we do not have infinite mass.
-        if (!particle->hasFiniteMass()) return;
         // Apply the mass-scaled force to the particle.
-        particle->addForce(gravity * particle->getMass());
+        particle.add_force(gravity * (particle.inverse_mass/1f32));
     }
 } // close ParticleForceGenerator impl
