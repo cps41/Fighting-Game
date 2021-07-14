@@ -36,7 +36,7 @@ fn main() {
     }
 
     let mut game_window = {
-    	match SDLCore::init(TITLE, false, CAM_W, CAM_H){
+    	match SDLCore::init(TITLE, true, CAM_W, CAM_H){
     		Ok(t) => t,
     		Err(e) => panic!("{}", e),
     	}
@@ -80,29 +80,36 @@ pub fn run(core: &mut SDLCore,
             }
         }
 
-		let mut input_1 = InputValues{W: false, S: false, A: false, D: false};
-		let mut input_2 = InputValues{W: false, S: false, A: false, D: false};
+		let mut input_1 = InputValues{w: false, s: false, a: false, d: false};
+		let mut input_2 = InputValues{w: false, s: false, a: false, d: false};
 		
 		receive(&socket, &client_addresses, &mut input_1, &mut input_2);
 
-		let (p1_x_vel, p1_y_vel) = calc_vel(&input_1, p1_x_vel, p1_y_vel);
+
+
+        /*
+        core.wincan.set_draw_color(Color::BLACK);
+        core.wincan.fill_rect(p1_box)?;
+        core.wincan.fill_rect(p2_box)?;
+        */
+
+
+		calc_vel(&input_1, &mut p1_x_vel, &mut p1_y_vel);
 		p1_box.set_x(p1_box.x() + p1_x_vel);
 		p1_box.set_y(p1_box.y() + p1_y_vel);
+        //println!("Player 1 position is X:{}, Y:{}", p1_box.x(), p1_box.y);
 
-		let (p2_x_vel, p2_y_vel) = calc_vel(&input_2, p2_x_vel, p2_y_vel);
+		calc_vel(&input_2, &mut p2_x_vel, &mut p2_y_vel);
 		p2_box.set_x(p2_box.x() + p2_x_vel);
 		p2_box.set_y(p2_box.y() + p2_y_vel);
+        //println!("Player 2 position is X:{}, Y:{}", p2_box.x(), p2_box.y);
 
-        // background
         core.wincan.set_draw_color(Color::BLACK);
         core.wincan.clear();
-
         core.wincan.set_draw_color(Color::CYAN);
         core.wincan.fill_rect(p1_box)?;
-
         core.wincan.set_draw_color(Color::RED);
         core.wincan.fill_rect(p2_box)?;
-
         core.wincan.present();
 
         let state = GameState::new(p1_box.x(), p1_box.y(), p1_x_vel, p1_y_vel,
@@ -115,34 +122,31 @@ pub fn run(core: &mut SDLCore,
     Ok(())
 }
 
-fn calc_vel(input: &InputValues, mut x_vel: i32, mut y_vel: i32) -> (i32, i32){
+fn calc_vel(input: &InputValues, x_vel: &mut i32, y_vel: &mut i32){
     let mut x_deltav = 0;
     let mut y_deltav = 0;
     
-    if input.W(){
+    if input.w(){
         y_deltav -= ACCEL_RATE;
     }
     
-    if input.A(){
+    if input.a(){
         x_deltav -= ACCEL_RATE;
     }
     
-    if input.S() {
+    if input.s() {
         y_deltav += ACCEL_RATE;
     }
     
-    if input.D() {
+    if input.d() {
         x_deltav += ACCEL_RATE;
     }
 
-    x_deltav = resist(x_vel, x_deltav);
-    y_deltav = resist(y_vel, y_deltav);
+    x_deltav = resist(*x_vel, x_deltav);
+    y_deltav = resist(*y_vel, y_deltav);
     
-    x_vel = (x_vel + x_deltav).clamp(-SPEED_LIMIT, SPEED_LIMIT);
-    y_vel = (y_vel + y_deltav).clamp(-SPEED_LIMIT, SPEED_LIMIT);
-
-    (x_vel, y_vel)
-
+    *x_vel = (*x_vel + x_deltav).clamp(-SPEED_LIMIT, SPEED_LIMIT);
+    *y_vel = (*y_vel + y_deltav).clamp(-SPEED_LIMIT, SPEED_LIMIT);
 }
 
 fn resist(vel: i32, deltav: i32) -> i32 {
@@ -162,7 +166,6 @@ fn resist(vel: i32, deltav: i32) -> i32 {
     }
 }
 
-
 fn server_setup() -> UdpSocket{
     // ADDRESSING
     let server_addresses: [SocketAddr; 1] = [
@@ -178,7 +181,6 @@ fn server_setup() -> UdpSocket{
     socket
 }
 
-// first connect
 fn client_connect(socket: &UdpSocket, 
                   client_addresses: &mut HashMap<SocketAddr,u8>,
                   player_count: u8) -> u8 {
@@ -197,35 +199,54 @@ fn client_connect(socket: &UdpSocket,
     return player_count;
 }
 
+/*
 fn receive(socket: &UdpSocket, 
            client_addresses: &HashMap<SocketAddr,u8>,
            input_1: &mut InputValues,
            input_2: &mut InputValues,
-		  ){ //-> (InputValues, InputValues){
-    
+		  ){
     let mut message_1 = false;
     let mut message_2 = false;
-    //let mut input_1;
-    //let mut input_2;
 
     loop{
         let mut buffer = [0u8; 100]; // a buffer than accepts 4096 
         let (number_of_bytes, src_addr) = socket.recv_from(&mut buffer).expect("Didn't receive data");
 
         if client_addresses.get(&src_addr).unwrap().eq(&1) && !message_1{
-            let input_1 = deserialize::<InputValues>(&buffer).expect("cannot crack ze coooode");
+            
+            let received_input = deserialize::<InputValues>(&buffer).expect("cannot crack ze coooode");
+            input_1.copy(received_input);
+            println!("Received Data from Player 1");
             message_1 = true;
-        
-
-        }else if client_addresses.get(&src_addr).unwrap().eq(&2) && !message_2{
-            let input_2 = deserialize::<InputValues>(&buffer).expect("cannot crack ze coooode");
+        }else if client_addresses.get(&src_addr).unwrap().eq(&2) && !message_2{ 
+            let received_input = deserialize::<InputValues>(&buffer).expect("cannot crack ze coooode");
+            input_2.copy(received_input);
+            println!("Received Data from Player 2");
             message_2 = true;
         }
 
         if message_1 && message_2 {break;}
     }
+}
+*/
 
-    //(input_1, input_2)
+fn receive(socket: &UdpSocket, 
+           client_addresses: &HashMap<SocketAddr,u8>,
+           input_1: &mut InputValues,
+           input_2: &mut InputValues,
+          ){
+    let mut buffer = [0u8; 100]; // a buffer than accepts 4096 
+    let (number_of_bytes, src_addr) = socket.recv_from(&mut buffer).expect("Didn't receive data");
+
+    if client_addresses.get(&src_addr).unwrap().eq(&1){
+        let received_input = deserialize::<InputValues>(&buffer).expect("cannot crack ze coooode");
+        input_1.copy(received_input);
+        //println!("Received Data from Player 1");
+    }else if client_addresses.get(&src_addr).unwrap().eq(&2){
+        let received_input = deserialize::<InputValues>(&buffer).expect("cannot crack ze coooode");
+        input_2.copy(received_input);
+        //println!("Received Data from Player 2");
+    }
 }
 
 fn send(socket: &UdpSocket,
@@ -246,117 +267,134 @@ fn send(socket: &UdpSocket,
 pub struct GameState{
     pub p1_x_pos: i32,
     pub p1_y_pos: i32,
-	pub p1_x_vel: i32,
-	pub p1_y_vel: i32,    
+    pub p1_x_vel: i32,
+    pub p1_y_vel: i32,    
     pub p2_x_pos: i32,
     pub p2_y_pos: i32, 
-	pub p2_x_vel: i32,
-	pub p2_y_vel: i32, 
+    pub p2_x_vel: i32,
+    pub p2_y_vel: i32, 
 }
 
 impl GameState{
-	pub fn new (p1_x_pos: i32, 
-				p1_y_pos: i32, 
-				p1_x_vel: i32, 
-				p1_y_vel: i32, 
-				p2_x_pos: i32, 
-				p2_y_pos: i32, 
-				p2_x_vel: i32, 
-				p2_y_vel: i32) -> GameState {
-		GameState {	p1_x_pos,
-					p1_y_pos,
-					p1_x_vel,
-					p1_y_vel,
-					p2_x_pos,
-					p2_y_pos,
-					p2_x_vel,
-					p2_y_vel}
-	}
+    pub fn new (p1_x_pos: i32, 
+                p1_y_pos: i32, 
+                p1_x_vel: i32, 
+                p1_y_vel: i32, 
+                p2_x_pos: i32, 
+                p2_y_pos: i32, 
+                p2_x_vel: i32, 
+                p2_y_vel: i32) -> GameState {
+        GameState { p1_x_pos,
+                    p1_y_pos,
+                    p1_x_vel,
+                    p1_y_vel,
+                    p2_x_pos,
+                    p2_y_pos,
+                    p2_x_vel,
+                    p2_y_vel}
+    }
 
-	pub fn p1_x_pos(&self) -> i32{
-		self.p1_x_pos
-	}
+    pub fn copy(&mut self, other: &GameState){
+        self.p1_x_pos = other.p1_x_pos();
+        self.p1_y_pos = other.p1_y_pos();
+        self.p1_x_vel = other.p1_x_vel();
+        self.p1_y_vel = other.p1_y_vel();
+        self.p2_x_pos = other.p2_x_pos();
+        self.p2_y_pos = other.p2_y_pos();
+        self.p2_x_vel = other.p2_x_vel();
+        self.p2_y_vel = other.p2_y_vel();
+    }
 
-	pub fn p1_y_pos(&self) -> i32{
-		self.p1_y_pos
-	}
+    pub fn p1_x_pos(&self) -> i32{
+        self.p1_x_pos
+    }
 
-	pub fn p1_y_vel(&self) -> i32{
-		self.p1_y_vel
-	}
+    pub fn p1_y_pos(&self) -> i32{
+        self.p1_y_pos
+    }
 
-	pub fn p1_x_vel(&self) -> i32{
-		self.p1_x_vel
-	}
-	pub fn p2_x_pos(&self) -> i32{
-		self.p2_x_pos
-	}
+    pub fn p1_y_vel(&self) -> i32{
+        self.p1_y_vel
+    }
 
-	pub fn p2_y_pos(&self) -> i32{
-		self.p2_y_pos
-	}
+    pub fn p1_x_vel(&self) -> i32{
+        self.p1_x_vel
+    }
+    pub fn p2_x_pos(&self) -> i32{
+        self.p2_x_pos
+    }
 
-	pub fn p2_y_vel(&self) -> i32{
-		self.p2_y_vel
-	}
+    pub fn p2_y_pos(&self) -> i32{
+        self.p2_y_pos
+    }
 
-	pub fn p2_x_vel(&self) -> i32{
-		self.p2_x_vel
-	}
+    pub fn p2_y_vel(&self) -> i32{
+        self.p2_y_vel
+    }
 
+    pub fn p2_x_vel(&self) -> i32{
+        self.p2_x_vel
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct InputValues{
-    pub W: bool,
-    pub S: bool,
-    pub A: bool,
-    pub D: bool,
+    pub w: bool,
+    pub s: bool,
+    pub a: bool,
+    pub d: bool,
 }
 
 impl InputValues{
     pub fn new(keystate: &HashSet<Keycode>) -> InputValues {    
-        let W = if keystate.contains(&Keycode::W) {
+        let w = if keystate.contains(&Keycode::W) {
             true
         }else{
             false
         };
         
-        let A = if keystate.contains(&Keycode::A) {
-            true
-        }else{
-            false
-        };
-        
-        let S = if keystate.contains(&Keycode::S) {
-            true
-        }else{
-            false
-        };
-        
-        let D = if keystate.contains(&Keycode::D) {
+        let s = if keystate.contains(&Keycode::S) {
             true
         }else{
             false
         };
 
-        InputValues{W,S,A,D}
+        let a = if keystate.contains(&Keycode::A) {
+            true
+        }else{
+            false
+        };
+
+        let d = if keystate.contains(&Keycode::D) {
+            true
+        }else{
+            false
+        };
+
+        InputValues{w,s,a,d}
     }
 
-    pub fn W(&self) -> bool{
-        self.W
+    pub fn copy(&mut self, other: InputValues){
+        self.w = other.w();
+        self.s = other.s();
+        self.a = other.a();
+        self.d = other.d();
     }
 
-    pub fn S(&self) -> bool{
-        self.S
+    pub fn w(&self) -> bool{
+        self.w
     }
 
-    pub fn A(&self) -> bool{
-        self.A
+    pub fn s(&self) -> bool{
+        self.s
     }
 
-    pub fn D(&self) -> bool{
-        self.D
+    pub fn a(&self) -> bool{
+        self.a
+    }
+
+    pub fn d(&self) -> bool{
+        self.d
     }
 }
 
