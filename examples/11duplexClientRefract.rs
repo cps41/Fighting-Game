@@ -229,20 +229,23 @@ fn client_setup() -> (UdpSocket, u8){
 }
 
 pub fn send(socket: &UdpSocket, inputs: &InputValues,){
+    println!("Sending Data");
     let envelope = serialize(inputs);
     match envelope{
         Ok(encoded_message) =>{ let message = encoded_message.as_slice();
                                 socket.send(message);},
         Err(e) => panic!("No message"),
     }
+    println!("Data Sent");
 }
 
 pub fn receive(socket: &UdpSocket) -> GameState{
+    println!("Receiving Data");
     let mut buffer = [0u8; 100];
     let (number_of_bytes, src_addr) = socket.recv_from(&mut buffer).expect("Didn't receive data");
 
     let state = deserialize::<GameState>(&buffer).expect("cannot crack ze coode");
-
+    println!("Data Received");
     state
 }
 

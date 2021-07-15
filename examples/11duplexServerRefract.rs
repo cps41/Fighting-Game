@@ -86,18 +86,17 @@ pub fn run(core: &mut SDLCore,
         let mut message_2 = false;
 
 		for i in 1 .. 5{
+            println!("Receive Attempt number {}", i);
             receive(&socket, &client_addresses, &mut input_1, &mut input_2, &mut message_1, &mut message_2);
             if message_1 && message_2 {break;}
+            println!("message 1 is: {}, message 2 is: {}", message_1, message_2);
+
         }
-
-
-
         /*
         core.wincan.set_draw_color(Color::BLACK);
         core.wincan.fill_rect(p1_box)?;
         core.wincan.fill_rect(p2_box)?;
         */
-
 
 		calc_vel(&input_1, &mut p1_x_vel, &mut p1_y_vel);
 		p1_box.set_x(p1_box.x() + p1_x_vel);
@@ -189,10 +188,8 @@ fn server_setup() -> UdpSocket{
 fn client_connect(socket: &UdpSocket, 
                   client_addresses: &mut HashMap<SocketAddr,u8>,
                   player_count: u8) -> u8 {
-
     let mut buffer = [0u8; 100]; // a buffer than accepts 100
     let (number_of_bytes, src_addr) = socket.recv_from(&mut buffer).expect("Didn't receive data");
-
     // Client IPs and player #
     if !client_addresses.contains_key(&src_addr) { // for first time
         println!("First time connection to: {:?} > {:?}", src_addr, &buffer[0]); // test to print IP and initial info sent 
@@ -257,22 +254,48 @@ fn receive(socket: &UdpSocket,
            message_1: &mut bool,
            message_2: &mut bool,
           ){
+    println!("Made it into receive");
     let mut buffer = [0u8; 100]; // a buffer than accepts 4096 
-    let (number_of_bytes, src_addr) = socket.recv_from(&mut buffer).expect("Didn't receive data");
     match socket.peek(&mut buffer){
-        Ok(t) => {if client_addresses.get(&src_addr).unwrap().eq(&1) && !*message_1{
+        Ok(t) => println!("Peak Worked"),
+        Err(e) => println!("Peak failed: {:?}",e),
+    }
+
+    let (number_of_bytes, src_addr) = socket.recv_from(&mut buffer).expect("Didn't receive data");                    
+    if client_addresses.get(&src_addr).unwrap().eq(&1) && !*message_1{
+        println!("Received Data from Player 1");
+        let received_input = deserialize::<InputValues>(&buffer).expect("cannot crack ze coooode");
+        input_1.copy(received_input);
+        *message_1 = true;
+        //println!("Received Data from Player 1");
+    }else if client_addresses.get(&src_addr).unwrap().eq(&2) && !*message_2{
+        println!("Received Data from Player 2");
+        let received_input = deserialize::<InputValues>(&buffer).expect("cannot crack ze coooode");
+        input_2.copy(received_input);
+        *message_2 = true;  
+    }
+
+/*
+    match socket.peek(&mut buffer){
+        Ok(t) => {  println!("Peak Worked");
+                    let (number_of_bytes, src_addr) = 
+                        socket.recv_from(&mut buffer).expect("Didn't receive data");                    
+                    if client_addresses.get(&src_addr).unwrap().eq(&1) && !*message_1{
+                    println!("Received Data from Player 1");
                     let received_input = deserialize::<InputValues>(&buffer).expect("cannot crack ze coooode");
                     input_1.copy(received_input);
                     *message_1 = true;
-                    println!("Received Data from Player 1");
+                    //println!("Received Data from Player 1");
                 }else if client_addresses.get(&src_addr).unwrap().eq(&2) && !*message_2{
+                    println!("Received Data from Player 2");
                     let received_input = deserialize::<InputValues>(&buffer).expect("cannot crack ze coooode");
                     input_2.copy(received_input);
                     *message_2 = true;
-                    println!("Received Data from Player 2");
+                    //println!("Received Data from Player 2");
                 }}
         Err(e) => {println!("Didn't receive data")},
     };
+*/
 }
 
 fn send(socket: &UdpSocket,
