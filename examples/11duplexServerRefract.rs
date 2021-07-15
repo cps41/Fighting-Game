@@ -82,8 +82,13 @@ pub fn run(core: &mut SDLCore,
 
 		let mut input_1 = InputValues{w: false, s: false, a: false, d: false};
 		let mut input_2 = InputValues{w: false, s: false, a: false, d: false};
-		
-		receive(&socket, &client_addresses, &mut input_1, &mut input_2);
+		let mut message_1 = false;
+        let mut message_2 = false;
+
+		for i in 1 .. 5{
+            receive(&socket, &client_addresses, &mut input_1, &mut input_2, &mut message_1, &mut message_2);
+            if message_1 && message_2 {break;}
+        }
 
 
 
@@ -209,11 +214,26 @@ fn receive(socket: &UdpSocket,
     let mut message_2 = false;
 
     loop{
+        println!("Started Receive Loop");
         let mut buffer = [0u8; 100]; // a buffer than accepts 4096 
-        let (number_of_bytes, src_addr) = socket.recv_from(&mut buffer).expect("Didn't receive data");
+        
+        match socket.peek(&mut buffer){
+            Ok(t) => 
+            Err(e) =>
+        }
 
+        /*
+        let (number_of_bytes, src_addr) = {
+            match socket.recv_from(&mut buffer){
+                Ok((usize, SocketAddr)) => {println!("Received Data"); (usize, SocketAddr)},
+                Err(e) => panic!("{}", e)
+            };
+        };
+        */
+      
+        let (number_of_bytes, src_addr) = socket.recv_from(&mut buffer).expect("Didn't receive data");
+        print!("Received Some Data");
         if client_addresses.get(&src_addr).unwrap().eq(&1) && !message_1{
-            
             let received_input = deserialize::<InputValues>(&buffer).expect("cannot crack ze coooode");
             input_1.copy(received_input);
             println!("Received Data from Player 1");
@@ -234,19 +254,25 @@ fn receive(socket: &UdpSocket,
            client_addresses: &HashMap<SocketAddr,u8>,
            input_1: &mut InputValues,
            input_2: &mut InputValues,
+           message_1: &mut bool,
+           message_2: &mut bool,
           ){
     let mut buffer = [0u8; 100]; // a buffer than accepts 4096 
     let (number_of_bytes, src_addr) = socket.recv_from(&mut buffer).expect("Didn't receive data");
-
-    if client_addresses.get(&src_addr).unwrap().eq(&1){
-        let received_input = deserialize::<InputValues>(&buffer).expect("cannot crack ze coooode");
-        input_1.copy(received_input);
-        //println!("Received Data from Player 1");
-    }else if client_addresses.get(&src_addr).unwrap().eq(&2){
-        let received_input = deserialize::<InputValues>(&buffer).expect("cannot crack ze coooode");
-        input_2.copy(received_input);
-        //println!("Received Data from Player 2");
-    }
+    match socket.peek(&mut buffer){
+        Ok(t) => {if client_addresses.get(&src_addr).unwrap().eq(&1) && !*message_1{
+                    let received_input = deserialize::<InputValues>(&buffer).expect("cannot crack ze coooode");
+                    input_1.copy(received_input);
+                    *message_1 = true;
+                    println!("Received Data from Player 1");
+                }else if client_addresses.get(&src_addr).unwrap().eq(&2) && !*message_2{
+                    let received_input = deserialize::<InputValues>(&buffer).expect("cannot crack ze coooode");
+                    input_2.copy(received_input);
+                    *message_2 = true;
+                    println!("Received Data from Player 2");
+                }}
+        Err(e) => {println!("Didn't receive data")},
+    };
 }
 
 fn send(socket: &UdpSocket,
@@ -346,7 +372,7 @@ pub struct InputValues{
 }
 
 impl InputValues{
-    pub fn new(keystate: &HashSet<Keycode>) -> InputValues {    
+    pub fn from_keystate(keystate: &HashSet<Keycode>) -> InputValues {    
         let w = if keystate.contains(&Keycode::W) {
             true
         }else{
