@@ -6,6 +6,7 @@ use bincode::{serialize, deserialize};
 use serde_derive::{Serialize, Deserialize};
 use std::collections::HashMap;
 use std::collections::HashSet;
+use std::time::{Instant, Duration};
 
 use sdl2::pixels::Color;
 use sdl2::rect::Rect;
@@ -34,6 +35,11 @@ fn main() {
             break 'connecting;
         }
     }
+
+    for address in client_addresses.keys(){
+        socket.send_to(&[0], address).expect("message not sent");
+    }
+
 
     let mut game_window = {
     	match SDLCore::init(TITLE, true, CAM_W, CAM_H){
@@ -70,6 +76,7 @@ pub fn run(core: &mut SDLCore,
     core.wincan.fill_rect(p2_box);
     core.wincan.present();
 
+    let received_limit = Duration::from_secs(5);
 
     'gameloop: loop{
         // keeping so we can exit
@@ -85,13 +92,15 @@ pub fn run(core: &mut SDLCore,
 		let mut message_1 = false;
         let mut message_2 = false;
 
-		for i in 1 .. 5{
-            println!("Receive Attempt number {}", i);
-            receive(&socket, &client_addresses, &mut input_1, &mut input_2, &mut message_1, &mut message_2);
-            if message_1 && message_2 {break;}
+		
+        let not_received = Instant::now();
+        loop{
+            receive(&socket, &client_addresses, &mut input_1, 
+                    &mut input_2, &mut message_1, &mut message_2);
             println!("message 1 is: {}, message 2 is: {}", message_1, message_2);
-
+            if (message_1 && message_2) || (not_received.elapsed() >= received_limit) {break;}
         }
+
         /*
         core.wincan.set_draw_color(Color::BLACK);
         core.wincan.fill_rect(p1_box)?;
@@ -256,46 +265,32 @@ fn receive(socket: &UdpSocket,
           ){
     println!("Made it into receive");
     let mut buffer = [0u8; 100]; // a buffer than accepts 4096 
+    
+    //let (number_of_bytes, src_addr) = socket.recv_from(&mut buffer).expect("Didn't receive data");
+    
     match socket.peek(&mut buffer){
-        Ok(t) => println!("Peak Worked"),
-        Err(e) => println!("Peak failed: {:?}",e),
-    }
-
-    let (number_of_bytes, src_addr) = socket.recv_from(&mut buffer).expect("Didn't receive data");                    
-    if client_addresses.get(&src_addr).unwrap().eq(&1) && !*message_1{
-        println!("Received Data from Player 1");
-        let received_input = deserialize::<InputValues>(&buffer).expect("cannot crack ze coooode");
-        input_1.copy(received_input);
-        *message_1 = true;
-        //println!("Received Data from Player 1");
-    }else if client_addresses.get(&src_addr).unwrap().eq(&2) && !*message_2{
-        println!("Received Data from Player 2");
-        let received_input = deserialize::<InputValues>(&buffer).expect("cannot crack ze coooode");
-        input_2.copy(received_input);
-        *message_2 = true;  
-    }
-
-/*
-    match socket.peek(&mut buffer){
-        Ok(t) => {  println!("Peak Worked");
-                    let (number_of_bytes, src_addr) = 
-                        socket.recv_from(&mut buffer).expect("Didn't receive data");                    
-                    if client_addresses.get(&src_addr).unwrap().eq(&1) && !*message_1{
-                    println!("Received Data from Player 1");
-                    let received_input = deserialize::<InputValues>(&buffer).expect("cannot crack ze coooode");
-                    input_1.copy(received_input);
-                    *message_1 = true;
-                    //println!("Received Data from Player 1");
-                }else if client_addresses.get(&src_addr).unwrap().eq(&2) && !*message_2{
-                    println!("Received Data from Player 2");
-                    let received_input = deserialize::<InputValues>(&buffer).expect("cannot crack ze coooode");
-                    input_2.copy(received_input);
-                    *message_2 = true;
-                    //println!("Received Data from Player 2");
-                }}
+        Ok(t) => {  
+            let (number_of_bytes, src_addr) = 
+                socket.recv_from(&mut buffer).expect("Didn't receive data");                    
+                    
+            if client_addresses.get(&src_addr).unwrap().eq(&1) && !*message_1{
+                println!("Received Data from Player 1");
+                let received_input = deserialize::<InputValues>(&buffer)
+                    .expect("cannot crack ze coooode");
+                input_1.copy(received_input);
+                *message_1 = true;
+                //println!("Received Data from Player 1");
+            }else if client_addresses.get(&src_addr).unwrap().eq(&2) && !*message_2{
+                println!("Received Data from Player 2");
+                let received_input = deserialize::<InputValues>(&buffer)
+                    .expect("cannot crack ze coooode");
+                input_2.copy(received_input);
+                *message_2 = true;
+                //println!("Received Data from Player 2");
+            }
+        },
         Err(e) => {println!("Didn't receive data")},
     };
-*/
 }
 
 fn send(socket: &UdpSocket,

@@ -59,6 +59,8 @@ fn run(core: &mut SDLCore,
     core.wincan.fill_rect(p2_box);
     core.wincan.present();
 
+    let mut buffer = [0u8; 100];
+    let (number_of_bytes) = socket.recv(&mut buffer).expect("Didn't receive data");
 
     'gameloop: loop{
         // keeping so we can exit
@@ -88,8 +90,6 @@ fn run(core: &mut SDLCore,
         core.wincan.fill_rect(p1_box);
         core.wincan.fill_rect(p2_box);
         */
-
-
 
         //this is the predictive aspect.  Assume what is happening on the server is
         //also happening on yours and show it
@@ -242,7 +242,7 @@ pub fn send(socket: &UdpSocket, inputs: &InputValues,){
 pub fn receive(socket: &UdpSocket) -> GameState{
     println!("Receiving Data");
     let mut buffer = [0u8; 100];
-    let (number_of_bytes, src_addr) = socket.recv_from(&mut buffer).expect("Didn't receive data");
+    let (number_of_bytes) = socket.recv(&mut buffer).expect("Didn't receive data");
 
     let state = deserialize::<GameState>(&buffer).expect("cannot crack ze coode");
     println!("Data Received");
