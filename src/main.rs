@@ -83,6 +83,10 @@ pub fn run_game() -> Result<(), String>{
     let block = texture_creator.load_texture("src/assets/images/characters/python/block.png")?;
     let hazard_texture = texture_creator.load_texture("src/assets/images/hazards/stalactite100x100.png")?;
     let background = texture_creator.load_texture("src/assets/images/background/small_background.png")?;
+    let healthbar_left = texture_creator.load_texture("src/assets/images/healthbar/healthbar_left.png")?;
+    let healthbar_right = texture_creator.load_texture("src/assets/images/healthbar/healthbar_right.png")?;
+    let healthbar_fill_left = texture_creator.load_texture("src/assets/images/healthbar/healthbar_fill_left.png")?;
+    let healthbar_fill_right = texture_creator.load_texture("src/assets/images/healthbar/healthbar_fill_right.png")?;
 
     let java_idle = texture_creator.load_texture("src/assets/images/characters/java/idle.png")?;
     let java_walk = texture_creator.load_texture("src/assets/images/characters/java/walk.png")?;
@@ -131,7 +135,9 @@ pub fn run_game() -> Result<(), String>{
         }
     };
 
-    game_window.render(&background, &texture, &fighter, &texture2, &fighter2, &hazard, &hazard_texture);
+    game_window.render(&background, &texture, &fighter, &texture2, &fighter2, 
+            &hazard, &hazard_texture, &healthbar_left, &healthbar_right,
+            &healthbar_fill_left, &healthbar_fill_right)?;
 
 
     let collisions = BVHierarchy::new(CollisionObject::new_from(CollisionObjectType::Platform, platform.clone(),
@@ -179,6 +185,8 @@ pub fn run_game() -> Result<(), String>{
         fighter.char_state.update_bounding_boxes(&collisions);
         fighter2.char_state.update_bounding_boxes(&collisions);
         collisions.resolve_collisions();
+        fighter.char_state.position.borrow_mut().integrate(FRAME_RATE as f32);
+        fighter2.char_state.position.borrow_mut().integrate(FRAME_RATE as f32);
         // println!("\nCollisions head: \n{:?}", collisions.head);
 
         //move hazard
@@ -207,7 +215,9 @@ pub fn run_game() -> Result<(), String>{
         };
 
         // render canvas
-        game_window.render(&background, &texture, &fighter, &texture2, &fighter2, &hazard, &hazard_texture);
+        game_window.render(&background, &texture, &fighter, &texture2, &fighter2, 
+            &hazard, &hazard_texture, &healthbar_left, &healthbar_right,
+            &healthbar_fill_left, &healthbar_fill_right);
     //##################################################-SLEEP-############################################
 
         thread::sleep(frame_time - loop_time.elapsed().clamp(Duration::new(0, 0), frame_time));

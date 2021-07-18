@@ -11,6 +11,8 @@ use crate::characters;
 use crate::animation;
 use crate::physics;
 
+use super::globals::*;
+
 pub struct SDLCore{
 	sdl_cxt: sdl2::Sdl,
 	pub wincan: sdl2::render::WindowCanvas,
@@ -67,14 +69,24 @@ impl SDLCore{
 				fighter2: &characters::characterAbstract::Fighter,
 				hazard: &physics::hazard::Hazard,
 				hazard_texture: &Texture,
+				healthbar_left: &Texture,
+				healthbar_right: &Texture,
+				healthbar_fill_left: &Texture,
+				healthbar_fill_right: &Texture,
 				) -> Result<(), String>{
 
 		// set canvas height
 		let (width, height) = self.wincan.output_size()?;
 
 		// background
-		self.wincan.copy(background, None, None);
+		self.wincan.copy(background, None, None)?;
 		//self.wincan.clear();
+
+		// fill health bars
+		self.wincan.copy(healthbar_fill_left, Rect::new(0,0, 300-(270-fighter.health), 40), Rect::new(3,10, 300-(270-fighter.health), 40))?;
+		self.wincan.copy(healthbar_fill_right, Rect::new(270-fighter2.health as i32,0, 300-(270-fighter.health), 40), Rect::new(CAM_W as i32-(300-(270-fighter.health as i32))-3,10, 300-(270-fighter.health), 40))?;
+		self.wincan.copy(healthbar_left, None, Rect::new(3,10, 300, 40))?;
+		self.wincan.copy(healthbar_right, None, Rect::new(CAM_W as i32-300-3,10, 300, 40))?;
 
 		let (frame_width, frame_height) = fighter.char_state.sprite.size();
 
@@ -94,6 +106,7 @@ impl SDLCore{
             frame_width,
             frame_height,
         );
+
 		let hazard_frame = Rect::new(0, 0, 100, 100);
 
         // (0, 0) cordinate = center of the scren

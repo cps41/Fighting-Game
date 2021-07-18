@@ -1,7 +1,4 @@
-
-use serde_derive::{Serialize, Deserialize}; 
-
-#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+#[derive(Clone, PartialEq, Debug)]
 pub struct PhysVec{pub x: f32, pub y: f32}
 
 impl PhysVec {
@@ -36,11 +33,12 @@ impl PhysVec {
         direction of a.
         a = a/|a| = a/d
     */
-    pub fn normalize(&mut self) {
+    pub fn normalize(&self) -> PhysVec{
         let length = self.magnitude();
         if length > 0f32 {
-            self.dot_replace(1f32/length);
+            self.dot_product(1f32/length)
         }
+        else {PhysVec::new(0.0,0.0)}
     }
     // replace values
     pub fn replace(&mut self, other: &PhysVec) {

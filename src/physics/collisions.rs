@@ -27,12 +27,10 @@ impl BVHierarchy {
 			let p0 = contact.particles[0].clone();
 			let p1 = contact.particles[1].clone();
 			if check_collision(p0.borrow().clone(), p1.borrow().clone()) {
-				let types = (p0.borrow().obj_type, p1.borrow().obj_type);
-				match types {
-					(CollisionObjectType::Platform, _) | (_, CollisionObjectType::Platform) => (),
-					_ => println!("Contact between\n {:?}\nand\n {:?}", p0, p1),
-				}
+				println!("Resolving....");
+				println!("\nContact between\n {:?}\nand\n {:?}", contact.particles[0], contact.particles[1]);
 				contact.resolve_velocity(FRAME_RATE as f32);
+				println!("\nVelocities updated between\n {:?}\nand\n {:?}", contact.particles[0], contact.particles[1]);
 			}
 		}
 	}
@@ -80,27 +78,19 @@ pub enum CollisionObjectType {
 
 pub struct ParticleContact {
 	pub particles: Vec<RefCell<CollisionObject>>,
-	pub restitution: f32, // idek what this does yet
+	pub restitution: f32,
 	pub contact_normal: PhysVec,
 	pub interpenetration: f32,
 }
 
 impl ParticleContact {
-	pub fn new(p0:RefCell<CollisionObject>, p1: RefCell<CollisionObject>, restitution: f32, interpenetration: f32) -> Self {
+	pub fn new(a:RefCell<CollisionObject>, b: RefCell<CollisionObject>, contact_normal: PhysVec, restitution: f32, interpenetration: f32) -> Self {
 		ParticleContact {
-			particles: vec![p0, p1],
+			particles: vec![a, b],
 			restitution: restitution,
-			contact_normal: PhysVec::new(0.0, 0.0),
+			contact_normal: contact_normal,
 			interpenetration: interpenetration,
 		}
-	}
-
-	fn calculate_normal(&mut self) {
-
-	}
-
-	fn resolve_penetration(&self) {
-
 	}
 
 	fn separating_velocity(&self) -> f32 {
@@ -114,34 +104,45 @@ impl ParticleContact {
 	}
 
 	fn resolve_velocity(&mut self, duration: f32) {
-		let p0 = &self.particles[0].borrow().particle;
-		let p1 = &self.particles[1].borrow().particle;
+		println!("\nEntered resolve velocity");
+		let a = &self.particles[0].borrow().particle;
+		let b = &self.particles[1].borrow().particle;
 		let separating_velocity = self.separating_velocity();
-		if separating_velocity > 0f32 { return } // contact is either separating or stationary, no impulse required
+		println!("separating_velocity: {}", separating_velocity);
+		if separating_velocity > 0f32 { 
+			println!("returning");
+			return 
+		} // contact is either separating or stationary, no impulse required
 
 		let new_sep_velocity = -separating_velocity*self.restitution;
 		let delta_velocity = new_sep_velocity - separating_velocity;
 
-		let total_inv_mass = p0.borrow().inverse_mass + p1.borrow().inverse_mass;
+		let total_inv_mass = a.borrow().inverse_mass + b.borrow().inverse_mass;
 		let impulse = delta_velocity / total_inv_mass;
 		let impulse_per_mass = self.contact_normal.dot_product(impulse);
+
+		println!("normal: {:?}, sep_vel: {:?}, impulse/mass: {:?}", self.contact_normal, separating_velocity, impulse_per_mass);
 
 		match &self.particles[0].borrow().obj_type {
 			CollisionObjectType::Platform => (),
 			_ => {
-				let v = p0.borrow().velocity.clone();
-				let m = p0.borrow().inverse_mass;
-				p0.borrow_mut().velocity.add_vec(&impulse_per_mass.dot_product(m));
+				let m = a.borrow().inverse_mass;
+				a.borrow_mut().velocity.add_vec(&impulse_per_mass.dot_product(m));
+				a.borrow_mut().integrate(duration);
 			}
 		}
 		match &self.particles[1].borrow().obj_type {
 			CollisionObjectType::Platform => (),
 			_ => {
-				let v = p1.borrow().velocity.clone();
-				let m = p1.borrow().inverse_mass;
-				p1.borrow_mut().velocity.add_vec(&impulse_per_mass.dot_product(m));
+				let m = b.borrow().inverse_mass;
+				b.borrow_mut().velocity.add_vec(&impulse_per_mass.dot_product(m));
+				b.borrow_mut().integrate(duration);
 			}
 		}
+	}
+
+	fn resolve_interpenetration(&self) {
+
 	}
 }
 

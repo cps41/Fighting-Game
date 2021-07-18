@@ -190,12 +190,20 @@ impl NodeRef<CollisionObject> {
 
 		// collision if both are leaves
 		else if self.get().isLeaf() && other.get().isLeaf() {
-			let mut overlap = PhysVec::new(intersection.unwrap().width() as f32, intersection.unwrap().height() as f32);
-			let s = self.get().bv.as_ref().unwrap().clone();
-			let o = other.get().bv.as_ref().unwrap().clone();
-			let interpenetration = overlap.magnitude();
-			overlap.normalize();
-			potential.push(ParticleContact::new(s, o, 0.0, interpenetration));
+			let a = self.get().bv.as_ref().unwrap().clone();
+			let b = other.get().bv.as_ref().unwrap().clone();
+			let types = (a.borrow().obj_type, b.borrow().obj_type);
+			match types {
+				// (CollisionObjectType::Platform, _) | (_, CollisionObjectType::Platform) => (),
+				_ => {
+					let overlap = PhysVec::new(intersection.unwrap().width() as f32, intersection.unwrap().height() as f32);
+					let interpenetration = overlap.magnitude();
+					let dif = a.borrow().particle.borrow().position.sub(&b.borrow().particle.borrow().position);
+					let collision_normal = dif.normalize();
+					println!("\nmagnitude: {}, normal: {:?}, interpenetration: {:?}", dif.magnitude(), collision_normal, interpenetration);
+					potential.push(ParticleContact::new(a, b, collision_normal, 1.0, interpenetration));
+				},
+			}
 			1
 		}
 

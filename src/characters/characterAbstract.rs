@@ -42,6 +42,7 @@ pub struct CharacterState {
 // EDIT: consider updating integers to f64
 pub struct Fighter<'t> {
 	pub name: Characters,
+	pub health: u32,
 	pub char_state: CharacterState, 
 	pub speed: i32,
     pub weight: i32,
@@ -72,6 +73,7 @@ impl <'t> Fighter <'t> {
 	pub fn new (c: CharacterState) -> Fighter<'t> {
 		Fighter {
 			name: Characters::Python,
+			health: 270,
 			char_state: c,
 			speed: 20, // arbitrary #
 			weight: 180,
@@ -138,7 +140,6 @@ impl <'t> Fighter <'t> {
 		let mut scaled = force.clone();
 		scaled.dot_replace(1.0/0.0002645833);
 		self.char_state.position.borrow_mut().add_force(&scaled);
-		self.char_state.position.borrow_mut().integrate(FRAME_RATE as f32);
 	} 
 
     // Setters
@@ -339,9 +340,16 @@ impl CharacterState {
 	pub fn insert_hit_box(&mut self, bvh: &BVHierarchy) {
 		// println!("inserting hit box...");
 		CharacterState::remove(&mut self.hitbox);
+		let mut vel_particle = self.position.clone();
+		vel_particle.borrow_mut().velocity.x = 5000.0;
 		self.hitbox = Some(bvh.insert(
-			CollisionObject::new(
-				CollisionObjectType::HitBox, self.x()+W_OFFSET+SPRITE_W as i32/2, self.y()+H_OFFSET, SPRITE_W as u32, SPRITE_H/2, self.position.clone())
+			CollisionObject {
+				obj_type: CollisionObjectType::HitBox, 
+				area: SPRITE_W as u32 * SPRITE_H/2,
+				rect: Rect::new(self.x()+W_OFFSET+SPRITE_W as i32/2, self.y()+H_OFFSET, SPRITE_W as u32, SPRITE_H/2),
+				noderef: None,
+				particle: vel_particle,
+			}
 		));
 	}
 	pub fn insert_hurt_box(&mut self, bvh: &BVHierarchy) {
@@ -373,6 +381,7 @@ impl CharacterState {
 				CharacterState::remove(&mut self.blockbox);
 				CharacterState::remove(&mut self.hurtbox);
 				self.insert_hit_box(&bvh);
+				self.position.borrow_mut().integrate(FRAME_RATE as f32);
 			},
 			_ => {
 				CharacterState::remove(&mut self.hitbox);
