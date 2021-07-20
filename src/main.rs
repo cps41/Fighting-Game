@@ -147,7 +147,7 @@ pub fn run_game() -> Result<(), String>{
     'gameloop: loop{
         let loop_time = Instant::now();
     //################################################-GET-INPUT-##########################################
-        //ceck if play quits
+        //check if play quits
         for event in game_window.event_pump.poll_iter() {
             match event {
                 Event::Quit{..} | Event::KeyDown{keycode: Some(Keycode::Escape), ..} => break 'gameloop,
