@@ -27,6 +27,7 @@ pub mod input; // for inputHandler and movement
 pub mod animation;
 pub mod networking;
 pub mod physics;
+pub mod audio;
 
 //use crate::view::core; // need for SDLCore and TextureManager
 //use crate::view::core::Demo; // need for SDLCore's Demo
@@ -110,6 +111,10 @@ pub fn run_game() -> Result<(), String>{
     java_textures.insert(animation::sprites::State::LKick, java_lkick);
     java_textures.insert(animation::sprites::State::HKick, java_hkick);
     java_textures.insert(animation::sprites::State::Block, java_block);
+
+    // music
+    let clips = audio::handler::Clips::new();
+    sdl2::mixer::Channel::all().play(&clips.combat1, -1); // -1 means repeat forever
 
     ///////////////////////
     // NOT YET FUNCTIONING
