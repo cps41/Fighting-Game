@@ -1,9 +1,12 @@
 extern crate street_code_fighter as scf;
+// extern crate rand;
+
 use street_code_fighter::view::globals::{TITLE, CAM_W, CAM_H};
 
 use std::path::Path;
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
+use rand::prelude::*;
 
 fn main() -> Result<(), String>  {
 	// have to initialize audio in SDL2!!
@@ -14,7 +17,13 @@ fn main() -> Result<(), String>  {
         }
     };
 
+    // get random #
+    let mut rng = rand::thread_rng();
+	let random_num: f64 = rng.gen(); // generates a float between 0 and 1
+    println!("{}", random_num);
+
     let clips = scf::audio::handler::Clips::new();
+
 
  	// sdl2::mixer::Channel::all().play(&clips.opening, 1);
  	// game_window.timer.delay(13_000); // wait for opening to end

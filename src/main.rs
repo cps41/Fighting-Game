@@ -20,6 +20,7 @@ use std::env;
 use physics::collisions::*;
 use physics::vecmath::*;
 use physics::particle::*;
+use rand::prelude::*;
 
 pub mod characters; // for characterAbstract
 pub mod view; // for core
@@ -42,6 +43,11 @@ const FRAME_RATE: f64 = 1.0/60.0;
 
 pub fn run_game() -> Result<(), String>{
     let frame_time = Duration::from_secs_f64(FRAME_RATE);
+
+    // get random # (for music)
+    let mut rng = rand::thread_rng();
+    let random_num: f64 = rng.gen(); // generates a float between 0 and 1
+    println!("{}", random_num);
 
     let mut game_window = {
         match view::core::SDLCore::init(TITLE, false, CAM_W, CAM_H){
@@ -114,8 +120,15 @@ pub fn run_game() -> Result<(), String>{
 
     // music
     let clips = audio::handler::Clips::new();
-    sdl2::mixer::Channel::all().play(&clips.combat1, -1); // -1 means repeat forever
 
+    // randomize between the 3x combat audio tracks
+    if random_num < 0.4 { 
+        sdl2::mixer::Channel::all().play(&clips.combat1, -1); // -1 means repeat forever
+    } else if random_num < 0.7 {
+        sdl2::mixer::Channel::all().play(&clips.combat2, -1); // -1 means repeat forever  
+    } else {
+        sdl2::mixer::Channel::all().play(&clips.combat3, -1); // -1 means repeat forever
+    }
     ///////////////////////
     // NOT YET FUNCTIONING
     // Self::load_textures(&texture_creator, &mut fighter);
