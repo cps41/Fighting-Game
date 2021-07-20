@@ -386,7 +386,6 @@ impl CharacterState {
 				CharacterState::remove(&mut self.blockbox);
 				CharacterState::remove(&mut self.hurtbox);
 				self.insert_hit_box(&bvh);
-				self.particle.borrow_mut().integrate(FRAME_RATE as f32);
 			},
 			_ => {
 				CharacterState::remove(&mut self.hitbox);

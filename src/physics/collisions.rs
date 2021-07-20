@@ -29,7 +29,7 @@ impl BVHierarchy {
 			let p1 = contact.particles[1].clone();
 			if check_collision(p0.borrow().clone(), p1.borrow().clone()) {
 				// println!("Resolving....");
-				// println!("\nContact between\n {:?}\nand\n {:?}", contact.particles[0], contact.particles[1]);
+				println!("\nContact between\n {:?}\nand\n {:?}", contact.particles[0], contact.particles[1]);
 				contact.resolve_velocity(FRAME_RATE as f32);
 				// println!("\nVelocities updated between\n {:?}\nand\n {:?}", contact.particles[0], contact.particles[1]);
 			}
