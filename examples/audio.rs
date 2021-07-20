@@ -16,13 +16,11 @@ fn main() -> Result<(), String>  {
 
     let clips = scf::audio::handler::Clips::new();
 
- 	sdl2::mixer::Channel::all().play(&clips.opening, 1);
+ 	// sdl2::mixer::Channel::all().play(&clips.opening, 1);
+ 	// game_window.timer.delay(13_000); // wait for opening to end
+ 	// sdl2::mixer::Channel::all().halt(); // halt the opening music, before restarting (otherwise all will play)
 
- 	game_window.timer.delay(13_000); // wait for opening to end
-
- 	sdl2::mixer::Channel::all().halt(); // halt the opening music, before restarting (otherwise all will play)
-
- 	sdl2::mixer::Channel::all().play(&clips.combat, -1); // -1 means repeat forever
+ 	sdl2::mixer::Channel::all().play(&clips.combat1, -1); // -1 means repeat forever
 
 	let mut count = 0;
 
@@ -35,15 +33,15 @@ fn main() -> Result<(), String>  {
             }
         } // for
 
-        if count == 5000000 { // this is just testing logic
-        	println!("hit");
-        	sdl2::mixer::Channel::all().play(&clips.hit, 1);
-        }
-        if count == 10000000 { // just for ze testing 
-        	println!("ko");
-        	sdl2::mixer::Channel::all().play(&clips.ko, 1);
-        	count = 0;
-        }
+        // if count == 5000000 { // this is just testing logic
+        // 	println!("hit");
+        // 	sdl2::mixer::Channel::all().play(&clips.hit, 1);
+        // }
+        // if count == 10000000 { // just for ze testing 
+        // 	println!("ko");
+        // 	sdl2::mixer::Channel::all().play(&clips.ko, 1);
+        // 	count = 0;
+        // }
 
         count = count + 1; 
     } // gameloop
