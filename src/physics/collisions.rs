@@ -135,12 +135,12 @@ impl ParticleContact {
 
 			// alter health for hit/hazard collisions
 			(CollisionObjectType::HitBox, CollisionObjectType::HurtBox) | (CollisionObjectType::Hazard, CollisionObjectType::HurtBox) => {
-				self.particles[1].borrow().particle.borrow_mut().update_health(10);
+				self.particles[1].borrow().particle.borrow_mut().update_health(1);
 				self.particles[0].borrow().particle.borrow_mut().velocity.add_vec(&impulse_per_mass.dot_product(mass_a));
 				self.particles[1].borrow().particle.borrow_mut().velocity.add_vec(&impulse_per_mass.dot_product(mass_b));
 			},
 			(CollisionObjectType::HurtBox, CollisionObjectType::HitBox) | (CollisionObjectType::HurtBox, CollisionObjectType::Hazard) => {
-				self.particles[0].borrow().particle.borrow_mut().update_health(10);
+				self.particles[0].borrow().particle.borrow_mut().update_health(1);
 				self.particles[0].borrow().particle.borrow_mut().velocity.add_vec(&impulse_per_mass.dot_product(mass_a));
 				self.particles[1].borrow().particle.borrow_mut().velocity.add_vec(&impulse_per_mass.dot_product(mass_b));
 			},

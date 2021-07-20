@@ -64,7 +64,7 @@ impl Hazard {
 		Hazard::remove(&mut self.hitbox);
 		self.hitbox = Some(bvh.insert(
 			CollisionObject::new(
-				CollisionObjectType::BlockBox, self.position.x()+W_OFFSET, self.position.y()+H_OFFSET, 100, 100, self.particle.clone())
+				CollisionObjectType::Hazard, self.sprite.x(), self.sprite.y(), 100, 100, self.particle.clone())
 		));
 	}
 	pub fn update_bounding_box(&mut self, bvh: &BVHierarchy) {
@@ -72,6 +72,12 @@ impl Hazard {
 		// println!("\nUpdating Bounding Boxes {:?}", bvh.head);
         Hazard::remove(&mut self.hitbox);
         self.insert(&bvh);
+    }
+    pub fn get_bb(&self) -> Rect {
+        if self.hitbox.is_some() {
+        self.hitbox.clone().unwrap().borrow().rect.clone()
+        }
+		else {Rect::new(0,0,0,0)}
     }
         // // setters
         // pub fn set_active(&mut self) -> &mut bool { &mut self.active; }
