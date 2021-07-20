@@ -143,11 +143,11 @@ pub fn run_game() -> Result<(), String>{
 
     let collisions = BVHierarchy::new(CollisionObject::new_from(CollisionObjectType::Platform, platform.clone(),
         Rc::new(RefCell::new(Particle::new(
-            PhysVec::new((CAM_W-platform.width()) as f32, 560f32), 0.5, 2000000000.0)))));
+            PhysVec::new((CAM_W-platform.width()) as f32, 560f32), 0.5, 2000000000.0, 0)))));
 
-        collisions.insert(CollisionObject::new_from(CollisionObjectType::Hazard, hazard.sprite.clone(),
-            Rc::new(RefCell::new(Particle::new(
-                PhysVec::new(hazard.position.x as f32, hazard.position.y as f32), 0.5, 200.0)))));
+        // collisions.insert(CollisionObject::new_from(CollisionObjectType::Hazard, hazard.sprite.clone(),
+        //     Rc::new(RefCell::new(Particle::new(
+        //         PhysVec::new(hazard.position.x as f32, hazard.position.y as f32), 0.5, 200.0, 0)))));
 
 
 //################################################-GAME-LOOP###############################################
@@ -185,8 +185,9 @@ pub fn run_game() -> Result<(), String>{
 
         fighter.char_state.update_bounding_boxes(&collisions);
         fighter2.char_state.update_bounding_boxes(&collisions);
+        hazard.update_bounding_box(&collisions);
         collisions.resolve_collisions();
-        println!("\nCollisions head: \n{:?}\n", collisions.head);
+        // println!("\nCollisions head: \n{:?}\n", collisions.head);
         fighter.char_state.particle.borrow_mut().integrate(FRAME_RATE as f32);
         fighter2.char_state.particle.borrow_mut().integrate(FRAME_RATE as f32);
 

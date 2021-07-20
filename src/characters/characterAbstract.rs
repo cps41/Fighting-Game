@@ -175,7 +175,7 @@ impl CharacterState {
 	pub fn new() -> CharacterState {
 		// current default values
 		// Stretch goals: expand to not use default values
-		let position = Particle::new(PhysVec::new(0f32,0f32), 0.01, 180f32);
+		let position = Particle::new(PhysVec::new(0f32,0f32), 0.01, 180f32, 270);
 		CharacterState {
 			// position: RefCell::new(position.clone()),
 			particle: Rc::new(RefCell::new(position.clone())),
@@ -307,6 +307,7 @@ impl CharacterState {
 	pub fn next_state(&self) 	-> &animation::sprites::State 	{ &self.next_state }
 	pub fn x(&self)				-> i32							{ self.particle.borrow().position.x as i32 }
 	pub fn y(&self)				-> i32							{ self.particle.borrow().position.y as i32 }
+	pub fn health(&self)		-> i32 							{ self.particle.borrow().health}
 	pub fn velocity(&self)		-> (f32, f32)					{ self.particle.borrow().velocity.raw() }
 	pub fn acceleration(&self)		-> (f32, f32)					{ self.particle.borrow().acceleration.raw() }
 	pub fn direction(&self)		-> &input::movement::Direction	{ &self.direction }

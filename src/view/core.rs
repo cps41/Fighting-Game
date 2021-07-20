@@ -86,8 +86,12 @@ impl SDLCore{
 		//self.wincan.clear();
 
 		// fill health bars
-		self.wincan.copy(healthbar_fill_left, Rect::new(0,0, 300-(270-fighter.health), 40), Rect::new(3,10, 300-(270-fighter.health), 40))?;
-		self.wincan.copy(healthbar_fill_right, Rect::new(270-fighter2.health as i32,0, 300-(270-fighter.health), 40), Rect::new(CAM_W as i32-(300-(270-fighter.health as i32))-3,10, 300-(270-fighter.health), 40))?;
+		self.wincan.copy(healthbar_fill_left, Rect::new(0,0, 
+				300-(270-fighter.char_state.health() as u32), 40), Rect::new(3,10, 
+				300-(270-fighter.char_state.health() as u32), 40))?;
+		self.wincan.copy(healthbar_fill_right, 
+			Rect::new(270-fighter2.char_state.health(),0, 300-(270-fighter.char_state.health() as u32), 40), 
+			Rect::new(CAM_W as i32-(300-(270-fighter.char_state.health()))-3,10, 300-(270-fighter.char_state.health() as u32), 40))?;
 		self.wincan.copy(healthbar_left, None, Rect::new(3,10, 300, 40))?;
 		self.wincan.copy(healthbar_right, None, Rect::new(CAM_W as i32-300-3,10, 300, 40))?;
 

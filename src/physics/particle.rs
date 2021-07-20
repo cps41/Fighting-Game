@@ -10,10 +10,11 @@ pub struct Particle {
     pub damping: f32,
     pub inverse_mass: f32,
     pub force_accumulator: PhysVec,
+    pub health: i32,
 }
 
 impl Particle {
-    pub fn new(position: PhysVec, damping: f32, mass: f32) -> Self {
+    pub fn new(position: PhysVec, damping: f32, mass: f32, health: i32) -> Self {
         let zero = PhysVec::new(0f32, 0f32);
         let inverse_mass = 1f32/mass;
         Particle {
@@ -23,6 +24,7 @@ impl Particle {
             damping,
             inverse_mass,
             force_accumulator: zero.clone(),
+            health: health,
         }
     }
 
@@ -37,6 +39,11 @@ impl Particle {
         self.velocity.y = 0.0;
         self.acceleration.y = 0.0;
         self.force_accumulator.y = 0.0;
+    }
+
+    pub fn update_health(&mut self, damage: i32) {
+        self.health -= damage;
+        self.health.clamp(0, 270);
     }
 
     /*
@@ -90,69 +97,5 @@ impl Particle {
     // Add force to the accumulator
     pub fn add_force_comps(&mut self, x: f32, y: f32) {
         self.force_accumulator.add_vec(&PhysVec::new(x, y));
-    }
-}
-
-#[cfg(test)]
-pub mod test {
-    use super::*;
-
-    #[test]
-    pub fn testInit() {
-        let zero = PhysVec::new(0f32, 0f32);
-        let p = Particle::new(zero.clone(), 1f32, 5f32);
-
-        assert_eq!(p.position, zero);
-        assert_eq!(p.acceleration, zero);
-        assert_eq!(p.velocity, zero);
-        assert_eq!(p.force_accumulator, zero);
-        assert_eq!(p.damping, 1f32);
-        assert_eq!(p.inverse_mass, 0.2);
-    }
-
-    #[test]
-    pub fn testAddForce() {
-        let zero = PhysVec::new(0f32, 0f32);
-        let mut p = Particle::new(zero.clone(), 1f32, 5f32);
-        let force1 = PhysVec::new(5f32, 7f32);
-        let force2 = PhysVec::new(2f32, 2f32);
-        p.add_force(&force1);
-
-        assert_eq!(p.force_accumulator, force1);
-
-        p.add_force(&force2);
-
-        assert_eq!(p.force_accumulator, PhysVec::new(7f32, 9f32));
-    }
-
-    #[test]
-    pub fn testClearForce() {
-        let zero = PhysVec::new(0f32, 0f32);
-        let mut p = Particle::new(zero.clone(), 1f32, 5f32);
-        let force1 = PhysVec::new(5f32, 7f32);
-        let force2 = PhysVec::new(2f32, 2f32);
-        p.add_force(&force1);
-        p.add_force(&force2);
-        p.clear_forces();
-
-        assert_eq!(p.force_accumulator, zero);
-    }
-
-    #[test]
-    pub fn testIntegrate() {
-        let zero = PhysVec::new(0f32, 0f32);
-        let one = PhysVec::new(1f32, 1f32);
-        let mut p = Particle::new(zero.clone(), 0.5f32, 2f32);
-        let force1 = PhysVec::new(5f32, 7f32);
-        let force2 = PhysVec::new(2f32, 2f32);
-        p.velocity.replace(&one);
-        p.add_force(&force1);
-        p.add_force(&force2);
-        p.integrate(1f32);
-
-        assert_eq!(p.position, one);
-        assert_eq!(p.acceleration, PhysVec::new(3.5, 4.5));
-        assert_eq!(p.velocity, PhysVec::new(2.25, 2.75));
-        assert_eq!(p.force_accumulator, zero);
     }
 }

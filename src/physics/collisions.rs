@@ -29,7 +29,11 @@ impl BVHierarchy {
 			let p1 = contact.particles[1].clone();
 			if check_collision(p0.borrow().clone(), p1.borrow().clone()) {
 				// println!("Resolving....");
-				println!("\nContact between\n {:?}\nand\n {:?}", contact.particles[0], contact.particles[1]);
+				match (p0.borrow().obj_type, p1.borrow().obj_type) {
+					(CollisionObjectType::Platform, _) => (),
+					(_, CollisionObjectType::Platform) => (),
+					_ => println!("\nContact between\n {:?}\nand\n {:?}", contact.particles[0], contact.particles[1]),
+				}
 				contact.resolve_velocity(FRAME_RATE as f32);
 				// println!("\nVelocities updated between\n {:?}\nand\n {:?}", contact.particles[0], contact.particles[1]);
 			}
@@ -121,29 +125,31 @@ impl ParticleContact {
 
 		// println!("normal: {:?}, sep_vel: {:?}, impulse/mass: {:?}", self.contact_normal, separating_velocity, impulse_per_mass);
 
-		match &self.particles[0].borrow().obj_type {
-			CollisionObjectType::Platform => {
-				self.particles[1].borrow().particle.borrow_mut().reset_y();
-				// self.particles[1].borrow().particle.borrow_mut().integrate(duration);
-				return;
+		let types = (self.particles[0].borrow().obj_type, self.particles[1].borrow().obj_type);
+		let mass_a = a.borrow().inverse_mass;
+		let mass_b = b.borrow().inverse_mass;
+		match &types {
+			// stop y movement for platform collisions
+			(CollisionObjectType::Platform, _) => self.particles[1].borrow().particle.borrow_mut().reset_y(),
+			(_, CollisionObjectType::Platform) => self.particles[0].borrow().particle.borrow_mut().reset_y(),
+
+			// alter health for hit/hazard collisions
+			(CollisionObjectType::HitBox, CollisionObjectType::HurtBox) | (CollisionObjectType::Hazard, CollisionObjectType::HurtBox) => {
+				self.particles[1].borrow().particle.borrow_mut().update_health(10);
+				self.particles[0].borrow().particle.borrow_mut().velocity.add_vec(&impulse_per_mass.dot_product(mass_a));
+				self.particles[1].borrow().particle.borrow_mut().velocity.add_vec(&impulse_per_mass.dot_product(mass_b));
 			},
-			_ => {
-				let m = a.borrow().inverse_mass;
-				self.particles[0].borrow().particle.borrow_mut().velocity.add_vec(&impulse_per_mass.dot_product(m));
-				// self.particles[0].borrow().particle.borrow_mut().integrate(duration);
-			}
-		}
-		match &self.particles[1].borrow().obj_type {
-			CollisionObjectType::Platform => {
-				self.particles[0].borrow().particle.borrow_mut().reset_y();
-				// self.particles[0].borrow().particle.borrow_mut().integrate(duration);
-				return;
+			(CollisionObjectType::HurtBox, CollisionObjectType::HitBox) | (CollisionObjectType::HurtBox, CollisionObjectType::Hazard) => {
+				self.particles[0].borrow().particle.borrow_mut().update_health(10);
+				self.particles[0].borrow().particle.borrow_mut().velocity.add_vec(&impulse_per_mass.dot_product(mass_a));
+				self.particles[1].borrow().particle.borrow_mut().velocity.add_vec(&impulse_per_mass.dot_product(mass_b));
 			},
+
+			// just update others
 			_ => {
-				let m = b.borrow().inverse_mass;
-				self.particles[1].borrow().particle.borrow_mut().velocity.add_vec(&impulse_per_mass.dot_product(m));
-				// self.particles[1].borrow().particle.borrow_mut().integrate(duration);
-			}
+				self.particles[0].borrow().particle.borrow_mut().velocity.add_vec(&impulse_per_mass.dot_product(mass_a));
+				self.particles[1].borrow().particle.borrow_mut().velocity.add_vec(&impulse_per_mass.dot_product(mass_b));
+			},
 		}
 	}
 
