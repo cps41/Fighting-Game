@@ -34,7 +34,7 @@ impl Hazard {
 		}
     }
 
-	pub fn reset(&mut self, ) {
+	pub fn reset(&mut self) {
 		if self.sprite.x() > 800 {
 			self.sprite.offset(-650, -600);
 		}
