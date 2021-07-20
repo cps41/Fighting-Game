@@ -140,14 +140,14 @@ fn server_rect(socket: &UdpSocket,
 
     let client_rect = deserialize::<CharacterState>(&buffer).expect("cannot crack ze coooode"); // print to console
     if client_addresses.get(&src_addr).unwrap().eq(&1) {
-        r.char_state.position = client_rect.position();
+        r.char_state.particle = client_rect.position();
         r.char_state.state = client_rect.state();
         r.char_state.frames_per_state = client_rect.frames_per_state();
         r.char_state.current_frame = client_rect.current_frame();
         r.char_state.frame_count = client_rect.frame_count();
         r.char_state.direction = client_rect.direction();
     } else {   
-        r2.char_state.position = client_rect.position();
+        r2.char_state.particle = client_rect.position();
         r2.char_state.state = client_rect.state();
         r2.char_state.frames_per_state = client_rect.frames_per_state();
         r2.char_state.current_frame = client_rect.current_frame();
@@ -193,7 +193,7 @@ pub fn run_game(socket: &UdpSocket, client_addresses: &HashMap<SocketAddr,u8>) -
     let mut fighter = characters::characterAbstract::Fighter::new(fighter);
     let mut fighter2 = characters::characterAbstract::Fighter::new(fighter2);
     //this is just to make fighter2 spawn a little to the right of fighter
-    fighter2.char_state.position.borrow_mut().position.replace(&PhysVec::new(300.0, 0.0));
+    fighter2.char_state.particle.borrow_mut().position.replace(&PhysVec::new(300.0, 0.0));
     fighter2.name = characters::characterAbstract::Characters::Java;
 
     let mut hazard = physics::hazard::Hazard::new();

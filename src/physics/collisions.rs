@@ -1,6 +1,7 @@
 #![allow(non_snake_case)]
 use sdl2::rect::{Rect, Point};
 use std::cell::{RefCell, Ref};
+use std::rc::Rc;
 use std::ops::{Deref, DerefMut};
 use std::fmt;
 use crate::view::globals::*;
@@ -27,10 +28,10 @@ impl BVHierarchy {
 			let p0 = contact.particles[0].clone();
 			let p1 = contact.particles[1].clone();
 			if check_collision(p0.borrow().clone(), p1.borrow().clone()) {
-				println!("Resolving....");
-				println!("\nContact between\n {:?}\nand\n {:?}", contact.particles[0], contact.particles[1]);
+				// println!("Resolving....");
+				// println!("\nContact between\n {:?}\nand\n {:?}", contact.particles[0], contact.particles[1]);
 				contact.resolve_velocity(FRAME_RATE as f32);
-				println!("\nVelocities updated between\n {:?}\nand\n {:?}", contact.particles[0], contact.particles[1]);
+				// println!("\nVelocities updated between\n {:?}\nand\n {:?}", contact.particles[0], contact.particles[1]);
 			}
 		}
 	}
@@ -104,13 +105,10 @@ impl ParticleContact {
 	}
 
 	fn resolve_velocity(&mut self, duration: f32) {
-		println!("\nEntered resolve velocity");
 		let a = &self.particles[0].borrow().particle;
 		let b = &self.particles[1].borrow().particle;
 		let separating_velocity = self.separating_velocity();
-		println!("separating_velocity: {}", separating_velocity);
 		if separating_velocity > 0f32 { 
-			println!("returning");
 			return 
 		} // contact is either separating or stationary, no impulse required
 
@@ -121,22 +119,30 @@ impl ParticleContact {
 		let impulse = delta_velocity / total_inv_mass;
 		let impulse_per_mass = self.contact_normal.dot_product(impulse);
 
-		println!("normal: {:?}, sep_vel: {:?}, impulse/mass: {:?}", self.contact_normal, separating_velocity, impulse_per_mass);
+		// println!("normal: {:?}, sep_vel: {:?}, impulse/mass: {:?}", self.contact_normal, separating_velocity, impulse_per_mass);
 
 		match &self.particles[0].borrow().obj_type {
-			CollisionObjectType::Platform => (),
+			CollisionObjectType::Platform => {
+				self.particles[1].borrow().particle.borrow_mut().reset_y();
+				// self.particles[1].borrow().particle.borrow_mut().integrate(duration);
+				return;
+			},
 			_ => {
 				let m = a.borrow().inverse_mass;
-				a.borrow_mut().velocity.add_vec(&impulse_per_mass.dot_product(m));
-				a.borrow_mut().integrate(duration);
+				self.particles[0].borrow().particle.borrow_mut().velocity.add_vec(&impulse_per_mass.dot_product(m));
+				// self.particles[0].borrow().particle.borrow_mut().integrate(duration);
 			}
 		}
 		match &self.particles[1].borrow().obj_type {
-			CollisionObjectType::Platform => (),
+			CollisionObjectType::Platform => {
+				self.particles[0].borrow().particle.borrow_mut().reset_y();
+				// self.particles[0].borrow().particle.borrow_mut().integrate(duration);
+				return;
+			},
 			_ => {
 				let m = b.borrow().inverse_mass;
-				b.borrow_mut().velocity.add_vec(&impulse_per_mass.dot_product(m));
-				b.borrow_mut().integrate(duration);
+				self.particles[1].borrow().particle.borrow_mut().velocity.add_vec(&impulse_per_mass.dot_product(m));
+				// self.particles[1].borrow().particle.borrow_mut().integrate(duration);
 			}
 		}
 	}
@@ -162,7 +168,7 @@ pub struct CollisionObject {
 	pub area: u32,
     pub rect: Rect,
 	pub noderef: WeakLink<CollisionObject>,
-	pub particle: RefCell<Particle>
+	pub particle: Rc<RefCell<Particle>>
 }
 
 
@@ -178,7 +184,7 @@ impl fmt::Debug for CollisionObject {
 }
 
 impl CollisionObject {
-    pub fn new(obj_type: CollisionObjectType, x: i32, y: i32, width: u32, height: u32, particle: RefCell<Particle>) -> CollisionObject {
+    pub fn new(obj_type: CollisionObjectType, x: i32, y: i32, width: u32, height: u32, particle: Rc<RefCell<Particle>>) -> CollisionObject {
         let rect = Rect::new(x, y, width, height);
 		let area = rect.area();
 		let noderef: WeakLink<CollisionObject> = None;
@@ -191,7 +197,7 @@ impl CollisionObject {
 			particle,
         }
     }
-    pub fn new_from(obj_type: CollisionObjectType, rect: Rect, particle: RefCell<Particle>) -> CollisionObject {
+    pub fn new_from(obj_type: CollisionObjectType, rect: Rect, particle: Rc<RefCell<Particle>>) -> CollisionObject {
 		let area = rect.area();
 		let noderef: WeakLink<CollisionObject> = None;
 

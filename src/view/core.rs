@@ -69,6 +69,7 @@ impl SDLCore{
 				fighter2: &characters::characterAbstract::Fighter,
 				hazard: &physics::hazard::Hazard,
 				hazard_texture: &Texture,
+				platform: &Rect,
 				healthbar_left: &Texture,
 				healthbar_right: &Texture,
 				healthbar_fill_left: &Texture,
@@ -80,6 +81,8 @@ impl SDLCore{
 
 		// background
 		self.wincan.copy(background, None, None)?;
+		self.wincan.set_draw_color(Color::YELLOW);
+		self.wincan.draw_rect(Rect::new(50, 560, CAM_W-100, 30))?;
 		//self.wincan.clear();
 
 		// fill health bars
@@ -112,9 +115,9 @@ impl SDLCore{
         // (0, 0) cordinate = center of the scren
 		// make new rect and screen pos //
 
-        let screen_position = fighter.char_state.position.borrow().to_point() + Point::new(width as i32 / 2, height as i32 / 2);
+        let screen_position = fighter.char_state.particle.borrow().to_point() + Point::new(width as i32 / 2, height as i32 / 2);
         let screen_rect = Rect::from_center(screen_position, frame_width, frame_height);
-		let screen_position2 = fighter2.char_state.position.borrow().to_point() + Point::new(width as i32 / 2, height as i32 / 2);
+		let screen_position2 = fighter2.char_state.particle.borrow().to_point() + Point::new(width as i32 / 2, height as i32 / 2);
         let screen_rect2 = Rect::from_center(screen_position2, frame_width, frame_height);
 
 

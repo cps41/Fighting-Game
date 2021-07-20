@@ -10,6 +10,7 @@ use sdl2::keyboard::Keycode;
 use std::collections::HashMap;
 use std::collections::HashSet;
 use std::cell::RefCell;
+use std::rc::Rc;
 use std::path::Path;
 use sdl2::render::Canvas;
 use sdl2::video::Window;
@@ -56,14 +57,14 @@ pub fn run_game() -> Result<(), String>{
     let mut fighter = characters::characterAbstract::Fighter::new(fighter);
     let mut fighter2 = characters::characterAbstract::Fighter::new(fighter2);
     //this is just to make fighter2 spawn a little to the right of fighter
-    fighter2.char_state.position.borrow_mut().position.replace(&PhysVec::new(300.0, 0.0));
+    fighter2.char_state.particle.borrow_mut().position.replace(&PhysVec::new(300.0, 0.0));
     fighter2.name = characters::characterAbstract::Characters::Java;
 
     let mut hazard = physics::hazard::Hazard::new();
 
     let texture_creator = game_window.wincan.texture_creator();
 
-    let platform = Rect::new(40, 620, CAM_W-80, CAM_H-680);
+    let platform = Rect::new(50, 560, CAM_W-100, 30);
 
 
     //////////////////////////
@@ -136,17 +137,17 @@ pub fn run_game() -> Result<(), String>{
     };
 
     game_window.render(&background, &texture, &fighter, &texture2, &fighter2, 
-            &hazard, &hazard_texture, &healthbar_left, &healthbar_right,
+            &hazard, &hazard_texture, &platform, &healthbar_left, &healthbar_right,
             &healthbar_fill_left, &healthbar_fill_right)?;
 
 
     let collisions = BVHierarchy::new(CollisionObject::new_from(CollisionObjectType::Platform, platform.clone(),
-        RefCell::new(Particle::new(
-            PhysVec::new(platform.x as f32, platform.y as f32), 0.5, 2000000000.0))));
+        Rc::new(RefCell::new(Particle::new(
+            PhysVec::new((CAM_W-platform.width()) as f32, 560f32), 0.5, 2000000000.0)))));
 
         collisions.insert(CollisionObject::new_from(CollisionObjectType::Hazard, hazard.sprite.clone(),
-            RefCell::new(Particle::new(
-                PhysVec::new(hazard.position.x as f32, hazard.position.y as f32), 0.5, 200.0))));
+            Rc::new(RefCell::new(Particle::new(
+                PhysVec::new(hazard.position.x as f32, hazard.position.y as f32), 0.5, 200.0)))));
 
 
 //################################################-GAME-LOOP###############################################
@@ -185,9 +186,9 @@ pub fn run_game() -> Result<(), String>{
         fighter.char_state.update_bounding_boxes(&collisions);
         fighter2.char_state.update_bounding_boxes(&collisions);
         collisions.resolve_collisions();
-        fighter.char_state.position.borrow_mut().integrate(FRAME_RATE as f32);
-        fighter2.char_state.position.borrow_mut().integrate(FRAME_RATE as f32);
-        // println!("\nCollisions head: \n{:?}", collisions.head);
+        println!("\nCollisions head: \n{:?}\n", collisions.head);
+        fighter.char_state.particle.borrow_mut().integrate(FRAME_RATE as f32);
+        fighter2.char_state.particle.borrow_mut().integrate(FRAME_RATE as f32);
 
         //move hazard
         if hazard.sprite.y() < 600 && hazard.fell == false {
@@ -216,8 +217,8 @@ pub fn run_game() -> Result<(), String>{
 
         // render canvas
         game_window.render(&background, &texture, &fighter, &texture2, &fighter2, 
-            &hazard, &hazard_texture, &healthbar_left, &healthbar_right,
-            &healthbar_fill_left, &healthbar_fill_right);
+            &hazard, &hazard_texture, &platform, &healthbar_left, &healthbar_right,
+            &healthbar_fill_left, &healthbar_fill_right)?;
     //##################################################-SLEEP-############################################
 
         thread::sleep(frame_time - loop_time.elapsed().clamp(Duration::new(0, 0), frame_time));

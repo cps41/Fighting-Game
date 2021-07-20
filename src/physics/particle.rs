@@ -32,6 +32,13 @@ impl Particle {
         Point::new(x as i32, y as i32)
     }
 
+    pub fn reset_y(&mut self) {
+        self.position.y = 88.0;
+        self.velocity.y = 0.0;
+        self.acceleration.y = 0.0;
+        self.force_accumulator.y = 0.0;
+    }
+
     /*
         updated x = a + v*t + (1/2)*x*t^2
         like in Physics 1!
@@ -64,10 +71,10 @@ impl Particle {
         let drag = self.damping.powf(duration);
         self.velocity.dot_replace(drag);
         // clamp velocity
-		self.velocity.x = self.velocity.x.clamp(-2000.0, 2000.0);
-		self.velocity.y = self.velocity.y.clamp(-2500.0, 2500.0);
+		self.velocity.x = self.velocity.x.clamp(-1000.0, 1000.0);
+		self.velocity.y = self.velocity.y.clamp(-2500.0, 1000.0);
 
-        // println!("integrated from {:?} to {:?}", old, self);
+        // println!("\nintegrated from {:?}\n to {:?}", old, self);
         // reset force accumulator
         self.clear_forces();
     }
@@ -79,6 +86,10 @@ impl Particle {
     // Add force to the accumulator
     pub fn add_force(&mut self, force: &PhysVec) {
         self.force_accumulator.add_vec(force);
+    }
+    // Add force to the accumulator
+    pub fn add_force_comps(&mut self, x: f32, y: f32) {
+        self.force_accumulator.add_vec(&PhysVec::new(x, y));
     }
 }
 

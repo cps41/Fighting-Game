@@ -144,9 +144,9 @@ fn client_rect(socket: &UdpSocket, player_state: &characters::characterAbstract:
 pub fn send(socket: &UdpSocket, fighter: &characters::characterAbstract::Fighter, player_number: u8){
 	let pstate;
 	if player_number == 1{
-        pstate = CharacterState::new(fighter.char_state.position.clone(), fighter.char_state.state, fighter.char_state.frames_per_state(), fighter.char_state.current_frame(), fighter.char_state.frame_count, fighter.char_state.direction);
+        pstate = CharacterState::new(fighter.char_state.particle.clone(), fighter.char_state.state, fighter.char_state.frames_per_state(), fighter.char_state.current_frame(), fighter.char_state.frame_count, fighter.char_state.direction);
 	} else { // player #2
-		pstate = CharacterState::new(fighter.char_state.position.clone(), fighter.char_state.state, fighter.char_state.frames_per_state(), fighter.char_state.current_frame(), fighter.char_state.frame_count, fighter.char_state.direction);
+		pstate = CharacterState::new(fighter.char_state.particle.clone(), fighter.char_state.state, fighter.char_state.frames_per_state(), fighter.char_state.current_frame(), fighter.char_state.frame_count, fighter.char_state.direction);
 	}
 
     // SENDING
@@ -165,7 +165,7 @@ pub fn receive(socket: &UdpSocket, enemy: &mut characters::characterAbstract::Fi
     let (number_of_bytes, src_addr) = socket.recv_from(&mut buffer).expect("Didn't receive data");
 
     let client_rect = deserialize::<CharacterState>(&buffer).expect("cannot crack ze coooode"); // print to console
-    enemy.char_state.position = client_rect.position;
+    enemy.char_state.particle = client_rect.position;
     enemy.char_state.state = client_rect.state;
     enemy.char_state.frames_per_state = client_rect.frames_per_state;
     enemy.char_state.current_frame = client_rect.current_frame;
@@ -200,7 +200,7 @@ pub fn run_game(socket: &UdpSocket, player_number: u8) -> Result<(), String>{
     let mut fighter = characters::characterAbstract::Fighter::new(fighter);
     let mut fighter2 = characters::characterAbstract::Fighter::new(fighter2);
     //this is just to make fighter2 spawn a little to the right of fighter
-    fighter2.char_state.position.borrow_mut().position.replace(&PhysVec::new(300.0, 0.0));
+    fighter2.char_state.particle.borrow_mut().position.replace(&PhysVec::new(300.0, 0.0));
     fighter2.name = characters::characterAbstract::Characters::Java;
 
     let mut hazard = physics::hazard::Hazard::new();
