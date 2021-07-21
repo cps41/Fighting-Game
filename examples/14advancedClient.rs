@@ -5,7 +5,9 @@ use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use std::net::{SocketAddr, UdpSocket};
 use bincode::{serialize, deserialize}; 
-use serde_derive::{Serialize, Deserialize}; 
+use serde_derive::{Serialize, Deserialize};
+use std::thread;
+use std::io;
 
 //const TITLE: &str = "CLIENT - CYAN - PLAYER 1";
 const CAM_W: u32 = 640;
@@ -30,6 +32,11 @@ fn main() {
             Err(e) => panic!("{}", e),
         }
     };
+
+    println!("Waiting for other player...");
+    let mut buffer = [0u8; 100];
+    let (number_of_bytes) = socket.recv(&mut buffer).expect("Didn't receive data");
+    println!("Starting Game");
     
     run(&mut game_window, &socket, player_number);
 }
@@ -59,9 +66,6 @@ fn run(core: &mut SDLCore,
     core.wincan.fill_rect(p2_box);
     core.wincan.present();
 
-    let mut buffer = [0u8; 100];
-    let (number_of_bytes) = socket.recv(&mut buffer).expect("Didn't receive data");
-
     'gameloop: loop{
         // keeping so we can exit
         for event in core.event_pump.poll_iter() {
@@ -70,38 +74,33 @@ fn run(core: &mut SDLCore,
                 _ => {},
             }
         }
-
-        //receive inputs
-        let keystate: HashSet<Keycode> = core.event_pump
-            .keyboard_state()
-            .pressed_scancodes()
-            .filter_map(Keycode::from_scancode)
-            .collect();
+        
+        let mut keystate: HashSet<Keycode> = core.event_pump
+                .keyboard_state()
+                .pressed_scancodes()
+                .filter_map(Keycode::from_scancode)
+                .collect();
 
         //convert inputs to serializable option
         let input = InputValues::new(&keystate);
         
+        //thread::sleep_ms(3000);
+
         //send inputs to be processed by the server
         send(&socket, &input);
-        
-        /*
-        //before movement is processed, set the previous state of the boxes to be filled black
-        core.wincan.set_draw_color(Color::BLACK);
-        core.wincan.fill_rect(p1_box);
-        core.wincan.fill_rect(p2_box);
-        */
 
-        //this is the predictive aspect.  Assume what is happening on the server is
-        //also happening on yours and show it
-        if player_number == 1{
-            calc_vel(&input, &mut p1_x_vel, &mut p1_y_vel);
-            p1_box.set_x(p1_box.x() + p1_x_vel);
-            p1_box.set_y(p1_box.y() + p1_y_vel);
-        } else if player_number == 2 {
-            calc_vel(&input, &mut p2_x_vel, &mut p2_y_vel);
-            p2_box.set_x(p2_box.x() + p2_x_vel);
-            p2_box.set_y(p2_box.y() + p2_y_vel);
-        }
+        //receive the current game state from the server
+        let state = receive(socket);
+            
+        p1_box.set_x(state.p1_x_pos());
+        p1_box.set_y(state.p1_y_pos());
+        p1_x_vel = state.p1_x_vel();
+        p1_y_vel = state.p1_y_vel();
+
+        p2_box.set_x(state.p2_x_pos());
+        p2_box.set_y(state.p2_y_pos());
+        p2_x_vel = state.p2_x_vel();
+        p2_y_vel = state.p2_y_vel();
 
         core.wincan.set_draw_color(Color::BLACK);
         core.wincan.clear();
@@ -109,92 +108,11 @@ fn run(core: &mut SDLCore,
         core.wincan.fill_rect(p1_box)?;
         core.wincan.set_draw_color(Color::RED);
         core.wincan.fill_rect(p2_box)?;
-        core.wincan.present();
-
-        //receive the current game state from the server
-        let state = receive(socket);
-
-        //if anything is wrong with box 1, fix it
-        if p1_box.x() != state.p1_x_pos() || p1_box.y() != state.p1_y_pos() 
-           || p1_x_vel != state.p1_x_vel() || p1_y_vel != state.p1_y_vel(){
-            
-            core.wincan.set_draw_color(Color::BLACK);
-            core.wincan.fill_rect(p1_box)?;
-            
-            p1_box.set_x(state.p1_x_pos());
-            p1_box.set_y(state.p1_y_pos());
-            p1_x_vel = state.p1_x_vel();
-            p1_y_vel = state.p1_y_vel();
-
-            core.wincan.set_draw_color(Color::CYAN);
-            core.wincan.fill_rect(p1_box)?;
-            core.wincan.present();
-        }
-
-        //if anything is wrong with box 2, fix it
-        if p2_box.x() != state.p2_x_pos() || p2_box.y() != state.p2_y_pos() 
-           || p2_x_vel != state.p2_x_vel() || p2_y_vel != state.p2_y_vel(){        
-            
-            core.wincan.set_draw_color(Color::BLACK);
-            core.wincan.fill_rect(p2_box)?;
-
-            p2_box.set_x(state.p2_x_pos());
-            p2_box.set_y(state.p2_y_pos());
-            p2_x_vel = state.p2_x_vel();
-            p2_y_vel = state.p2_y_vel();
-
-            core.wincan.set_draw_color(Color::BLACK);
-            core.wincan.fill_rect(p2_box)?;
-            core.wincan.present();
-        }                
+        core.wincan.present();                
     }
 
     // Out of game loop, return Ok
     Ok(())
-}
-
-fn calc_vel(input: &InputValues, x_vel: &mut i32, y_vel: &mut i32){
-    let mut x_deltav = 0;
-    let mut y_deltav = 0;
-    
-    if input.w(){
-        y_deltav -= ACCEL_RATE;
-    }
-    
-    if input.a(){
-        x_deltav -= ACCEL_RATE;
-    }
-    
-    if input.s() {
-        y_deltav += ACCEL_RATE;
-    }
-    
-    if input.d() {
-        x_deltav += ACCEL_RATE;
-    }
-
-    x_deltav = resist(*x_vel, x_deltav);
-    y_deltav = resist(*y_vel, y_deltav);
-    
-    *x_vel = (*x_vel + x_deltav).clamp(-SPEED_LIMIT, SPEED_LIMIT);
-    *y_vel = (*y_vel + y_deltav).clamp(-SPEED_LIMIT, SPEED_LIMIT);
-}
-
-fn resist(vel: i32, deltav: i32) -> i32 {
-    if deltav == 0 {
-        if vel > 0 {
-            -1
-        }
-        else if vel < 0 {
-            1
-        }
-        else {
-            deltav
-        }
-    }
-    else {
-        deltav
-    }
 }
 
 fn client_setup() -> (UdpSocket, u8){
@@ -234,7 +152,7 @@ pub fn send(socket: &UdpSocket, inputs: &InputValues,){
     match envelope{
         Ok(encoded_message) =>{ let message = encoded_message.as_slice();
                                 socket.send(message);},
-        Err(e) => panic!("No message"),
+        Err(e) => panic!("Send Failed: {:?}", e),
     }
     println!("Data Sent");
 }
@@ -242,7 +160,15 @@ pub fn send(socket: &UdpSocket, inputs: &InputValues,){
 pub fn receive(socket: &UdpSocket) -> GameState{
     println!("Receiving Data");
     let mut buffer = [0u8; 100];
-    let (number_of_bytes) = socket.recv(&mut buffer).expect("Didn't receive data");
+    let mut number_of_bytes;
+
+    loop{    
+        match socket.recv(&mut buffer){
+            Ok(t) => {number_of_bytes = t; break;},
+            //Err(ref e) if e.kind() == io::ErrorKind::WouldBlock => {},
+            Err(e) => panic!("recv function failed: {:?}", e),
+        }
+    }
 
     let state = deserialize::<GameState>(&buffer).expect("cannot crack ze coode");
     println!("Data Received");

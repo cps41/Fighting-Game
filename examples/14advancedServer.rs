@@ -7,6 +7,7 @@ use serde_derive::{Serialize, Deserialize};
 use std::collections::HashMap;
 use std::collections::HashSet;
 use std::time::{Instant, Duration};
+use std::io;
 
 use sdl2::pixels::Color;
 use sdl2::rect::Rect;
@@ -23,6 +24,8 @@ const ACCEL_RATE: i32 = 1;
 
 fn main() {
     let socket = server_setup(); // make connection w/ socket
+    socket.set_read_timeout(None).expect("set_read_timeout call failed");
+
     let mut client_addresses = HashMap::new(); // store addresses
     let mut player_count: u8 = 1;
 
@@ -48,7 +51,11 @@ fn main() {
     	}
     };
 
+    socket.set_nonblocking(true).unwrap();
+    //socket.set_read_timeout(Some(Duration::new(2, 0)));
+
     run(&mut game_window, &socket, &client_addresses);
+    //run(&socket, &client_addresses);
 }
 
 pub fn run(core: &mut SDLCore,
@@ -76,7 +83,9 @@ pub fn run(core: &mut SDLCore,
     core.wincan.fill_rect(p2_box);
     core.wincan.present();
 
-    let received_limit = Duration::from_secs(5);
+
+    //let received_limit = Duration::from_secs(10);
+
 
     'gameloop: loop{
         // keeping so we can exit
@@ -87,25 +96,22 @@ pub fn run(core: &mut SDLCore,
             }
         }
 
+        let mut receive_count: u8 = 1;
+
 		let mut input_1 = InputValues{w: false, s: false, a: false, d: false};
-		let mut input_2 = InputValues{w: false, s: false, a: false, d: false};
+        let mut input_2 = InputValues{w: false, s: false, a: false, d: false};
+
 		let mut message_1 = false;
         let mut message_2 = false;
 
-		
-        let not_received = Instant::now();
-        loop{
-            receive(&socket, &client_addresses, &mut input_1, 
-                    &mut input_2, &mut message_1, &mut message_2);
-            println!("message 1 is: {}, message 2 is: {}", message_1, message_2);
-            if (message_1 && message_2) || (not_received.elapsed() >= received_limit) {break;}
+        'receiving: loop {
+            println!("Entering Receiving Loop");
+            receive_count = receive(&socket, &client_addresses, &mut input_1, &mut input_2, receive_count);
+            if receive_count == 3 { // if 3, two players are found
+                println!("both inputs found");
+                break 'receiving;
+            }
         }
-
-        /*
-        core.wincan.set_draw_color(Color::BLACK);
-        core.wincan.fill_rect(p1_box)?;
-        core.wincan.fill_rect(p2_box)?;
-        */
 
 		calc_vel(&input_1, &mut p1_x_vel, &mut p1_y_vel);
 		p1_box.set_x(p1_box.x() + p1_x_vel);
@@ -198,7 +204,13 @@ fn client_connect(socket: &UdpSocket,
                   client_addresses: &mut HashMap<SocketAddr,u8>,
                   player_count: u8) -> u8 {
     let mut buffer = [0u8; 100]; // a buffer than accepts 100
-    let (number_of_bytes, src_addr) = socket.recv_from(&mut buffer).expect("Didn't receive data");
+    let (number_of_bytes, src_addr) = {
+        match socket.recv_from(&mut buffer){
+            Ok(t) => t,
+            Err(e) => panic!("recv_from function failed: {:?}",e),
+        }
+    };
+    //socket.recv_from(&mut buffer).expect("Didn't receive data");
     // Client IPs and player #
     if !client_addresses.contains_key(&src_addr) { // for first time
         println!("First time connection to: {:?} > {:?}", src_addr, &buffer[0]); // test to print IP and initial info sent 
@@ -210,87 +222,38 @@ fn client_connect(socket: &UdpSocket,
     return player_count;
 }
 
-/*
-fn receive(socket: &UdpSocket, 
-           client_addresses: &HashMap<SocketAddr,u8>,
+fn receive(socket: &UdpSocket,
+           client_addresses: &HashMap<SocketAddr, u8>,
            input_1: &mut InputValues,
            input_2: &mut InputValues,
-		  ){
-    let mut message_1 = false;
-    let mut message_2 = false;
+           receive_count: u8
+           ) -> u8 {
+    let mut buffer = [0u8; 100];
 
-    loop{
-        println!("Started Receive Loop");
-        let mut buffer = [0u8; 100]; // a buffer than accepts 4096 
-        
-        match socket.peek(&mut buffer){
-            Ok(t) => 
-            Err(e) =>
-        }
-
-        /*
-        let (number_of_bytes, src_addr) = {
-            match socket.recv_from(&mut buffer){
-                Ok((usize, SocketAddr)) => {println!("Received Data"); (usize, SocketAddr)},
-                Err(e) => panic!("{}", e)
-            };
-        };
-        */
-      
-        let (number_of_bytes, src_addr) = socket.recv_from(&mut buffer).expect("Didn't receive data");
-        print!("Received Some Data");
-        if client_addresses.get(&src_addr).unwrap().eq(&1) && !message_1{
-            let received_input = deserialize::<InputValues>(&buffer).expect("cannot crack ze coooode");
-            input_1.copy(received_input);
-            println!("Received Data from Player 1");
-            message_1 = true;
-        }else if client_addresses.get(&src_addr).unwrap().eq(&2) && !message_2{ 
-            let received_input = deserialize::<InputValues>(&buffer).expect("cannot crack ze coooode");
-            input_2.copy(received_input);
-            println!("Received Data from Player 2");
-            message_2 = true;
-        }
-
-        if message_1 && message_2 {break;}
-    }
-}
-*/
-
-fn receive(socket: &UdpSocket, 
-           client_addresses: &HashMap<SocketAddr,u8>,
-           input_1: &mut InputValues,
-           input_2: &mut InputValues,
-           message_1: &mut bool,
-           message_2: &mut bool,
-          ){
-    println!("Made it into receive");
-    let mut buffer = [0u8; 100]; // a buffer than accepts 4096 
-    
-    //let (number_of_bytes, src_addr) = socket.recv_from(&mut buffer).expect("Didn't receive data");
-    
-    match socket.peek(&mut buffer){
-        Ok(t) => {  
-            let (number_of_bytes, src_addr) = 
-                socket.recv_from(&mut buffer).expect("Didn't receive data");                    
-                    
-            if client_addresses.get(&src_addr).unwrap().eq(&1) && !*message_1{
-                println!("Received Data from Player 1");
-                let received_input = deserialize::<InputValues>(&buffer)
-                    .expect("cannot crack ze coooode");
-                input_1.copy(received_input);
-                *message_1 = true;
-                //println!("Received Data from Player 1");
-            }else if client_addresses.get(&src_addr).unwrap().eq(&2) && !*message_2{
-                println!("Received Data from Player 2");
-                let received_input = deserialize::<InputValues>(&buffer)
-                    .expect("cannot crack ze coooode");
-                input_2.copy(received_input);
-                *message_2 = true;
-                //println!("Received Data from Player 2");
+    let (number_of_bytes, src_addr) = {
+        match socket.recv_from(&mut buffer){
+            Ok(t) => t,
+            Err(ref e) if e.kind() == io::ErrorKind::WouldBlock => {
+                //println!("Data not ready to be read");
+                return receive_count;
             }
-        },
-        Err(e) => {println!("Didn't receive data")},
+            Err(e) => panic!("recv_from function failed: {:?}",e),
+        }
     };
+    
+    let received_input = deserialize::<InputValues>(&buffer).expect("Couldn't interpret data");
+   
+    if client_addresses.get(&src_addr).unwrap().eq(&1){
+        input_1.copy(received_input);
+        println!("Received Input from Player 1");
+        return receive_count + 1;
+    }else if client_addresses.get(&src_addr).unwrap().eq(&2){
+        input_2.copy(received_input);
+        println!("Received Input from Player 2");
+        return receive_count + 1;
+    }
+
+    return receive_count;
 }
 
 fn send(socket: &UdpSocket,
@@ -300,10 +263,13 @@ fn send(socket: &UdpSocket,
 	match envelope{
 		Ok(encoded_message) =>{ let message = encoded_message.as_slice();
 								for address in client_addresses.keys(){
-									socket.send_to(message, address).expect("message not sent");
+									match socket.send_to(message, address){
+                                        Ok(t) => println!("Sent Properly"),
+                                        Err(e) => panic!("Couldn't Send: {:?}", e),
+                                    }
 								}
 		},
-		Err(e) => panic!("No message"),
+		Err(e) => panic!("Encoding Failed: {:?}", e),
 	}
 }
 
