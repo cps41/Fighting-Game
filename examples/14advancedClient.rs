@@ -8,16 +8,21 @@ use bincode::{serialize, deserialize};
 use serde_derive::{Serialize, Deserialize};
 use std::thread;
 use std::io;
+use std::collections::VecDeque;
+use std::time::{Instant, Duration};
+
 
 //const TITLE: &str = "CLIENT - CYAN - PLAYER 1";
 const CAM_W: u32 = 640;
 const CAM_H: u32 = 480;
 const SPEED_LIMIT: i32 = 5;
 const ACCEL_RATE: i32 = 1;
+const FRAME_RATE: f64 = 1.0/10.0;
 
 fn main() {
     let (socket, player_number) = client_setup(); // set up connection with server
-    
+    socket.set_read_timeout(None).expect("set_read_timeout call failed");
+
     let TITLE: &str ={
         if player_number == 1 {
             "CLIENT - CYAN - PLAYER 1"
@@ -37,7 +42,8 @@ fn main() {
     let mut buffer = [0u8; 100];
     let (number_of_bytes) = socket.recv(&mut buffer).expect("Didn't receive data");
     println!("Starting Game");
-    
+
+    //socket.set_nonblocking(true).unwrap();
     run(&mut game_window, &socket, player_number);
 }
 
@@ -46,6 +52,9 @@ fn run(core: &mut SDLCore,
        player_number: u8,
       ) -> Result<(), String> {
     
+    let frame_time = Duration::from_secs_f64(FRAME_RATE);
+
+
     let w = 25;
     let x_pos = (CAM_W/2 - w/2) as i32;
     let y_pos = (CAM_H/2 - w/2) as i32;     
@@ -58,6 +67,15 @@ fn run(core: &mut SDLCore,
     let mut p2_x_vel = 0;
     let mut p2_y_vel = 0;
 
+
+    let mut input_buffer: VecDeque<GameState> = VecDeque::new();
+
+    for i in 0 .. 6{
+        input_buffer.push_back(GameState::new(0,0,0,0,0,0,0,0));
+    }
+
+
+
     core.wincan.set_draw_color(Color::BLACK);
     core.wincan.clear();
     core.wincan.set_draw_color(Color::CYAN);
@@ -67,6 +85,7 @@ fn run(core: &mut SDLCore,
     core.wincan.present();
 
     'gameloop: loop{
+        let loop_time = Instant::now();
         // keeping so we can exit
         for event in core.event_pump.poll_iter() {
             match event {
@@ -82,7 +101,7 @@ fn run(core: &mut SDLCore,
                 .collect();
 
         //convert inputs to serializable option
-        let input = InputValues::new(&keystate);
+        let input = InputValues::from_keystate(&keystate);
         
         //thread::sleep_ms(3000);
 
@@ -90,7 +109,7 @@ fn run(core: &mut SDLCore,
         send(&socket, &input);
 
         //receive the current game state from the server
-        let state = receive(socket);
+        let state = input_buffer.pop_front().unwrap();
             
         p1_box.set_x(state.p1_x_pos());
         p1_box.set_y(state.p1_y_pos());
@@ -108,7 +127,10 @@ fn run(core: &mut SDLCore,
         core.wincan.fill_rect(p1_box)?;
         core.wincan.set_draw_color(Color::RED);
         core.wincan.fill_rect(p2_box)?;
-        core.wincan.present();                
+        core.wincan.present();
+
+        input_buffer.push_back(receive(socket));
+        thread::sleep(frame_time - loop_time.elapsed().clamp(Duration::new(0,0), frame_time));
     }
 
     // Out of game loop, return Ok
@@ -147,18 +169,18 @@ fn client_setup() -> (UdpSocket, u8){
 }
 
 pub fn send(socket: &UdpSocket, inputs: &InputValues,){
-    println!("Sending Data");
+    //println!("Sending Data");
     let envelope = serialize(inputs);
     match envelope{
         Ok(encoded_message) =>{ let message = encoded_message.as_slice();
                                 socket.send(message);},
         Err(e) => panic!("Send Failed: {:?}", e),
     }
-    println!("Data Sent");
+    //println!("Data Sent");
 }
 
 pub fn receive(socket: &UdpSocket) -> GameState{
-    println!("Receiving Data");
+    //println!("Receiving Data");
     let mut buffer = [0u8; 100];
     let mut number_of_bytes;
 
@@ -171,20 +193,20 @@ pub fn receive(socket: &UdpSocket) -> GameState{
     }
 
     let state = deserialize::<GameState>(&buffer).expect("cannot crack ze coode");
-    println!("Data Received");
+    //println!("Data Received");
     state
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct GameState{
-    pub p1_x_pos: i32,
-    pub p1_y_pos: i32,
-    pub p1_x_vel: i32,
-    pub p1_y_vel: i32,    
-    pub p2_x_pos: i32,
-    pub p2_y_pos: i32, 
-    pub p2_x_vel: i32,
-    pub p2_y_vel: i32, 
+    pub p1_x_pos:   i32,
+    pub p1_y_pos:   i32,
+    pub p1_x_vel:   i32,
+    pub p1_y_vel:   i32,    
+    pub p2_x_pos:   i32,
+    pub p2_y_pos:   i32, 
+    pub p2_x_vel:   i32,
+    pub p2_y_vel:   i32,
 }
 
 impl GameState{
@@ -203,18 +225,20 @@ impl GameState{
                     p2_x_pos,
                     p2_y_pos,
                     p2_x_vel,
-                    p2_y_vel}
+                    p2_y_vel,
+                }
     }
 
+
     pub fn copy(&mut self, other: &GameState){
-        self.p1_x_pos = other.p1_x_pos();
-        self.p1_y_pos = other.p1_y_pos();
-        self.p1_x_vel = other.p1_x_vel();
-        self.p1_y_vel = other.p1_y_vel();
-        self.p2_x_pos = other.p2_x_pos();
-        self.p2_y_pos = other.p2_y_pos();
-        self.p2_x_vel = other.p2_x_vel();
-        self.p2_y_vel = other.p2_y_vel();
+        self.p1_x_pos   =   other.p1_x_pos();
+        self.p1_y_pos   =   other.p1_y_pos();
+        self.p1_x_vel   =   other.p1_x_vel();
+        self.p1_y_vel   =   other.p1_y_vel();
+        self.p2_x_pos   =   other.p2_x_pos();
+        self.p2_y_pos   =   other.p2_y_pos();
+        self.p2_x_vel   =   other.p2_x_vel();
+        self.p2_y_vel   =   other.p2_y_vel();
     }
 
     pub fn p1_x_pos(&self) -> i32{
@@ -258,7 +282,7 @@ pub struct InputValues{
 }
 
 impl InputValues{
-    pub fn new(keystate: &HashSet<Keycode>) -> InputValues {    
+    pub fn from_keystate(keystate: &HashSet<Keycode>) -> InputValues {    
         let w = if keystate.contains(&Keycode::W) {
             true
         }else{
@@ -283,7 +307,7 @@ impl InputValues{
             false
         };
 
-        InputValues{w,s,a,d}
+        InputValues{w,s,a,d,}
     }
 
     pub fn copy(&mut self, other: InputValues){
@@ -341,7 +365,7 @@ impl SDLCore{
 
         wincan.set_draw_color(Color::RGBA(0, 128, 128, 255));
         wincan.clear();
-        wincan.present();
+        //wincan.present();
 
         Ok(SDLCore{
             sdl_cxt,
