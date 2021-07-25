@@ -77,7 +77,6 @@ impl <'t> Fighter <'t> {
 			name: Characters::Python,
 			health: 270,
 			char_state: c,
-			health: 100, // <- something to start with
 			speed: 20, // arbitrary #
 			weight: 180,
 			gravity: -9.8,
@@ -143,8 +142,8 @@ impl <'t> Fighter <'t> {
 	pub fn update_position(&mut self, force: &PhysVec) {
 		let mut scaled = force.clone();
 		scaled.dot_replace(1.0/0.0002645833);
-		self.char_state.position.borrow_mut().add_force(&scaled);
-		self.char_state.position.borrow_mut().integrate(FRAME_RATE as f32);
+		self.char_state.particle.borrow_mut().add_force(&scaled);
+		self.char_state.particle.borrow_mut().integrate(FRAME_RATE as f32);
 	}
 
 	pub fn inflict_damage (&mut self, damage: i32) {
@@ -312,7 +311,7 @@ impl CharacterState {
     }
 	// convenience f(x)
 	// getters
-	pub fn position(&self)  	-> Particle 					{ self.position.clone().into_inner() }
+	pub fn position(&self)  	-> Particle 					{ self.particle.borrow().clone() }
 	pub fn state(&self)     	-> &animation::sprites::State 	{ &self.state }
 	pub fn frames_per_state(&self) -> i32 						{ self.frames_per_state } // for testing
 	pub fn current_frame(&self) -> i32 							{ self.current_frame }

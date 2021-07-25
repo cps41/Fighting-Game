@@ -35,10 +35,17 @@ impl Particle {
     }
 
     pub fn reset_y(&mut self) {
-        self.position.y = 88.0;
+        // self.position.y = 88.0;
         self.velocity.y = 0.0;
         self.acceleration.y = 0.0;
         self.force_accumulator.y = 0.0;
+    }
+
+    pub fn reset_x(&mut self) {
+        // self.position.y = 88.0;
+        self.velocity.x = 0.0;
+        self.acceleration.x = 0.0;
+        self.force_accumulator.x = 0.0;
     }
 
     pub fn update_health(&mut self, damage: i32) {

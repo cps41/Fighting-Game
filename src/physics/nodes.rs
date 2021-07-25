@@ -209,14 +209,14 @@ impl NodeRef<CollisionObject> {
 
 		// collision if both are leaves
 		else if self.get().isLeaf() && other.get().isLeaf() {
+			// println!("\n//////self:\n {:?}, \n///////other:\n {:?}", self, other);
 			let a = self.get().bv.as_ref().unwrap().clone();
 			let b = other.get().bv.as_ref().unwrap().clone();
 			let types = (a.borrow().obj_type, b.borrow().obj_type);
 			match types {
 				// (CollisionObjectType::Platform, _) | (_, CollisionObjectType::Platform) => (),
 				_ => {
-					let overlap = PhysVec::new(intersection.unwrap().width() as f32, intersection.unwrap().height() as f32);
-					let interpenetration = overlap.magnitude();
+					let interpenetration = PhysVec::new(intersection.unwrap().width() as f32, intersection.unwrap().height() as f32);
 					let dif = a.borrow().particle.borrow().position.sub(&b.borrow().particle.borrow().position);
 					let collision_normal = dif.normalize();
 					// println!("\nmagnitude: {}, normal: {:?}, interpenetration: {:?}", dif.magnitude(), collision_normal, interpenetration);
@@ -231,6 +231,7 @@ impl NodeRef<CollisionObject> {
 			let mut count = self.getLeftRef().collidingWith(&other, potential, limit);
 			count += self.getRightRef().collidingWith(&other, potential, limit);
 			count += self.getPotentialCollisions(potential, limit);
+			count += other.getPotentialCollisions(potential, limit);
 			count
 		}
 
@@ -238,6 +239,7 @@ impl NodeRef<CollisionObject> {
 			let mut count = self.collidingWith(&other.getLeftRef(), potential, limit);
 			count += self.collidingWith(&other.getRightRef(), potential, limit);
 			count += other.getPotentialCollisions(potential, limit);
+			count += self.getPotentialCollisions(potential, limit);
 			count
 		}
 	}
