@@ -11,6 +11,8 @@ use crate::characters;
 use crate::animation;
 use crate::physics;
 
+use super::globals::*;
+
 pub struct SDLCore{
 	sdl_cxt: sdl2::Sdl,
 	pub wincan: sdl2::render::WindowCanvas,
@@ -67,14 +69,34 @@ impl SDLCore{
 				fighter2: &characters::characterAbstract::Fighter,
 				hazard: &physics::hazard::Hazard,
 				hazard_texture: &Texture,
+				platform: &Rect,
+				healthbar_left: &Texture,
+				healthbar_right: &Texture,
+				healthbar_fill_left: &Texture,
+				healthbar_fill_right: &Texture,
 				) -> Result<(), String>{
 
 		// set canvas height
 		let (width, height) = self.wincan.output_size()?;
 
 		// background
-		self.wincan.copy(background, None, None);
+		self.wincan.copy(background, None, None)?;
+		self.wincan.set_draw_color(Color::YELLOW);
+		let wall_l = Rect::new(WALL_L.0, WALL_L.1, WALL_SIZE.0, WALL_SIZE.1);
+		let wall_r = Rect::new(WALL_R.0, WALL_R.1, WALL_SIZE.0, WALL_SIZE.1);
+		let arch = Rect::new(ARCH.0, ARCH.1, ARCH_SIZE.0, ARCH_SIZE.1);
+		self.wincan.draw_rects(&[Rect::new(50, 560, CAM_W-100, 30), wall_l, wall_r, arch])?;
 		//self.wincan.clear();
+
+		// fill health bars
+		self.wincan.copy(healthbar_fill_left, Rect::new(0,0, 
+				300-(270-fighter.char_state.health() as u32), 40), Rect::new(3,10, 
+				300-(270-fighter.char_state.health() as u32), 40))?;
+		self.wincan.copy(healthbar_fill_right, 
+			Rect::new(270-fighter2.char_state.health(),0, 300-(270-fighter.char_state.health() as u32), 40), 
+			Rect::new(CAM_W as i32-(300-(270-fighter.char_state.health()))-3,10, 300-(270-fighter.char_state.health() as u32), 40))?;
+		self.wincan.copy(healthbar_left, None, Rect::new(3,10, 300, 40))?;
+		self.wincan.copy(healthbar_right, None, Rect::new(CAM_W as i32-300-3,10, 300, 40))?;
 
 		let (frame_width, frame_height) = fighter.char_state.sprite.size();
 
@@ -94,14 +116,15 @@ impl SDLCore{
             frame_width,
             frame_height,
         );
+
 		let hazard_frame = Rect::new(0, 0, 100, 100);
 
         // (0, 0) cordinate = center of the scren
 		// make new rect and screen pos //
 
-        let screen_position = fighter.char_state.position.borrow().to_point() + Point::new(width as i32 / 2, height as i32 / 2);
+        let screen_position = fighter.char_state.particle.borrow().to_point() + Point::new(width as i32 / 2, height as i32 / 2);
         let screen_rect = Rect::from_center(screen_position, frame_width, frame_height);
-		let screen_position2 = fighter2.char_state.position.borrow().to_point() + Point::new(width as i32 / 2, height as i32 / 2);
+		let screen_position2 = fighter2.char_state.particle.borrow().to_point() + Point::new(width as i32 / 2, height as i32 / 2);
         let screen_rect2 = Rect::from_center(screen_position2, frame_width, frame_height);
 
 
@@ -114,7 +137,7 @@ impl SDLCore{
 		self.wincan.copy_ex(texture2, current_frame2, screen_rect2, 0.0, None, true, false)?;
 		self.wincan.copy(hazard_texture, hazard_frame, hazard_screen_rectangle)?;
 		self.wincan.set_draw_color(Color::RED);
-		self.wincan.draw_rects(&[fighter.char_state.get_bb(), fighter2.char_state.get_bb()])?;
+		self.wincan.draw_rects(&[fighter.char_state.get_bb(), fighter2.char_state.get_bb(), hazard.get_bb()])?;
         self.wincan.present();
 
         /*

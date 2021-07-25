@@ -1,3 +1,5 @@
 target*
 *.dll
 .vscode*
+Cargo.toml
+README.md

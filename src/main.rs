@@ -10,6 +10,7 @@ use sdl2::keyboard::Keycode;
 use std::collections::HashMap;
 use std::collections::HashSet;
 use std::cell::RefCell;
+use std::rc::Rc;
 use std::path::Path;
 use sdl2::render::Canvas;
 use sdl2::video::Window;
@@ -20,7 +21,7 @@ use std::env;
 use physics::collisions::*;
 use physics::vecmath::*;
 use physics::particle::*;
-use rand::prelude::*;
+use view::globals::*;
 
 pub mod characters; // for characterAbstract
 pub mod view; // for core
@@ -28,7 +29,6 @@ pub mod input; // for inputHandler and movement
 pub mod animation;
 pub mod networking;
 pub mod physics;
-pub mod audio;
 
 //use crate::view::core; // need for SDLCore and TextureManager
 //use crate::view::core::Demo; // need for SDLCore's Demo
@@ -44,11 +44,6 @@ const FRAME_RATE: f64 = 1.0/60.0;
 pub fn run_game() -> Result<(), String>{
     let frame_time = Duration::from_secs_f64(FRAME_RATE);
 
-    // get random # (for music)
-    let mut rng = rand::thread_rng();
-    let random_num: f64 = rng.gen(); // generates a float between 0 and 1
-    println!("{}", random_num);
-
     let mut game_window = {
         match view::core::SDLCore::init(TITLE, false, CAM_W, CAM_H){
             Ok(t) => t,
@@ -63,14 +58,17 @@ pub fn run_game() -> Result<(), String>{
     let mut fighter = characters::characterAbstract::Fighter::new(fighter);
     let mut fighter2 = characters::characterAbstract::Fighter::new(fighter2);
     //this is just to make fighter2 spawn a little to the right of fighter
-    fighter2.char_state.position.borrow_mut().position.replace(&PhysVec::new(300.0, 0.0));
+    fighter2.char_state.particle.borrow_mut().position.replace(&PhysVec::new(300.0, 0.0));
     fighter2.name = characters::characterAbstract::Characters::Java;
 
     let mut hazard = physics::hazard::Hazard::new();
 
     let texture_creator = game_window.wincan.texture_creator();
 
-    let platform = Rect::new(40, 620, CAM_W-80, CAM_H-680);
+    let platform = Rect::new(50, 560, CAM_W-100, 30);
+    let wall_l = Rect::new(WALL_L.0, WALL_L.1, WALL_SIZE.0, WALL_SIZE.1);
+    let wall_r = Rect::new(WALL_R.0, WALL_R.1, WALL_SIZE.0, WALL_SIZE.1);
+    let arch = Rect::new(ARCH.0, ARCH.1, ARCH_SIZE.0, ARCH_SIZE.1);
 
 
     //////////////////////////
@@ -90,6 +88,10 @@ pub fn run_game() -> Result<(), String>{
     let block = texture_creator.load_texture("src/assets/images/characters/python/block.png")?;
     let hazard_texture = texture_creator.load_texture("src/assets/images/hazards/stalactite100x100.png")?;
     let background = texture_creator.load_texture("src/assets/images/background/small_background.png")?;
+    let healthbar_left = texture_creator.load_texture("src/assets/images/healthbar/healthbar_left.png")?;
+    let healthbar_right = texture_creator.load_texture("src/assets/images/healthbar/healthbar_right.png")?;
+    let healthbar_fill_left = texture_creator.load_texture("src/assets/images/healthbar/healthbar_fill_left.png")?;
+    let healthbar_fill_right = texture_creator.load_texture("src/assets/images/healthbar/healthbar_fill_right.png")?;
 
     let java_idle = texture_creator.load_texture("src/assets/images/characters/java/idle.png")?;
     let java_walk = texture_creator.load_texture("src/assets/images/characters/java/walk.png")?;
@@ -118,17 +120,6 @@ pub fn run_game() -> Result<(), String>{
     java_textures.insert(animation::sprites::State::HKick, java_hkick);
     java_textures.insert(animation::sprites::State::Block, java_block);
 
-    // music
-    let clips = audio::handler::Clips::new();
-
-    // randomize between the 3x combat audio tracks
-    if random_num < 0.4 { 
-        sdl2::mixer::Channel::all().play(&clips.combat1, -1); // -1 means repeat forever
-    } else if random_num < 0.7 {
-        sdl2::mixer::Channel::all().play(&clips.combat2, -1); // -1 means repeat forever  
-    } else {
-        sdl2::mixer::Channel::all().play(&clips.combat3, -1); // -1 means repeat forever
-    }
     ///////////////////////
     // NOT YET FUNCTIONING
     // Self::load_textures(&texture_creator, &mut fighter);
@@ -149,23 +140,29 @@ pub fn run_game() -> Result<(), String>{
         }
     };
 
-    game_window.render(&background, &texture, &fighter, &texture2, &fighter2, &hazard, &hazard_texture);
+    game_window.render(&background, &texture, &fighter, &texture2, &fighter2, 
+            &hazard, &hazard_texture, &platform, &healthbar_left, &healthbar_right,
+            &healthbar_fill_left, &healthbar_fill_right)?;
 
 
     let collisions = BVHierarchy::new(CollisionObject::new_from(CollisionObjectType::Platform, platform.clone(),
-        RefCell::new(Particle::new(
-            PhysVec::new(platform.x as f32, platform.y as f32), 0.5, 2000000000.0))));
+        Rc::new(RefCell::new(Particle::new(
+            PhysVec::new((CAM_W-50-platform.width()) as f32, 560f32), 0.5, 2000000000.0, 0)))));
 
-        collisions.insert(CollisionObject::new_from(CollisionObjectType::Hazard, hazard.sprite.clone(),
-            RefCell::new(Particle::new(
-                PhysVec::new(hazard.position.x as f32, hazard.position.y as f32), 0.5, 200.0))));
+    // collisions.insert(CollisionObject::new_from(CollisionObjectType::Wall, wall_l, 
+    //     Rc::new(RefCell::new(Particle::new(PhysVec::new(WALL_L.0 as f32, WALL_L.1 as f32), 0.5, 20000000000.0, 0)))));
+    // collisions.insert(CollisionObject::new_from(CollisionObjectType::Wall, wall_r, 
+    //     Rc::new(RefCell::new(Particle::new(PhysVec::new(WALL_R.0 as f32, WALL_R.1 as f32), 0.5, 20000000000.0, 0)))));
+    collisions.insert(CollisionObject::new_from(CollisionObjectType::Platform, arch, 
+        Rc::new(RefCell::new(Particle::new(PhysVec::new(ARCH.0 as f32, ARCH.1 as f32), 0.5, 20000000000.0, 0)))));
+
 
 
 //################################################-GAME-LOOP###############################################
     'gameloop: loop{
         let loop_time = Instant::now();
     //################################################-GET-INPUT-##########################################
-        //check if play quits
+        //ceck if play quits
         for event in game_window.event_pump.poll_iter() {
             match event {
                 Event::Quit{..} | Event::KeyDown{keycode: Some(Keycode::Escape), ..} => break 'gameloop,
@@ -196,15 +193,19 @@ pub fn run_game() -> Result<(), String>{
 
         fighter.char_state.update_bounding_boxes(&collisions);
         fighter2.char_state.update_bounding_boxes(&collisions);
-        collisions.resolve_collisions();
-        // println!("\nCollisions head: \n{:?}", collisions.head);
+        hazard.update_bounding_box(&collisions);
+        let hazard_reset = collisions.resolve_collisions();
+        // println!("\nCollisions head: \n{:?}\n", collisions.head);
+        fighter.char_state.particle.borrow_mut().integrate(FRAME_RATE as f32);
+        fighter2.char_state.particle.borrow_mut().integrate(FRAME_RATE as f32);
 
         //move hazard
         if hazard.sprite.y() < 600 && hazard.fell == false {
            hazard.sprite.offset(0, 7);
            //println!("{}", hazard.sprite.y())
        }
-       if hazard.sprite.y() >= 600 {
+    //    if hazard.sprite.y() >= 600 || hazard_reset {
+        if hazard_reset {
            hazard.reset();
            hazard.fell = false;
        }
@@ -225,7 +226,9 @@ pub fn run_game() -> Result<(), String>{
         };
 
         // render canvas
-        game_window.render(&background, &texture, &fighter, &texture2, &fighter2, &hazard, &hazard_texture);
+        game_window.render(&background, &texture, &fighter, &texture2, &fighter2, 
+            &hazard, &hazard_texture, &platform, &healthbar_left, &healthbar_right,
+            &healthbar_fill_left, &healthbar_fill_right)?;
     //##################################################-SLEEP-############################################
 
         thread::sleep(frame_time - loop_time.elapsed().clamp(Duration::new(0, 0), frame_time));
