@@ -13,7 +13,7 @@ use crate::physics::nodes::*;
 use crate::physics::particle::*;
 use crate::view::globals::*;
 
-// Enums 
+// Enums
 // defines optional Characters
 #[derive(Hash, Eq, PartialEq, Debug)]
 pub enum Characters {
@@ -22,7 +22,7 @@ pub enum Characters {
 	// Stretch goal: add more
 }
 
-// Structs 
+// Structs
 // defines the current state of the character
 pub struct CharacterState {
 	// pub position: RefCell<Particle>,
@@ -44,8 +44,8 @@ pub struct CharacterState {
 // EDIT: consider updating integers to f64
 pub struct Fighter<'t> {
 	pub name: Characters,
-	pub health: u32,
-	pub char_state: CharacterState, 
+	pub char_state: CharacterState,
+	pub health: i32,
 	pub speed: i32,
     pub weight: i32,
     pub gravity: f32,
@@ -77,6 +77,7 @@ impl <'t> Fighter <'t> {
 			name: Characters::Python,
 			health: 270,
 			char_state: c,
+			health: 100, // <- something to start with
 			speed: 20, // arbitrary #
 			weight: 180,
 			gravity: -9.8,
@@ -101,12 +102,13 @@ impl <'t> Fighter <'t> {
 			shield_size: 3,
       		textures: HashMap::new(),
 		}
-	} 
-	
+	}
+
 	// Getters
     pub fn weight(&self) -> &i32 {&self.weight}
     pub fn gravity(&self) -> &f32 {&self.gravity}
     pub fn max_fall_speed(&self) -> &i32 {&self.max_fall_speed}
+	pub fn get_health(&self) -> &i32 {&self.health}
     pub fn walk_speed(&self) -> &i32 {&self.walk_speed}
     pub fn run_speed(&self) -> &i32 {&self.run_speed}
     pub fn max_air_speed(&self) -> &i32 {&self.max_air_speed}
@@ -124,7 +126,7 @@ impl <'t> Fighter <'t> {
     pub fn air_jump_height(&self) -> &i32 {&self.air_jump_height}
     pub fn heavy_land_lag(&self) -> &i32 {&self.heavy_land_lag}
     pub fn fastfall_multiplier(&self) -> &f32 {&self.fastfall_multiplier}
-    pub fn shield_size(&self) -> &i32 {&self.shield_size} 
+    pub fn shield_size(&self) -> &i32 {&self.shield_size}
 
 	pub fn textures(&self) -> &Texture<'t> {
 		match &self.textures.get(&self.char_state.state) {
@@ -136,18 +138,30 @@ impl <'t> Fighter <'t> {
 	pub fn add_texture(&mut self, s: animation::sprites::State, t: Texture<'t>) {
             &self.textures.insert(s, t);
 	}
-	
+
 	// update Particle position
 	pub fn update_position(&mut self, force: &PhysVec) {
 		let mut scaled = force.clone();
 		scaled.dot_replace(1.0/0.0002645833);
-		self.char_state.particle.borrow_mut().add_force(&scaled);
-		// self.char_state.position.borrow_mut().integrate(FRAME_RATE as f32);
-	} 
+		self.char_state.position.borrow_mut().add_force(&scaled);
+		self.char_state.position.borrow_mut().integrate(FRAME_RATE as f32);
+	}
+
+	pub fn inflict_damage (&mut self, damage: i32) {
+		self.health = self.health - damage;
+		if self.health < 0 {
+			println!("Uh Oh, we're dead");
+			self.health = 0;
+		}
+	}
+	pub fn reset_health (&mut self) { self.health = 100; }
+	pub fn kill_player_test (&mut self) { self.inflict_damage(100); }
+
 
     // Setters
     pub fn set_weight(&mut self) -> &mut i32 {&mut self.weight}
     pub fn set_gravity(&mut self) -> &mut f32 {&mut self.gravity}
+	pub fn set_health(&mut self) -> &mut i32 {&mut self.health}
     pub fn set_max_fall_speed(&mut self) -> &mut i32 {&mut self.max_fall_speed}
     pub fn set_walk_speed(&mut self) -> &mut i32 {&mut self.walk_speed}
     pub fn set_run_speed(&mut self) -> &mut i32 {&mut self.run_speed}
@@ -181,7 +195,7 @@ impl CharacterState {
 			particle: Rc::new(RefCell::new(position.clone())),
 			state: animation::sprites::State::Idle,
 			frames_per_state: 30,
-			current_frame: 0, 
+			current_frame: 0,
 			frame_count:	0,
 			sprite: Rect::new(0, 0, 210, 300),
 			auto_repeat: true,
@@ -192,11 +206,11 @@ impl CharacterState {
 			blockbox: None,
 		}
 	}
-	
+
     // advancing frames
     pub fn advance_frame(&mut self) {
 		self.frame_count = (self.frame_count + 1) % (self.frames_per_state+1);
-    	
+
     	match self.state{
     		animation::sprites::State::Idle =>{
     			if self.frame_count < 7{
@@ -296,12 +310,12 @@ impl CharacterState {
 
 
     }
-	// convenience f(x)	
+	// convenience f(x)
 	// getters
-	// pub fn position(&self)  	-> Particle 					{ self.position.into_inner() } 
+	pub fn position(&self)  	-> Particle 					{ self.position.clone().into_inner() }
 	pub fn state(&self)     	-> &animation::sprites::State 	{ &self.state }
 	pub fn frames_per_state(&self) -> i32 						{ self.frames_per_state } // for testing
-	pub fn current_frame(&self) -> i32 							{ self.current_frame } 
+	pub fn current_frame(&self) -> i32 							{ self.current_frame }
 	pub fn sprite(&self) 		-> &Rect 						{ &self.sprite }
 	pub fn auto_repeat(&self)	-> bool 						{ self.auto_repeat }
 	pub fn next_state(&self) 	-> &animation::sprites::State 	{ &self.next_state }
@@ -311,10 +325,10 @@ impl CharacterState {
 	pub fn velocity(&self)		-> (f32, f32)					{ self.particle.borrow().velocity.raw() }
 	pub fn acceleration(&self)		-> (f32, f32)					{ self.particle.borrow().acceleration.raw() }
 	pub fn direction(&self)		-> &input::movement::Direction	{ &self.direction }
-	
+
 	// settters (use to update)
 	// pub fn set_position(&mut self, p: PhysVec)						{ self.position.borrow().position.replace(&p); }
-	pub fn set_state(&mut self, s: animation::sprites::State)		{ self.state = s; 
+	pub fn set_state(&mut self, s: animation::sprites::State)		{ self.state = s;
 																	  self.frames_per_state = animation::sprites::get_frame_cnt(self);
 																	  // println!("s: {:?}, cf: {}", self.state, self.current_frame);
 																	}
@@ -327,7 +341,7 @@ impl CharacterState {
 	pub fn reset_current_frame(&mut self)							{ self.current_frame = 0;  self.frame_count = 0;}
 
 	pub fn isMoving(&self) -> bool {
-		if self.state == animation::sprites::State::Jump || self.state == animation::sprites::State::FJump 
+		if self.state == animation::sprites::State::Jump || self.state == animation::sprites::State::FJump
 		|| self.state == animation::sprites::State::LPunch || self.state == animation::sprites::State::LKick
 		|| self.state == animation::sprites::State::HKick {
 			true

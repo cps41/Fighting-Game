@@ -101,6 +101,14 @@ impl ParticleContact {
 		}
 	}
 
+	fn calculate_normal(&mut self) {
+
+	}
+
+	fn resolve_penetration(&self) {
+		
+	}
+
 	fn separating_velocity(&self) -> f32 {
 		let contact_0 = self.particles[0].borrow();
 		let p0 = contact_0.particle.borrow();
@@ -307,7 +315,7 @@ mod test {
 		assert_eq!(node.get().bv.as_ref().take(), Some(&RefCell::new(co)));
 		assert_eq!(node.get().area, Rect::new(0,2,3,3));
 	}
-	
+
 	#[test]
 	fn testBVHNodeInsert() {
 		let co1 = CollisionObject::new(CollisionObjectType::HitBox, 0, 2, 3, 3);
@@ -332,7 +340,7 @@ mod test {
 		assert_eq!(node.get().bv.as_ref().take(), None);
 		assert_eq!(node.get().area, Rect::new(0,0,22,22));
 	}
-	
+
 	// #[test]
 	// fn testBVHNodeRemove() {
 	// 	let co1 = CollisionObject::new(CollisionObjectType::HitBox, 0, 2, 3, 3);
