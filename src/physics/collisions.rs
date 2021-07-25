@@ -21,9 +21,11 @@ impl BVHierarchy {
 		// println!("inserting {:?}", co);
 		self.head.insert(co)
 	}
-	pub fn resolve_collisions(&self) {
+	pub fn resolve_collisions(&self) -> bool {
 		let mut potential_collisions: Vec<ParticleContact> = Vec::new();
-		self.head.getPotentialCollisions(&mut potential_collisions, 100);
+		let count = self.head.getPotentialCollisions(&mut potential_collisions, 100);
+		println!("Counted {} collisions\n", count);
+		let mut hazard_reset = false; // bool to reset hazard upon impact
 		for contact in potential_collisions.iter_mut() {
 			let p0 = contact.particles[0].clone();
 			let p1 = contact.particles[1].clone();
@@ -32,12 +34,13 @@ impl BVHierarchy {
 				match (p0.borrow().obj_type, p1.borrow().obj_type) {
 					(CollisionObjectType::Platform, _) => (),
 					(_, CollisionObjectType::Platform) => (),
-					_ => println!("\nContact between\n {:?}\nand\n {:?}", contact.particles[0], contact.particles[1]),
+					_ => () // println!("\n\nBVH Head: {:?}\n\nContact between\n {:?}\nand\n {:?}", self.head, contact.particles[0], contact.particles[1]),
 				}
-				contact.resolve_velocity(FRAME_RATE as f32);
+				if contact.resolve_velocity(FRAME_RATE as f32) {hazard_reset = true}
 				// println!("\nVelocities updated between\n {:?}\nand\n {:?}", contact.particles[0], contact.particles[1]);
 			}
 		}
+		hazard_reset
 	}
 }
 
@@ -108,12 +111,12 @@ impl ParticleContact {
 		relative_velocity.scalar_product(&self.contact_normal)
 	}
 
-	fn resolve_velocity(&mut self, duration: f32) {
+	fn resolve_velocity(&mut self, duration: f32) -> bool{
 		let a = &self.particles[0].borrow().particle;
 		let b = &self.particles[1].borrow().particle;
 		let separating_velocity = self.separating_velocity();
 		if separating_velocity > 0f32 { 
-			return 
+			return false
 		} // contact is either separating or stationary, no impulse required
 
 		let new_sep_velocity = -separating_velocity*self.restitution;
@@ -150,6 +153,10 @@ impl ParticleContact {
 				self.particles[0].borrow().particle.borrow_mut().velocity.add_vec(&impulse_per_mass.dot_product(mass_a));
 				self.particles[1].borrow().particle.borrow_mut().velocity.add_vec(&impulse_per_mass.dot_product(mass_b));
 			},
+		}
+		match &types {
+			(CollisionObjectType::Hazard, _) | (_, CollisionObjectType::Hazard) => true,
+			_ => false,
 		}
 	}
 

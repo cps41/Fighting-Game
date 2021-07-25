@@ -186,7 +186,7 @@ pub fn run_game() -> Result<(), String>{
         fighter.char_state.update_bounding_boxes(&collisions);
         fighter2.char_state.update_bounding_boxes(&collisions);
         hazard.update_bounding_box(&collisions);
-        collisions.resolve_collisions();
+        let hazard_reset = collisions.resolve_collisions();
         // println!("\nCollisions head: \n{:?}\n", collisions.head);
         fighter.char_state.particle.borrow_mut().integrate(FRAME_RATE as f32);
         fighter2.char_state.particle.borrow_mut().integrate(FRAME_RATE as f32);
@@ -196,7 +196,7 @@ pub fn run_game() -> Result<(), String>{
            hazard.sprite.offset(0, 7);
            //println!("{}", hazard.sprite.y())
        }
-       if hazard.sprite.y() >= 600 {
+       if hazard.sprite.y() >= 600 || hazard_reset {
            hazard.reset();
            hazard.fell = false;
        }

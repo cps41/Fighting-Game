@@ -348,6 +348,7 @@ impl CharacterState {
 		CharacterState::remove(&mut self.hitbox);
 		let mut vel_particle = self.particle.clone();
 		vel_particle.borrow_mut().velocity.x = 50.0;
+		vel_particle.borrow_mut().velocity.y = 0.0;
 		self.hitbox = Some(bvh.insert(
 			CollisionObject {
 				obj_type: CollisionObjectType::HitBox, 
