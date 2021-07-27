@@ -22,6 +22,7 @@ use physics::collisions::*;
 use physics::vecmath::*;
 use physics::particle::*;
 use view::globals::*;
+use rand::prelude::*;
 
 pub mod characters; // for characterAbstract
 pub mod view; // for core
@@ -29,6 +30,7 @@ pub mod input; // for inputHandler and movement
 pub mod animation;
 pub mod networking;
 pub mod physics;
+pub mod audio;
 
 //use crate::view::core; // need for SDLCore and TextureManager
 //use crate::view::core::Demo; // need for SDLCore's Demo
@@ -124,6 +126,24 @@ pub fn run_game() -> Result<(), String>{
     // NOT YET FUNCTIONING
     // Self::load_textures(&texture_creator, &mut fighter);
     ////////
+
+    // get random # (for music)
+    let mut rng = rand::thread_rng();
+    let random_num: f64 = rng.gen(); // generates a float between 0 and 1
+    println!("{}", random_num);
+
+    // music 
+    let clips = audio::handler::Clips::new();
+
+        // randomize between the 3x combat audio tracks
+    if random_num < 0.4 { 
+        sdl2::mixer::Channel::all().play(&clips.combat1, -1); // -1 means repeat forever
+    } else if random_num < 0.7 {
+        sdl2::mixer::Channel::all().play(&clips.combat2, -1); // -1 means repeat forever  
+    } else {
+        sdl2::mixer::Channel::all().play(&clips.combat3, -1); // -1 means repeat forever
+    }
+
 
     //load window before game starts with starting texture
     let texture = {
