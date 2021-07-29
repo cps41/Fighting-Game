@@ -1,3 +1,4 @@
+use bincode::{serialize, deserialize}; 
 use serde_derive::{Serialize, Deserialize};
 
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]

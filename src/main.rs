@@ -179,7 +179,7 @@ pub fn run_game() -> Result<(), String>{
 
 
 
-//################################################-GAME-LOOP###############################################
+  //################################################-GAME-LOOP###############################################
     'gameloop: loop{
         let loop_time = Instant::now();
     //################################################-GET-INPUT-##########################################
@@ -366,7 +366,7 @@ pub fn run_server() -> Result<(), String>{
            hazard.fell = false;
        }
     //#############################################-SEND-GAMESTATE-#######################################
-        let current_frame = networking::transmit::GameState::new(&fighter1, &fighter2);
+        let current_frame = networking::transmit::GameState::new(&fighter1, &fighter2, &hazard);
         networking::transmit::send_game_state(&socket, &client_addresses, &current_frame);    
     }
     Ok(())
@@ -515,7 +515,7 @@ pub fn run_client() -> Result<(), String>{
     let mut input_buffer: VecDeque<networking::transmit::GameState> = VecDeque::new();
 
     for i in 0 .. 6{
-        input_buffer.push_back(networking::transmit::GameState::new(&fighter1, &fighter2));
+        input_buffer.push_back(networking::transmit::GameState::new(&fighter1, &fighter2, &hazard));
     }
 
     println!("Waiting for other player...");
@@ -557,7 +557,9 @@ pub fn run_client() -> Result<(), String>{
 
         fighter2.char_state.set_state(state.p2_state);
         fighter2.char_state.current_frame = state.p2_frame;
-        fighter2.char_state.particle.replace(state.p2_position);    
+        fighter2.char_state.particle.replace(state.p2_position);
+
+        hazard.from_packet(&state.hazard);    
     //##################################################-RENDER-###########################################
 
         // get the proper texture within the game

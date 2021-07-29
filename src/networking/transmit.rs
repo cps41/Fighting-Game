@@ -18,12 +18,14 @@ pub struct GameState{
     pub p2_position: physics::particle::Particle,
     pub p2_state: animation::sprites::State,
     pub p2_frame: i32,
+    pub hazard: physics::hazard::HazardVar,
 }
 
 impl GameState{
     pub fn new(
         p1: &characters::characterAbstract::Fighter,
         p2: &characters::characterAbstract::Fighter,
+        hazard: &physics::hazard::Hazard,
         ) -> GameState{
         GameState {
             p1_position:    p1.char_state.position(),
@@ -32,6 +34,7 @@ impl GameState{
             p2_position:    p2.char_state.position(),
             p2_state:       p2.char_state.state.clone(),
             p2_frame:       p2.char_state.current_frame,
+            hazard:         physics::hazard::HazardVar::new(hazard),
         }
     }
 }
