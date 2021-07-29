@@ -23,6 +23,7 @@ use physics::vecmath::*;
 use physics::particle::*;
 use view::globals::*;
 use rand::prelude::*;
+use std::collections::VecDeque;
 
 pub mod characters; // for characterAbstract
 pub mod view; // for core
@@ -199,6 +200,8 @@ pub fn run_game() -> Result<(), String>{
             .filter_map(Keycode::from_scancode)
             .collect();
 
+        let player_input = input::inputHandler::convert_input(&player_input);
+
     //##############################################-PROCESS-EVENTS-#######################################
         //process player movement
         input::inputHandler::keyboard_input(&player_input, &mut fighter);
@@ -256,11 +259,332 @@ pub fn run_game() -> Result<(), String>{
     Ok(())
 }
 
-
 pub fn run_server() -> Result<(), String>{
-    networking::chatServer::server_start();
+    let socket = networking::config::server_setup();
+    socket.set_read_timeout(None).expect("set_read_timeout call failed");
+
+    let mut client_addresses = HashMap::new();
+    let mut player_count: u8 = 1;
+
+    'connecting: loop{
+        player_count = networking::config::client_connect(&socket, &mut client_addresses, player_count);
+        if player_count == 3 {
+            println!("Two players found!");
+            break 'connecting;
+        }
+    }
+
+    // Creating initial character state
+    let fighter1 = characters::characterAbstract::CharacterState::new();
+    let fighter2 = characters::characterAbstract::CharacterState::new();
+
+    let mut fighter1 = characters::characterAbstract::Fighter::new(fighter1);
+    let mut fighter2 = characters::characterAbstract::Fighter::new(fighter2);
+    //this is just to make fighter2 spawn a little to the right of fighter
+    fighter2.char_state.particle.borrow_mut().position.replace(&PhysVec::new(300.0, 0.0));
+    fighter2.name = characters::characterAbstract::Characters::Java;
+
+    let mut hazard = physics::hazard::Hazard::new();
+
+    let platform = Rect::new(50, 560, CAM_W-100, 30);
+    let wall_l = Rect::new(WALL_L.0, WALL_L.1, WALL_SIZE.0, WALL_SIZE.1);
+    let wall_r = Rect::new(WALL_R.0, WALL_R.1, WALL_SIZE.0, WALL_SIZE.1);
+    let arch = Rect::new(ARCH.0, ARCH.1, ARCH_SIZE.0, ARCH_SIZE.1);
+
+
+    let collisions = BVHierarchy::new(CollisionObject::new_from(CollisionObjectType::Platform, platform.clone(),
+        Rc::new(RefCell::new(Particle::new(
+            PhysVec::new((CAM_W-50-platform.width()) as f32, 560f32), 0.5, 2000000000.0, 0)))));
+
+    // collisions.insert(CollisionObject::new_from(CollisionObjectType::Wall, wall_l, 
+    //     Rc::new(RefCell::new(Particle::new(PhysVec::new(WALL_L.0 as f32, WALL_L.1 as f32), 0.5, 20000000000.0, 0)))));
+    // collisions.insert(CollisionObject::new_from(CollisionObjectType::Wall, wall_r, 
+    //     Rc::new(RefCell::new(Particle::new(PhysVec::new(WALL_R.0 as f32, WALL_R.1 as f32), 0.5, 20000000000.0, 0)))));
+    collisions.insert(CollisionObject::new_from(CollisionObjectType::Platform, arch, 
+        Rc::new(RefCell::new(Particle::new(PhysVec::new(ARCH.0 as f32, ARCH.1 as f32), 0.5, 20000000000.0, 0)))));
+
+
+    for address in client_addresses.keys(){
+        socket.send_to(&[0], address).expect("message not sent");
+    }
+
+    socket.set_nonblocking(true).unwrap();
+
+  //################################################-GAME-LOOP###############################################
+    'gameloop: loop{
+        let loop_time = Instant::now();
+    //################################################-GET-INPUT-##########################################
+        let mut input_1: HashSet<u8> = HashSet::new();
+        let mut input_2: HashSet<u8> = HashSet::new();
+        let mut message_1 = false;
+        let mut message_2 = false;        
+        
+        'peeking: loop{
+            if networking::transmit::ready_to_read(&socket){break;}
+        }
+
+        'receiving: loop{
+            networking::transmit::receive_input(&socket, &client_addresses, &mut input_1, 
+                &mut input_2, &mut message_1, &mut message_2);
+        
+            if message_1 && message_2 { break; }
+        }
+
+
+    //##############################################-PROCESS-EVENTS-#######################################
+        //process player movement
+        input::inputHandler::keyboard_input(&input_1, &mut fighter1);
+        input::inputHandler::keyboard_input(&input_2, &mut fighter2);
+
+
+        //select frame to be rendered
+        fighter1.char_state.advance_frame();
+        fighter2.char_state.advance_frame();
+
+        //move character based on current frame
+        input::movement::move_char(&mut fighter1);
+        input::movement::move_char(&mut fighter2);
+
+        fighter1.char_state.update_bounding_boxes(&collisions);
+        fighter2.char_state.update_bounding_boxes(&collisions);
+        hazard.update_bounding_box(&collisions);
+        
+
+        let hazard_reset = collisions.resolve_collisions();
+        // println!("\nCollisions head: \n{:?}\n", collisions.head);
+        fighter1.char_state.particle.borrow_mut().integrate(FRAME_RATE as f32);
+        fighter2.char_state.particle.borrow_mut().integrate(FRAME_RATE as f32);
+
+        //move hazard
+        if hazard.sprite.y() < 600 && hazard.fell == false {
+           hazard.sprite.offset(0, 7);
+           //println!("{}", hazard.sprite.y())
+       }
+    //    if hazard.sprite.y() >= 600 || hazard_reset {
+        if hazard_reset {
+           hazard.reset();
+           hazard.fell = false;
+       }
+    //#############################################-SEND-GAMESTATE-#######################################
+        let current_frame = networking::transmit::GameState::new(&fighter1, &fighter2);
+        networking::transmit::send_game_state(&socket, &client_addresses, &current_frame);    
+    }
     Ok(())
 }
+
+
+pub fn run_client() -> Result<(), String>{
+    let frame_time = Duration::from_secs_f64(FRAME_RATE);
+
+    let (socket, player_number) = networking::config::client_setup();
+    socket.set_read_timeout(None).expect("set_read_timeout call failed");
+
+
+    let mut game_window = {
+        match view::core::SDLCore::init(TITLE, false, CAM_W, CAM_H){
+            Ok(t) => t,
+            Err(e) => panic!("{}", e),
+        }
+    };
+
+    // Creating initial character state
+    let fighter1 = characters::characterAbstract::CharacterState::new();
+    let fighter2 = characters::characterAbstract::CharacterState::new();
+
+    let mut fighter1 = characters::characterAbstract::Fighter::new(fighter1);
+    let mut fighter2 = characters::characterAbstract::Fighter::new(fighter2);
+    //this is just to make fighter2 spawn a little to the right of fighter
+    fighter2.char_state.particle.borrow_mut().position.replace(&PhysVec::new(300.0, 0.0));
+    fighter2.name = characters::characterAbstract::Characters::Java;
+
+    let mut hazard = physics::hazard::Hazard::new();
+
+    let texture_creator = game_window.wincan.texture_creator();
+
+    let platform = Rect::new(50, 560, CAM_W-100, 30);
+    let wall_l = Rect::new(WALL_L.0, WALL_L.1, WALL_SIZE.0, WALL_SIZE.1);
+    let wall_r = Rect::new(WALL_R.0, WALL_R.1, WALL_SIZE.0, WALL_SIZE.1);
+    let arch = Rect::new(ARCH.0, ARCH.1, ARCH_SIZE.0, ARCH_SIZE.1);
+
+
+    //////////////////////////
+    // FUNCTIONING
+    // EDIT: Modularize. Challenge: figuring out how to deal with texture's + hashmap lifetime
+    // create HashMap of all textures
+    let mut python_textures = HashMap::new();
+    let mut java_textures = HashMap::new();
+
+    let idle = texture_creator.load_texture("src/assets/images/characters/python/idle.png")?;
+    let walk = texture_creator.load_texture("src/assets/images/characters/python/walk.png")?;
+    let jump = texture_creator.load_texture("src/assets/images/characters/python/jump.png")?;
+    let fjump = texture_creator.load_texture("src/assets/images/characters/python/fjump.png")?;
+    let lpunch = texture_creator.load_texture("src/assets/images/characters/python/lpunch.png")?;
+    let lkick = texture_creator.load_texture("src/assets/images/characters/python/lkick.png")?;
+    let hkick = texture_creator.load_texture("src/assets/images/characters/python/hkick.png")?;
+    let block = texture_creator.load_texture("src/assets/images/characters/python/block.png")?;
+    let hazard_texture = texture_creator.load_texture("src/assets/images/hazards/stalactite100x100.png")?;
+    let background = texture_creator.load_texture("src/assets/images/background/small_background.png")?;
+    let healthbar_left = texture_creator.load_texture("src/assets/images/healthbar/healthbar_left.png")?;
+    let healthbar_right = texture_creator.load_texture("src/assets/images/healthbar/healthbar_right.png")?;
+    let healthbar_fill_left = texture_creator.load_texture("src/assets/images/healthbar/healthbar_fill_left.png")?;
+    let healthbar_fill_right = texture_creator.load_texture("src/assets/images/healthbar/healthbar_fill_right.png")?;
+
+    let java_idle = texture_creator.load_texture("src/assets/images/characters/java/idle.png")?;
+    let java_walk = texture_creator.load_texture("src/assets/images/characters/java/walk.png")?;
+    let java_jump = texture_creator.load_texture("src/assets/images/characters/java/jump.png")?;
+    let java_fjump = texture_creator.load_texture("src/assets/images/characters/java/fjump.png")?;
+    let java_lpunch = texture_creator.load_texture("src/assets/images/characters/java/lpunch.png")?;
+    let java_lkick = texture_creator.load_texture("src/assets/images/characters/java/lkick.png")?;
+    let java_hkick = texture_creator.load_texture("src/assets/images/characters/java/hkick.png")?;
+    let java_block = texture_creator.load_texture("src/assets/images/characters/java/block.png")?;
+
+    python_textures.insert(animation::sprites::State::Idle, idle);
+    python_textures.insert(animation::sprites::State::Walk, walk);
+    python_textures.insert(animation::sprites::State::Jump, jump);
+    python_textures.insert(animation::sprites::State::FJump, fjump);
+    python_textures.insert(animation::sprites::State::LPunch, lpunch);
+    python_textures.insert(animation::sprites::State::LKick, lkick);
+    python_textures.insert(animation::sprites::State::HKick, hkick);
+    python_textures.insert(animation::sprites::State::Block, block);
+
+    java_textures.insert(animation::sprites::State::Idle, java_idle);
+    java_textures.insert(animation::sprites::State::Walk, java_walk);
+    java_textures.insert(animation::sprites::State::Jump, java_jump);
+    java_textures.insert(animation::sprites::State::FJump, java_fjump);
+    java_textures.insert(animation::sprites::State::LPunch, java_lpunch);
+    java_textures.insert(animation::sprites::State::LKick, java_lkick);
+    java_textures.insert(animation::sprites::State::HKick, java_hkick);
+    java_textures.insert(animation::sprites::State::Block, java_block);
+
+    ///////////////////////
+    // NOT YET FUNCTIONING
+    // Self::load_textures(&texture_creator, &mut fighter);
+    ////////
+
+    // get random # (for music)
+    let mut rng = rand::thread_rng();
+    let random_num: f64 = rng.gen(); // generates a float between 0 and 1
+    println!("{}", random_num);
+
+    // music 
+    let clips = audio::handler::Clips::new();
+
+        // randomize between the 3x combat audio tracks
+    if random_num < 0.4 { 
+        sdl2::mixer::Channel::all().play(&clips.combat1, -1); // -1 means repeat forever
+    } else if random_num < 0.7 {
+        sdl2::mixer::Channel::all().play(&clips.combat2, -1); // -1 means repeat forever  
+    } else {
+        sdl2::mixer::Channel::all().play(&clips.combat3, -1); // -1 means repeat forever
+    }
+
+
+    //load window before game starts with starting texture
+    let texture = {
+        match python_textures.get(&fighter1.char_state.state) {
+            Some(text) => text,
+            _=> panic!("No texture found for the state! Oh nos."),
+        }
+    };
+
+    let texture2 = {
+        match java_textures.get(&fighter2.char_state.state) {
+            Some(text) => text,
+            _=> panic!("No texture found for the state! Oh nos."),
+        }
+    };
+
+    game_window.render(&background, &texture, &fighter1, &texture2, &fighter2, 
+            &hazard, &hazard_texture, &platform, &healthbar_left, &healthbar_right,
+            &healthbar_fill_left, &healthbar_fill_right)?;
+
+
+    let collisions = BVHierarchy::new(CollisionObject::new_from(CollisionObjectType::Platform, platform.clone(),
+        Rc::new(RefCell::new(Particle::new(
+            PhysVec::new((CAM_W-50-platform.width()) as f32, 560f32), 0.5, 2000000000.0, 0)))));
+
+    // collisions.insert(CollisionObject::new_from(CollisionObjectType::Wall, wall_l, 
+    //     Rc::new(RefCell::new(Particle::new(PhysVec::new(WALL_L.0 as f32, WALL_L.1 as f32), 0.5, 20000000000.0, 0)))));
+    // collisions.insert(CollisionObject::new_from(CollisionObjectType::Wall, wall_r, 
+    //     Rc::new(RefCell::new(Particle::new(PhysVec::new(WALL_R.0 as f32, WALL_R.1 as f32), 0.5, 20000000000.0, 0)))));
+    collisions.insert(CollisionObject::new_from(CollisionObjectType::Platform, arch, 
+        Rc::new(RefCell::new(Particle::new(PhysVec::new(ARCH.0 as f32, ARCH.1 as f32), 0.5, 20000000000.0, 0)))));
+
+
+
+    let mut input_buffer: VecDeque<networking::transmit::GameState> = VecDeque::new();
+
+    for i in 0 .. 6{
+        input_buffer.push_back(networking::transmit::GameState::new(&fighter1, &fighter2));
+    }
+
+    println!("Waiting for other player...");
+    let mut buffer = [0u8; 100];
+    let (number_of_bytes) = socket.recv(&mut buffer).expect("Didn't receive data");
+    println!("Starting Game");
+
+  //################################################-GAME-LOOP###############################################
+    'gameloop: loop{
+        let loop_time = Instant::now();
+    //################################################-GET-INPUT-##########################################
+        //ceck if play quits
+        for event in game_window.event_pump.poll_iter() {
+            match event {
+                Event::Quit{..} | Event::KeyDown{keycode: Some(Keycode::Escape), ..} => break 'gameloop,
+                //_ => { input::inputHandler::keyboard_input(&event, &mut fighter); }
+                _=> {},
+            }
+        }
+
+
+        //gather player input
+        let player_input: HashSet<Keycode> = game_window.event_pump
+            .keyboard_state()
+            .pressed_scancodes()
+            .filter_map(Keycode::from_scancode)
+            .collect();
+
+        let player_input = input::inputHandler::convert_input(&player_input);
+
+    //##############################################-PROCESS-EVENTS-#######################################
+        networking::transmit::send_input(&socket, &player_input);
+
+        let state = input_buffer.pop_front().unwrap();
+        
+        fighter1.char_state.set_state(state.p1_state);
+        fighter1.char_state.current_frame = state.p1_frame;
+        fighter1.char_state.particle.replace(state.p1_position);
+
+        fighter2.char_state.set_state(state.p2_state);
+        fighter2.char_state.current_frame = state.p2_frame;
+        fighter2.char_state.particle.replace(state.p2_position);    
+    //##################################################-RENDER-###########################################
+
+        // get the proper texture within the game
+        let texture = {
+            match python_textures.get(&fighter1.char_state.state) {
+                Some(text) => text,
+                _=> panic!("No texture found for the state! Oh nos."),
+            }
+        };
+        let texture2 = {
+            match java_textures.get(&fighter2.char_state.state) {
+                Some(text) => text,
+                _=> panic!("No texture found for the state! Oh nos."),
+            }
+        };
+
+        // render canvas
+        game_window.render(&background, &texture, &fighter1, &texture2, &fighter2, 
+            &hazard, &hazard_texture, &platform, &healthbar_left, &healthbar_right,
+            &healthbar_fill_left, &healthbar_fill_right)?;
+    //##################################################-SLEEP-############################################
+        input_buffer.push_back(networking::transmit::receive_game_state(&socket));
+        thread::sleep(frame_time - loop_time.elapsed().clamp(Duration::new(0, 0), frame_time));
+    }
+    Ok(())
+}
+
 
 /*
  // run credits
@@ -327,9 +651,11 @@ fn main() -> Result<(), String> {
     let args: Vec<String> = env::args().collect();
     if args.len() > 1 && "server".eq(&args[1]){
         run_server()?;
+    }else if args.len() > 1 && "client".eq(&args[1]){
+        run_client()?;
+        //networking::chatClient::server_connect();
     }else{
         run_game()?;
-        //networking::chatClient::server_connect();
     }
 
     // run_credits()?;

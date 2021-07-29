@@ -1,8 +1,9 @@
 use crate::physics::vecmath::PhysVec;
 use crate::view::globals::*;
 use sdl2::rect::Point;
+use serde_derive::{Serialize, Deserialize};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Particle {
     pub position: PhysVec,
     pub velocity: PhysVec,
