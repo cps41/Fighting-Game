@@ -4,6 +4,9 @@ use std::collections::HashMap;
 use std::collections::HashSet;
 use bincode::{serialize, deserialize}; 
 use serde_derive::{Serialize, Deserialize};
+use std::time::{SystemTime,UNIX_EPOCH};
+use std::time::{Instant, Duration};
+
 
 use crate::physics;
 use crate::animation;
@@ -19,6 +22,7 @@ pub struct GameState{
     pub p2_state: animation::sprites::State,
     pub p2_frame: i32,
     pub hazard: physics::hazard::HazardVar,
+    pub time: SystemTime,
 }
 
 impl GameState{
@@ -35,7 +39,42 @@ impl GameState{
             p2_state:       p2.char_state.state.clone(),
             p2_frame:       p2.char_state.current_frame,
             hazard:         physics::hazard::HazardVar::new(hazard),
+            time:           SystemTime::now(),
         }
+    }
+
+    pub fn copy(&mut self, other: &GameState){
+        self.p1_position = other.p1_position.clone();
+        self.p1_state = other.p1_state;
+        self.p1_frame = other.p1_frame;
+        self.p2_position = other.p2_position.clone();
+        self.p2_state = other.p2_state;
+        self.p2_frame = other.p2_frame;
+        self.hazard.from_hazvar(&other.hazard);
+        self.time = other.time;
+    }
+
+    pub fn update_time(&mut self){
+        self.time = SystemTime::now();
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct InputStruct{
+    pub inputs: HashSet<u8>,
+    pub time:   SystemTime,
+}
+
+impl InputStruct{
+    pub fn new(keys: HashSet<u8>) -> InputStruct{
+        InputStruct{
+            inputs:  keys,
+            time:    SystemTime::now(),
+        }
+    }
+
+    pub fn update_time(&mut self){
+        self.time = SystemTime::now();
     }
 }
 
@@ -45,6 +84,7 @@ pub fn receive_input(socket: &UdpSocket,
 				  input_2: &mut HashSet<u8>,
 				  message_1: &mut bool,
 				  message_2: &mut bool,
+                  readout_time: &Instant,
 				  ){
 	let mut buffer = [0u8; 100];
 
@@ -58,24 +98,26 @@ pub fn receive_input(socket: &UdpSocket,
 		}
 	};
 
-    let received_input = deserialize::<HashSet<u8>>(&buffer).expect("Couldn't interpret data");
-   
+    let received_input = deserialize::<InputStruct>(&buffer).expect("Couldn't interpret data");
+    
+    if received_input.time.elapsed().unwrap() > readout_time.elapsed(){ return; }
+
     if client_addresses.get(&src_addr).unwrap().eq(&1) && !*message_1{
-    	for keys in received_input.iter(){
+        for keys in received_input.inputs.iter(){
     		input_1.insert(*keys);
     	}        
         *message_1 = true;
-        println!("Received Input from Player 1");
+        //println!("Received Input from Player 1");
     }else if client_addresses.get(&src_addr).unwrap().eq(&2) && !*message_2{
-		for keys in received_input.iter(){
+		for keys in received_input.inputs.iter(){
 			input_2.insert(*keys);
 		}        
         *message_2 = true;
-        println!("Received Input from Player 2");
+        //println!("Received Input from Player 2");
     }
 }
 
-pub fn send_input(socket: &UdpSocket, inputs: &HashSet<u8>,){
+pub fn send_input(socket: &UdpSocket, inputs: &InputStruct,){
 	let envelope = serialize(inputs);
     match envelope{
         Ok(encoded_message) =>{ let message = encoded_message.as_slice();
@@ -101,19 +143,27 @@ pub fn send_game_state( socket: &UdpSocket,
     }
 }
 
-pub fn receive_game_state(socket: &UdpSocket) -> GameState{
+pub fn receive_game_state(  socket: &UdpSocket, 
+                            next_state: &mut GameState, 
+                            readout_time: &Instant
+                         ) -> bool{
     let mut buffer = [0u8; 150];
-    let mut number_of_bytes;
+    //let mut number_of_bytes;
    
     match socket.recv(&mut buffer){
-        Ok(t) => {number_of_bytes = t;},
-        //Err(ref e) if e.kind() == io::ErrorKind::WouldBlock => {},
+        Ok(t) => {
+            let state = deserialize::<GameState>(&buffer).expect("cannot crack ze coode");
+            if state.time.elapsed().unwrap() > readout_time.elapsed(){
+                return false;
+            }
+            next_state.copy(&state);
+            return true
+        },
+        Err(ref e) if e.kind() == io::ErrorKind::WouldBlock => {return false},
         Err(e) => panic!("recv function failed: {:?}", e),
     }
 
-    let state = deserialize::<GameState>(&buffer).expect("cannot crack ze coode");
-    //println!("Data Received");
-    state    
+    false
 }
 
 pub fn ready_to_read(socket: &UdpSocket) -> bool{

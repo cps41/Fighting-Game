@@ -33,6 +33,15 @@ impl HazardVar{
 			sprite_h:	hazard.sprite.height(),
 		}
 	}
+
+	pub fn from_hazvar(&mut self, other: &HazardVar){
+		self.pos_x = other.pos_x;
+		self.pos_y = other.pos_y;
+		self.sprite_x = other.sprite_x;
+		self.sprite_y = other.sprite_y;
+		self.sprite_w = other.sprite_w;
+		self.sprite_h = other.sprite_h;
+	}
 }
 
 

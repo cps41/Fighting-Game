@@ -260,6 +260,8 @@ pub fn run_game() -> Result<(), String>{
 }
 
 pub fn run_server() -> Result<(), String>{
+    let frame_time = Duration::from_secs_f64(FRAME_RATE);
+
     let socket = networking::config::server_setup();
     socket.set_read_timeout(None).expect("set_read_timeout call failed");
 
@@ -312,7 +314,7 @@ pub fn run_server() -> Result<(), String>{
 
   //################################################-GAME-LOOP###############################################
     'gameloop: loop{
-        let loop_time = Instant::now();
+        let readout_time = Instant::now();
     //################################################-GET-INPUT-##########################################
         let mut input_1: HashSet<u8> = HashSet::new();
         let mut input_2: HashSet<u8> = HashSet::new();
@@ -323,11 +325,13 @@ pub fn run_server() -> Result<(), String>{
             if networking::transmit::ready_to_read(&socket){break;}
         }
 
+        let receive_time = Instant::now();
         'receiving: loop{
             networking::transmit::receive_input(&socket, &client_addresses, &mut input_1, 
-                &mut input_2, &mut message_1, &mut message_2);
+                &mut input_2, &mut message_1, &mut message_2, &readout_time);
         
-            if message_1 && message_2 { break; }
+            if receive_time.elapsed().as_millis() >= Duration::from_secs_f64(FRAME_RATE*2.0).as_millis() 
+                || message_1 && message_2 { break; }
         }
 
 
@@ -366,12 +370,12 @@ pub fn run_server() -> Result<(), String>{
            hazard.fell = false;
        }
     //#############################################-SEND-GAMESTATE-#######################################
+        
         let current_frame = networking::transmit::GameState::new(&fighter1, &fighter2, &hazard);
         networking::transmit::send_game_state(&socket, &client_addresses, &current_frame);    
     }
     Ok(())
 }
-
 
 pub fn run_client() -> Result<(), String>{
     let frame_time = Duration::from_secs_f64(FRAME_RATE);
@@ -522,6 +526,7 @@ pub fn run_client() -> Result<(), String>{
     let mut buffer = [0u8; 100];
     let (number_of_bytes) = socket.recv(&mut buffer).expect("Didn't receive data");
     println!("Starting Game");
+    socket.set_nonblocking(true).unwrap();
 
   //################################################-GAME-LOOP###############################################
     'gameloop: loop{
@@ -547,6 +552,10 @@ pub fn run_client() -> Result<(), String>{
         let player_input = input::inputHandler::convert_input(&player_input);
 
     //##############################################-PROCESS-EVENTS-#######################################
+        let player_input = networking::transmit::InputStruct::new(player_input);
+        let readout_time = Instant::now();
+
+
         networking::transmit::send_input(&socket, &player_input);
 
         let state = input_buffer.pop_front().unwrap();
@@ -581,7 +590,21 @@ pub fn run_client() -> Result<(), String>{
             &hazard, &hazard_texture, &platform, &healthbar_left, &healthbar_right,
             &healthbar_fill_left, &healthbar_fill_right)?;
     //##################################################-SLEEP-############################################
-        input_buffer.push_back(networking::transmit::receive_game_state(&socket));
+            let mut next_state = networking::transmit::GameState::new(&fighter1, &fighter2, &hazard);
+            let receive_time = Instant::now();
+           
+            'reading: loop{
+                if networking::transmit::receive_game_state(&socket, &mut next_state, &readout_time){ 
+                    break;
+                }else if(receive_time.elapsed().as_millis() > Duration::from_secs_f64(FRAME_RATE*2.0).as_millis()){
+                    break;
+                }
+            }
+
+            input_buffer.push_back(next_state);
+
+        
+
         thread::sleep(frame_time - loop_time.elapsed().clamp(Duration::new(0, 0), frame_time));
     }
     Ok(())
