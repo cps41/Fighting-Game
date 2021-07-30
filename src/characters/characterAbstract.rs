@@ -1,7 +1,8 @@
 use core::cell::RefCell;
 use crate::animation; // to reference sprite State
 use crate::animation::sprites::State;
-use crate::input; // use to reference Direction
+use crate::input;
+use crate::input::movement::Direction; // use to reference Direction
 
 use sdl2::rect::{Rect};
 use sdl2::render::Texture;
@@ -144,6 +145,9 @@ impl <'t> Fighter <'t> {
 		scaled.dot_replace(1.0/0.0002645833);
 		self.char_state.particle.borrow_mut().add_force(&scaled);
 		self.char_state.particle.borrow_mut().integrate(FRAME_RATE as f32);
+		if self.char_state.particle.borrow().position.clone().y > 900.0 {
+			self.char_state.particle.borrow_mut().health = 0;
+		}
 	}
 
 	pub fn inflict_damage (&mut self, damage: i32) {
@@ -360,14 +364,28 @@ impl CharacterState {
 	pub fn insert_hit_box(&mut self, bvh: &BVHierarchy) {
 		// println!("inserting hit box...");
 		CharacterState::remove(&mut self.hitbox);
-		let mut vel_particle = self.particle.clone();
-		vel_particle.borrow_mut().velocity.x = 50.0;
-		vel_particle.borrow_mut().velocity.y = 0.0;
+		let vel_particle = self.particle.clone();
+		let rect = {
+			if self.direction == Direction::Right {
+				vel_particle.borrow_mut().velocity.x = 50.0;
+				Rect::new(self.x()+W_OFFSET+SPRITE_W as i32/2, self.y()+H_OFFSET, SPRITE_W as u32, SPRITE_H/2)
+			}
+			else {
+				vel_particle.borrow_mut().velocity.x = -50.0;
+				Rect::new(self.x()+W_OFFSET-SPRITE_W as i32/2, self.y()+H_OFFSET, SPRITE_W as u32, SPRITE_H/2)
+			}
+		};
+		if self.particle.borrow().position.y < 88.0 {
+			vel_particle.borrow_mut().velocity.y = 500.0;
+		}
+		else {
+			vel_particle.borrow_mut().velocity.y = 0.0;
+		}
 		self.hitbox = Some(bvh.insert(
 			CollisionObject {
 				obj_type: CollisionObjectType::HitBox, 
 				area: SPRITE_W as u32 * SPRITE_H/2,
-				rect: Rect::new(self.x()+W_OFFSET+SPRITE_W as i32/2, self.y()+H_OFFSET, SPRITE_W as u32, SPRITE_H/2),
+				rect: rect,
 				noderef: None,
 				particle: vel_particle,
 			}

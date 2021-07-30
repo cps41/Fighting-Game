@@ -68,7 +68,7 @@ pub fn run_game() -> Result<(), String>{
 
     let texture_creator = game_window.wincan.texture_creator();
 
-    let platform = Rect::new(100, 560, CAM_W-150, 30);
+    let platform = Rect::new(100, 560, CAM_W-200, 30);
     let wall_l = Rect::new(WALL_L.0, WALL_L.1, WALL_SIZE.0, WALL_SIZE.1);
     let wall_r = Rect::new(WALL_R.0, WALL_R.1, WALL_SIZE.0, WALL_SIZE.1);
     let arch = Rect::new(ARCH.0, ARCH.1, ARCH_SIZE.0, ARCH_SIZE.1);
@@ -219,10 +219,10 @@ pub fn run_game() -> Result<(), String>{
         fighter.char_state.update_bounding_boxes(&collisions);
         fighter2.char_state.update_bounding_boxes(&collisions);
         hazard.update_bounding_box(&collisions);
-        println!("\n\nupdating...");
-		println!("\nFighter 1\n {:?}\n", fighter.char_state.get_node());
-		println!("\nFighter 2\n {:?}\n", fighter2.char_state.get_node());
-		println!("\nHazard\n {:?}\n", hazard.hitbox);
+        // println!("\n\nupdating...");
+		// println!("\nFighter 1\n {:?}\n", fighter.char_state.get_node());
+		// println!("\nFighter 2\n {:?}\n", fighter2.char_state.get_node());
+		// println!("\nHazard\n {:?}\n", hazard.hitbox);
         let hazard_reset = collisions.resolve_collisions();
         // println!("\nCollisions head: \n{:?}\n", collisions.head);
         fighter.char_state.particle.borrow_mut().integrate(FRAME_RATE as f32);
@@ -233,7 +233,7 @@ pub fn run_game() -> Result<(), String>{
         if hazard.sprite.y() < 600 && hazard.fell == false {
             //hazard.sprite.offset(0, 7);
             //println!("{}", hazard.sprite.y())
-            hazard.particle.borrow_mut().add_force(&PhysVec::new(0.0, GRAVITY));
+            hazard.update_position();
        }
     //    if hazard.sprite.y() >= 600 || hazard_reset {
         if hazard_reset || hazard.sprite.y() >= 560 {

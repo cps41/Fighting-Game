@@ -87,10 +87,16 @@ pub fn move_char(f: &mut characters::characterAbstract::Fighter){
         },
         
         animation::sprites::State::Idle => {
-            let force = PhysVec::new(0.0, GRAVITY);
+            let force = PhysVec::new(0.0, 0.0);
             let x = f.char_state.velocity().0;
+            let (x_pos, y_pos) = f.char_state.position().position.raw();
+
             if x != 0.0 {
                 f.char_state.particle.borrow_mut().velocity.x = 0.0;
+            } 
+
+            if y_pos < -40.0 || (y_pos > -49.0 && y_pos < 90.0) || y_pos > 98.75 {
+                f.char_state.particle.borrow_mut().velocity.y = 500.0;
             }
             f.update_position(&force);
         },

@@ -12,7 +12,7 @@ pub fn keyboard_input(player_input: &HashSet<u8>, fighter: &mut characters::char
     if fighter.char_state.frame_count == animation::sprites::get_frame_cnt(&fighter.char_state){
         fighter.char_state.set_state(animation::sprites::State::Idle);
         fighter.char_state.reset_current_frame();
-        fighter.char_state.direction = input::movement::Direction::Up;        
+        // fighter.char_state.direction = input::movement::Direction::Up;        
     }
 
     //inputs accepted while idle
@@ -50,7 +50,7 @@ pub fn keyboard_input(player_input: &HashSet<u8>, fighter: &mut characters::char
     }else if fighter.char_state.state == animation::sprites::State::Walk{
         //if no longer holding down, stop walking
         if player_input.is_empty(){
-            fighter.char_state.direction = input::movement::Direction::Up;
+            // fighter.char_state.direction = input::movement::Direction::Up;
             fighter.char_state.set_state(animation::sprites::State::Idle); 
             fighter.char_state.reset_current_frame();
         }else{

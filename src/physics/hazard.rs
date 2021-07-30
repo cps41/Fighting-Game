@@ -70,26 +70,33 @@ impl Hazard {
 			fell: false,
             hit: false,
             fall_speed: 1.0, // idk something to start with
-            damage: 50.0, // same as above ^^
+            damage: 5.0, // same as above ^^
             position: Point::new(35,0),
 			sprite: Rect::new(250, 0, 100, 100),
             hitbox: None,
-            particle: Rc::new(RefCell::new(Particle::new(PhysVec::new(35f32,0f32), 0.01, 300f32, 0, 5))),
+            particle: Rc::new(RefCell::new(Particle::new(PhysVec::new(35f32,0f32), 0.01, 300f32, 0, 20))),
 		}
     }
 	pub fn update_position(&mut self) {
-		let mut scaled = PhysVec::new(0.0, GRAVITY);
-		scaled.dot_replace(1.0/0.0002645833);
+		let mut scaled = PhysVec::new(0.0, 0.0);
+		self.particle.borrow_mut().velocity.y = 200.0;
+		// scaled.dot_replace(1.0/0.0002645833);
 		self.particle.borrow_mut().add_force(&scaled);
 		self.particle.borrow_mut().integrate(FRAME_RATE as f32);
+		self.sprite.reposition(self.particle.borrow().to_point());
 	}
 	pub fn reset(&mut self, ) {
+		self.sprite.set_y(0);
 		if self.sprite.x() > 800 {
-			self.sprite.offset(-650, -600);
+			self.sprite.offset(-650, 0);
 		}
 		else {
-			self.sprite.offset(350, -600);
+			self.sprite.offset(350, 0);
 		}
+		self.particle.borrow_mut().reset_x();
+		self.particle.borrow_mut().reset_y();
+		self.particle.borrow_mut().position.x = self.sprite.x() as f32;
+		self.particle.borrow_mut().position.y = self.sprite.y() as f32;
 		self.fell = true;
 	}
 	

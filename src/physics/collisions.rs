@@ -34,13 +34,13 @@ impl BVHierarchy {
 				if contact.resolve_velocity(FRAME_RATE as f32) {hazard_reset = true}
 				contact.resolve_interpenetration();
 				match (p0.borrow().obj_type, p1.borrow().obj_type) {
-					(CollisionObjectType::Platform, _) => (),
-					// println!("\n\nContact between\n {:?}\nand\n {:?}", contact.objects[0], contact.objects[1]),
-					(_, CollisionObjectType::Platform) => (),
-					// println!("\n\nContact between\n {:?}\nand\n {:?}", contact.objects[0], contact.objects[1]),
+					(CollisionObjectType::Platform, _) => //(),
+					println!("\n\nContact between\n {:#?}\nand\n {:#?}", contact.objects[0], contact.objects[1]),
+					(_, CollisionObjectType::Platform) => //(),
+					println!("\n\nContact between\n {:#?}\nand\n {:#?}", contact.objects[0], contact.objects[1]),
 					_ => // ()
-					{println!("\n\n**********BVH Head: {:?}\n", self.head);
-					println!("\n\nContact between\n {:?}\nand\n {:?}", contact.objects[0], contact.objects[1])},
+					{println!("\n\n**********BVH Head: {:#?}\n", self.head);
+					println!("\n\nContact between\n {:#?}\nand\n {:#?}", contact.objects[0], contact.objects[1])},
 				}
 				// println!("\nVelocities updated between\n {:?}\nand\n {:?}", contact.particles[0], contact.particles[1]);
 			}
@@ -62,10 +62,10 @@ pub struct Node<T> {
 }
 impl<T: fmt::Debug> fmt::Debug for Node<T> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        f.debug_struct("\n\tNode")
-		.field("\n\tleft", &self.left)
-		.field("\n\tright", &self.right)
-		.field("\n\tbv", &self.bv)
+        f.debug_struct("Node")
+		.field("left", &self.left)
+		.field("right", &self.right)
+		.field("bv", &self.bv)
 		.finish()
     }
 }
@@ -151,18 +151,18 @@ impl ParticleContact {
 			(CollisionObjectType::HitBox, CollisionObjectType::HurtBox) | (CollisionObjectType::Hazard, CollisionObjectType::HurtBox) => {
 				self.objects[1].borrow().particle.borrow_mut().update_health(self.objects[0].borrow().particle.borrow().damage);
 				self.objects[0].borrow().particle.borrow_mut().velocity.add_vec(&impulse_per_mass.dot_product(mass_a));
-				self.objects[1].borrow().particle.borrow_mut().velocity.add_vec(&impulse_per_mass.dot_product(mass_b));
+				self.objects[1].borrow().particle.borrow_mut().velocity.add_vec(&impulse_per_mass.dot_product(-mass_b));
 			},
 			(CollisionObjectType::HurtBox, CollisionObjectType::HitBox) | (CollisionObjectType::HurtBox, CollisionObjectType::Hazard) => {
 				self.objects[0].borrow().particle.borrow_mut().update_health(self.objects[1].borrow().particle.borrow().damage);
 				self.objects[0].borrow().particle.borrow_mut().velocity.add_vec(&impulse_per_mass.dot_product(mass_a));
-				self.objects[1].borrow().particle.borrow_mut().velocity.add_vec(&impulse_per_mass.dot_product(mass_b));
+				self.objects[1].borrow().particle.borrow_mut().velocity.add_vec(&impulse_per_mass.dot_product(-mass_b));
 			},
 
 			// just update others
 			_ => {
 				self.objects[0].borrow().particle.borrow_mut().velocity.add_vec(&impulse_per_mass.dot_product(mass_a));
-				self.objects[1].borrow().particle.borrow_mut().velocity.add_vec(&impulse_per_mass.dot_product(mass_b));
+				self.objects[1].borrow().particle.borrow_mut().velocity.add_vec(&impulse_per_mass.dot_product(-mass_b));
 			},
 		}
 		match &types {

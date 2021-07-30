@@ -10,6 +10,7 @@ use sdl2::rect::Point;
 
 use crate::characters;
 use crate::animation;
+use crate::input::movement::Direction;
 use crate::physics;
 
 use super::globals::*;
@@ -86,14 +87,14 @@ impl SDLCore{
 		let wall_l = Rect::new(WALL_L.0, WALL_L.1, WALL_SIZE.0, WALL_SIZE.1);
 		let wall_r = Rect::new(WALL_R.0, WALL_R.1, WALL_SIZE.0, WALL_SIZE.1);
 		let arch = Rect::new(ARCH.0, ARCH.1, ARCH_SIZE.0, ARCH_SIZE.1);
-		self.wincan.draw_rects(&[Rect::new(100, 560, CAM_W-150, 30), wall_l, wall_r, arch])?;
+		self.wincan.draw_rects(&[Rect::new(100, 560, CAM_W-200, 30), wall_l, wall_r, arch])?;
 		//self.wincan.clear();
 
 		// fill health bars
 		if fighter.char_state.health() > 0 {
 			self.wincan.copy(healthbar_fill_left, 
-				Rect::new(0,0, 300-(270-fighter.char_state.health() as u32), 40), 
-				Rect::new(3,10, 300-(270-fighter.char_state.health() as u32), 40))?;
+				Rect::new(0,0, 270-(270-fighter.char_state.health() as u32), 40), 
+				Rect::new(3,10, 270-(270-fighter.char_state.health() as u32), 40))?;
 		}
 		if fighter2.char_state.health() > 0 {
 			self.wincan.copy(healthbar_fill_right, 
@@ -138,7 +139,12 @@ impl SDLCore{
 		let hazard_screen_rectangle = hazard.sprite;
 
 		// copy textures
-        self.wincan.copy(texture, current_frame, screen_rect)?;
+        if let Direction::Left = fighter.char_state.direction() {
+			self.wincan.copy_ex(texture, current_frame, screen_rect, 0.0, None, true, false)?;
+		}
+		else {
+			self.wincan.copy(texture, current_frame, screen_rect)?;
+		}
 		self.wincan.copy_ex(texture2, current_frame2, screen_rect2, 0.0, None, true, false)?;
 		self.wincan.copy(hazard_texture, hazard_frame, hazard_screen_rectangle)?;
 		self.wincan.set_draw_color(Color::RED);

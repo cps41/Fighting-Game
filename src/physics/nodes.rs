@@ -38,10 +38,10 @@ impl<T> Clone for NodeRef<T> {
 impl<T: fmt::Debug> fmt::Debug for NodeRef<T> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.debug_struct("NodeRef")
-		.field("\nparent", &self.0.borrow().parent)
-		.field("\nleft", &self.0.borrow().left)
-		.field("\nright", &self.0.borrow().right)
-		.field("\nbv", &self.0.borrow().bv)
+		.field("parent", &self.0.borrow().parent)
+		.field("left", &self.0.borrow().left)
+		.field("right", &self.0.borrow().right)
+		.field("bv", &self.0.borrow().bv)
 		.finish()
     }
 }
