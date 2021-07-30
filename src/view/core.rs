@@ -86,7 +86,7 @@ impl SDLCore{
 		let wall_l = Rect::new(WALL_L.0, WALL_L.1, WALL_SIZE.0, WALL_SIZE.1);
 		let wall_r = Rect::new(WALL_R.0, WALL_R.1, WALL_SIZE.0, WALL_SIZE.1);
 		let arch = Rect::new(ARCH.0, ARCH.1, ARCH_SIZE.0, ARCH_SIZE.1);
-		self.wincan.draw_rects(&[Rect::new(50, 560, CAM_W-100, 30), wall_l, wall_r, arch])?;
+		self.wincan.draw_rects(&[Rect::new(100, 560, CAM_W-150, 30), wall_l, wall_r, arch])?;
 		//self.wincan.clear();
 
 		// fill health bars

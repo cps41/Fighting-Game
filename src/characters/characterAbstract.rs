@@ -188,7 +188,7 @@ impl CharacterState {
 	pub fn new() -> CharacterState {
 		// current default values
 		// Stretch goals: expand to not use default values
-		let position = Particle::new(PhysVec::new(0f32,0f32), 0.01, 180f32, 270);
+		let position = Particle::new(PhysVec::new(0f32,0f32), 0.01, 180f32, 270, 2);
 		CharacterState {
 			// position: RefCell::new(position.clone()),
 			particle: Rc::new(RefCell::new(position.clone())),
@@ -324,6 +324,7 @@ impl CharacterState {
 	pub fn velocity(&self)		-> (f32, f32)					{ self.particle.borrow().velocity.raw() }
 	pub fn acceleration(&self)		-> (f32, f32)					{ self.particle.borrow().acceleration.raw() }
 	pub fn direction(&self)		-> &input::movement::Direction	{ &self.direction }
+	pub fn can_jump(&self)		-> bool 						{ self.particle.borrow().jump_count < 2 }
 
 	// settters (use to update)
 	// pub fn set_position(&mut self, p: PhysVec)						{ self.position.borrow().position.replace(&p); }

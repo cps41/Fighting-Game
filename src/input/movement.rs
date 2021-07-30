@@ -29,7 +29,7 @@ pub fn move_char(f: &mut characters::characterAbstract::Fighter){
                f.char_state.frame_count == 26 {
                 if f.char_state.direction == Direction::Right {
                     f.update_position(&gravity);
-                    f.char_state.particle.borrow_mut().velocity.add_vec(&PhysVec::new(200.0, 0.0));
+                    f.char_state.particle.borrow_mut().velocity.add_vec(&PhysVec::new(200.0, 90.0));
                     // f.char_state.particle.borrow_mut().add_force(&gravity);
                 }
                 else{
@@ -42,6 +42,9 @@ pub fn move_char(f: &mut characters::characterAbstract::Fighter){
         
         //jump or or left, depending on input
         animation::sprites::State::Jump => {
+            if f.char_state.frame_count == 1 {
+                f.char_state.particle.borrow_mut().jump_count += 1;
+            }
             if f.char_state.frame_count == 1 || 
                f.char_state.frame_count == 6 ||
                f.char_state.frame_count == 11{
@@ -65,6 +68,9 @@ pub fn move_char(f: &mut characters::characterAbstract::Fighter){
         
         //jump forward
         animation::sprites::State::FJump => {
+            if f.char_state.frame_count == 1 {
+                f.char_state.particle.borrow_mut().jump_count += 1;
+            }
             if f.char_state.frame_count == 1  ||
                f.char_state.frame_count == 7  ||
                f.char_state.frame_count == 13 ||

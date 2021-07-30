@@ -149,12 +149,12 @@ impl ParticleContact {
 
 			// alter health for hit/hazard collisions
 			(CollisionObjectType::HitBox, CollisionObjectType::HurtBox) | (CollisionObjectType::Hazard, CollisionObjectType::HurtBox) => {
-				self.objects[1].borrow().particle.borrow_mut().update_health(2);
+				self.objects[1].borrow().particle.borrow_mut().update_health(self.objects[0].borrow().particle.borrow().damage);
 				self.objects[0].borrow().particle.borrow_mut().velocity.add_vec(&impulse_per_mass.dot_product(mass_a));
 				self.objects[1].borrow().particle.borrow_mut().velocity.add_vec(&impulse_per_mass.dot_product(mass_b));
 			},
 			(CollisionObjectType::HurtBox, CollisionObjectType::HitBox) | (CollisionObjectType::HurtBox, CollisionObjectType::Hazard) => {
-				self.objects[0].borrow().particle.borrow_mut().update_health(2);
+				self.objects[0].borrow().particle.borrow_mut().update_health(self.objects[1].borrow().particle.borrow().damage);
 				self.objects[0].borrow().particle.borrow_mut().velocity.add_vec(&impulse_per_mass.dot_product(mass_a));
 				self.objects[1].borrow().particle.borrow_mut().velocity.add_vec(&impulse_per_mass.dot_product(mass_b));
 			},
@@ -193,6 +193,7 @@ impl ParticleContact {
 						self.objects[1].borrow().particle.borrow_mut().position.x += self.interpenetration.x as f32;
 					}
 				}
+				self.objects[1].borrow().particle.borrow_mut().jump_count = 0;
 			},
 			(_, CollisionObjectType::Platform) => {
 				if self.interpenetration.x > self.interpenetration.y {
@@ -206,6 +207,7 @@ impl ParticleContact {
 					else {
 						self.objects[0].borrow().particle.borrow_mut().position.x += self.interpenetration.x as f32;
 					}
+					self.objects[0].borrow().particle.borrow_mut().jump_count = 0;
 				}
 			},
 			(CollisionObjectType::Wall, _) => {

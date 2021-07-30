@@ -1,8 +1,10 @@
 use crate::physics::vecmath::PhysVec;
 use crate::view::globals::*;
 use sdl2::rect::Point;
+use bincode::{serialize, deserialize}; 
+use serde_derive::{Serialize, Deserialize};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Particle {
     pub position: PhysVec,
     pub velocity: PhysVec,
@@ -11,10 +13,12 @@ pub struct Particle {
     pub inverse_mass: f32,
     pub force_accumulator: PhysVec,
     pub health: i32,
+    pub jump_count: i32,
+    pub damage: i32,
 }
 
 impl Particle {
-    pub fn new(position: PhysVec, damping: f32, mass: f32, health: i32) -> Self {
+    pub fn new(position: PhysVec, damping: f32, mass: f32, health: i32, damage: i32) -> Self {
         let zero = PhysVec::new(0f32, 0f32);
         let inverse_mass = 1f32/mass;
         Particle {
@@ -25,6 +29,8 @@ impl Particle {
             inverse_mass,
             force_accumulator: zero.clone(),
             health: health,
+            damage: damage,
+            jump_count: 0,
         }
     }
 
