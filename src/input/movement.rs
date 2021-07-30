@@ -17,6 +17,7 @@ pub enum Direction {
 
 //moves character on first frame a sprite is loaded
 pub fn move_char(f: &mut characters::characterAbstract::Fighter){
+    let gravity = PhysVec::new(0.0, GRAVITY);
     match f.char_state.state{
         //walk right or left, depending
         animation::sprites::State::Walk => {
@@ -27,11 +28,13 @@ pub fn move_char(f: &mut characters::characterAbstract::Fighter){
                f.char_state.frame_count == 21 ||
                f.char_state.frame_count == 26 {
                 if f.char_state.direction == Direction::Right {
+                    f.update_position(&gravity);
                     f.char_state.particle.borrow_mut().velocity.add_vec(&PhysVec::new(200.0, 0.0));
-                    // f.update_position(&PhysVec::new(0.0, 0.0));
+                    // f.char_state.particle.borrow_mut().add_force(&gravity);
                 }
                 else{
-                    f.char_state.particle.borrow_mut().velocity.add_vec(&PhysVec::new(-200.0, 0.0));
+                    f.char_state.particle.borrow_mut().velocity.add_vec(&PhysVec::new(-200.0, 90.0));
+                    // f.char_state.particle.borrow_mut().add_force(&gravity);
                     // f.update_position(&PhysVec::new(0.0, 0.0 ));
                 }
             }
@@ -43,10 +46,12 @@ pub fn move_char(f: &mut characters::characterAbstract::Fighter){
                f.char_state.frame_count == 6 ||
                f.char_state.frame_count == 11{
                 f.char_state.particle.borrow_mut().velocity.replace(&PhysVec::new(0.0, -800.0));
+                f.char_state.particle.borrow_mut().add_force(&gravity);
                 // f.update_position(&PhysVec::new(0.0, 0.0));     
             }else if f.char_state.frame_count == 16 ||
             f.char_state.frame_count == 21 {
                 f.char_state.particle.borrow_mut().velocity.replace(&PhysVec::new(0.0, -500.0));
+                f.char_state.particle.borrow_mut().add_force(&gravity);
                 // f.update_position(&PhysVec::new(0.0, 0.0));            
             }else if f.char_state.frame_count == 24{
             
@@ -77,10 +82,9 @@ pub fn move_char(f: &mut characters::characterAbstract::Fighter){
         
         animation::sprites::State::Idle => {
             let force = PhysVec::new(0.0, GRAVITY);
-            let (x, _y) = f.char_state.velocity();
-            match x {
-                x if x != 0.0 => f.char_state.particle.borrow_mut().velocity.x = 0.0,
-                _ => {}
+            let x = f.char_state.velocity().0;
+            if x != 0.0 {
+                f.char_state.particle.borrow_mut().velocity.x = 0.0;
             }
             f.update_position(&force);
         },

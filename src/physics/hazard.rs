@@ -41,7 +41,12 @@ impl Hazard {
             particle: Rc::new(RefCell::new(Particle::new(PhysVec::new(35f32,0f32), 0.01, 300f32, 0))),
 		}
     }
-
+	pub fn update_position(&mut self) {
+		let mut scaled = PhysVec::new(0.0, GRAVITY);
+		scaled.dot_replace(1.0/0.0002645833);
+		self.particle.borrow_mut().add_force(&scaled);
+		self.particle.borrow_mut().integrate(FRAME_RATE as f32);
+	}
 	pub fn reset(&mut self, ) {
 		if self.sprite.x() > 800 {
 			self.sprite.offset(-650, -600);
@@ -69,7 +74,7 @@ impl Hazard {
 	}
 	pub fn update_bounding_box(&mut self, bvh: &BVHierarchy) {
 		// println!("updating...");
-		// println!("\nUpdating Bounding Boxes {:?}", bvh.head);
+		// println!("\nUpdating Hazard\n {:?}\n", self.hitbox);
         Hazard::remove(&mut self.hitbox);
         self.insert(&bvh);
     }

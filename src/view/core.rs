@@ -1,5 +1,6 @@
 extern crate sdl2;
 
+use sdl2::keyboard::TextInputUtil;
 use sdl2::rect::Rect;
 use sdl2::render::{WindowCanvas, Texture, TextureCreator};
 use sdl2::pixels::Color;
@@ -69,7 +70,7 @@ impl SDLCore{
 				fighter2: &characters::characterAbstract::Fighter,
 				hazard: &physics::hazard::Hazard,
 				hazard_texture: &Texture,
-				platform: &Rect,
+				end: Option<&Texture>,
 				healthbar_left: &Texture,
 				healthbar_right: &Texture,
 				healthbar_fill_left: &Texture,
@@ -89,12 +90,16 @@ impl SDLCore{
 		//self.wincan.clear();
 
 		// fill health bars
-		self.wincan.copy(healthbar_fill_left, Rect::new(0,0, 
-				300-(270-fighter.char_state.health() as u32), 40), Rect::new(3,10, 
-				300-(270-fighter.char_state.health() as u32), 40))?;
-		self.wincan.copy(healthbar_fill_right, 
-			Rect::new(270-fighter2.char_state.health(),0, 300-(270-fighter.char_state.health() as u32), 40), 
-			Rect::new(CAM_W as i32-(300-(270-fighter.char_state.health()))-3,10, 300-(270-fighter.char_state.health() as u32), 40))?;
+		if fighter.char_state.health() > 0 {
+			self.wincan.copy(healthbar_fill_left, 
+				Rect::new(0,0, 300-(270-fighter.char_state.health() as u32), 40), 
+				Rect::new(3,10, 300-(270-fighter.char_state.health() as u32), 40))?;
+		}
+		if fighter2.char_state.health() > 0 {
+			self.wincan.copy(healthbar_fill_right, 
+				Rect::new(270-fighter2.char_state.health(),0, 300-(270-fighter2.char_state.health() as u32), 40), 
+				Rect::new(CAM_W as i32-(300-(270-fighter2.char_state.health()))-3,10, 300-(270-fighter2.char_state.health() as u32), 40))?;
+		}
 		self.wincan.copy(healthbar_left, None, Rect::new(3,10, 300, 40))?;
 		self.wincan.copy(healthbar_right, None, Rect::new(CAM_W as i32-300-3,10, 300, 40))?;
 
@@ -138,6 +143,11 @@ impl SDLCore{
 		self.wincan.copy(hazard_texture, hazard_frame, hazard_screen_rectangle)?;
 		self.wincan.set_draw_color(Color::RED);
 		self.wincan.draw_rects(&[fighter.char_state.get_bb(), fighter2.char_state.get_bb(), hazard.get_bb()])?;
+		if end.is_some() {
+			self.wincan.copy(end.unwrap(), 
+				Rect::new((700-415)/2,(300-155)/2,415, 155), 
+				Rect::new((CAM_W as i32-415)/2, (CAM_H as i32-155)/2, 415, 155))?;
+		}
         self.wincan.present();
 
         /*

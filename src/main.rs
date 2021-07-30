@@ -94,6 +94,8 @@ pub fn run_game() -> Result<(), String>{
     let healthbar_right = texture_creator.load_texture("src/assets/images/healthbar/healthbar_right.png")?;
     let healthbar_fill_left = texture_creator.load_texture("src/assets/images/healthbar/healthbar_fill_left.png")?;
     let healthbar_fill_right = texture_creator.load_texture("src/assets/images/healthbar/healthbar_fill_right.png")?;
+    let win = texture_creator.load_texture("src/assets/images/end/win.png")?;
+    let lose = texture_creator.load_texture("src/assets/images/end/lose.png")?;
 
     let java_idle = texture_creator.load_texture("src/assets/images/characters/java/idle.png")?;
     let java_walk = texture_creator.load_texture("src/assets/images/characters/java/walk.png")?;
@@ -161,7 +163,7 @@ pub fn run_game() -> Result<(), String>{
     };
 
     game_window.render(&background, &texture, &fighter, &texture2, &fighter2, 
-            &hazard, &hazard_texture, &platform, &healthbar_left, &healthbar_right,
+            &hazard, &hazard_texture, None, &healthbar_left, &healthbar_right,
             &healthbar_fill_left, &healthbar_fill_right)?;
 
 
@@ -169,17 +171,17 @@ pub fn run_game() -> Result<(), String>{
         Rc::new(RefCell::new(Particle::new(
             PhysVec::new((CAM_W-50-platform.width()) as f32, 560f32), 0.5, 2000000000.0, 0)))));
 
-    // collisions.insert(CollisionObject::new_from(CollisionObjectType::Wall, wall_l, 
-    //     Rc::new(RefCell::new(Particle::new(PhysVec::new(WALL_L.0 as f32, WALL_L.1 as f32), 0.5, 20000000000.0, 0)))));
-    // collisions.insert(CollisionObject::new_from(CollisionObjectType::Wall, wall_r, 
-    //     Rc::new(RefCell::new(Particle::new(PhysVec::new(WALL_R.0 as f32, WALL_R.1 as f32), 0.5, 20000000000.0, 0)))));
+    collisions.insert(CollisionObject::new_from(CollisionObjectType::Wall, wall_l, 
+        Rc::new(RefCell::new(Particle::new(PhysVec::new(WALL_L.0 as f32, WALL_L.1 as f32), 0.5, 20000000000.0, 0)))));
+    collisions.insert(CollisionObject::new_from(CollisionObjectType::Wall, wall_r, 
+        Rc::new(RefCell::new(Particle::new(PhysVec::new(WALL_R.0 as f32, WALL_R.1 as f32), 0.5, 20000000000.0, 0)))));
     collisions.insert(CollisionObject::new_from(CollisionObjectType::Platform, arch, 
         Rc::new(RefCell::new(Particle::new(PhysVec::new(ARCH.0 as f32, ARCH.1 as f32), 0.5, 20000000000.0, 0)))));
 
 
 
 //################################################-GAME-LOOP###############################################
-    'gameloop: loop{
+    'gameloop: loop {
         let loop_time = Instant::now();
     //################################################-GET-INPUT-##########################################
         //ceck if play quits
@@ -214,23 +216,28 @@ pub fn run_game() -> Result<(), String>{
         fighter.char_state.update_bounding_boxes(&collisions);
         fighter2.char_state.update_bounding_boxes(&collisions);
         hazard.update_bounding_box(&collisions);
+        println!("\n\nupdating...");
+		println!("\nFighter 1\n {:?}\n", fighter.char_state.get_node());
+		println!("\nFighter 2\n {:?}\n", fighter2.char_state.get_node());
+		println!("\nHazard\n {:?}\n", hazard.hitbox);
         let hazard_reset = collisions.resolve_collisions();
         // println!("\nCollisions head: \n{:?}\n", collisions.head);
         fighter.char_state.particle.borrow_mut().integrate(FRAME_RATE as f32);
         fighter2.char_state.particle.borrow_mut().integrate(FRAME_RATE as f32);
+        hazard.particle.borrow_mut().integrate(FRAME_RATE as f32);
 
         //move hazard
         if hazard.sprite.y() < 600 && hazard.fell == false {
-           hazard.sprite.offset(0, 7);
-           //println!("{}", hazard.sprite.y())
+            //hazard.sprite.offset(0, 7);
+            //println!("{}", hazard.sprite.y())
+            hazard.particle.borrow_mut().add_force(&PhysVec::new(0.0, GRAVITY));
        }
     //    if hazard.sprite.y() >= 600 || hazard_reset {
-        if hazard_reset {
+        if hazard_reset || hazard.sprite.y() >= 560 {
            hazard.reset();
            hazard.fell = false;
        }
     //##################################################-RENDER-###########################################
-
         // get the proper texture within the game
         let texture = {
             match python_textures.get(&fighter.char_state.state) {
@@ -245,9 +252,21 @@ pub fn run_game() -> Result<(), String>{
             }
         };
 
+        let end_message = {
+            // check if game should continue
+            if fighter.char_state.health() <= 0 {
+                Some(&lose)
+            }
+            else if fighter2.char_state.health() <= 0 {
+                Some(&win)
+            }
+            else {
+                None
+            }
+        };
         // render canvas
         game_window.render(&background, &texture, &fighter, &texture2, &fighter2, 
-            &hazard, &hazard_texture, &platform, &healthbar_left, &healthbar_right,
+            &hazard, &hazard_texture, end_message, &healthbar_left, &healthbar_right,
             &healthbar_fill_left, &healthbar_fill_right)?;
     //##################################################-SLEEP-############################################
 

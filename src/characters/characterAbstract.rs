@@ -107,7 +107,7 @@ impl <'t> Fighter <'t> {
     pub fn weight(&self) -> &i32 {&self.weight}
     pub fn gravity(&self) -> &f32 {&self.gravity}
     pub fn max_fall_speed(&self) -> &i32 {&self.max_fall_speed}
-	pub fn get_health(&self) -> &i32 {&self.health}
+	pub fn get_health(&self) -> i32 {self.health}
     pub fn walk_speed(&self) -> &i32 {&self.walk_speed}
     pub fn run_speed(&self) -> &i32 {&self.run_speed}
     pub fn max_air_speed(&self) -> &i32 {&self.max_air_speed}
@@ -421,6 +421,17 @@ impl CharacterState {
 			self.blockbox.clone().unwrap().borrow().rect.clone()
 		}
 		else {Rect::new(0,0,0,0)}
+	}
+	pub fn get_node(&self) -> CollisionObject {
+		if self.hurtbox.is_some() {
+			self.hurtbox.clone().unwrap().borrow().clone()
+		}
+		else if self.hitbox.is_some() {
+			self.hitbox.clone().unwrap().borrow().clone()
+		}
+		else {
+			self.blockbox.clone().unwrap().borrow().clone()
+		}
 	}
 }
 
