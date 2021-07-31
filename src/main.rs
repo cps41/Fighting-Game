@@ -620,11 +620,17 @@ pub fn run_client() -> Result<(), String>{
 
         let end_message = {
             // check if game should continue
-            if fighter1.char_state.health() <= 0 {
+            if fighter1.char_state.health() <= 0 && player_number == 1 {
                 Some(&lose)
             }
-            else if fighter2.char_state.health() <= 0 {
+            else if fighter2.char_state.health() <= 0 && player_number == 1 {
                 Some(&win)
+            }
+            else if fighter1.char_state.health() <= 0 && player_number == 2 {
+                Some(&win)
+            }
+            else if fighter2.char_state.health() <= 0 && player_number == 2 {
+                Some(&lose)
             }
             else {
                 None
