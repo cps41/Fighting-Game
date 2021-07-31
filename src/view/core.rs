@@ -140,7 +140,7 @@ impl SDLCore{
 
 		// copy textures
         if let Direction::Left = fighter.char_state.direction() {
-			self.wincan.copy_ex(texture, current_frame, screen_rect, 0.0, None, true, false)?;
+			self.wincan.copy(texture, current_frame, screen_rect)?;
 		}
 		else {
 			self.wincan.copy(texture, current_frame, screen_rect)?;
@@ -149,7 +149,7 @@ impl SDLCore{
 			self.wincan.copy_ex(texture2, current_frame2, screen_rect2, 0.0, None, true, false)?;
 		}
 		else {
-			self.wincan.copy(texture2, current_frame2, screen_rect2)?;
+			self.wincan.copy_ex(texture2, current_frame2, screen_rect2, 0.0, None, true, false)?;
 		}
 		// self.wincan.copy_ex(texture2, current_frame2, screen_rect2, 0.0, None, true, false)?;
 		self.wincan.copy(hazard_texture, hazard_frame, hazard_screen_rectangle)?;
