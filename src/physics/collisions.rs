@@ -131,9 +131,6 @@ impl ParticleContact {
 		let a = &self.objects[0].borrow().particle;
 		let b = &self.objects[1].borrow().particle;
 		let separating_velocity = self.separating_velocity();
-		if separating_velocity > 0f32 { 
-			return false
-		} // contact is either separating or stationary, no impulse required
 
 		let new_sep_velocity = -separating_velocity*self.restitution;
 		let delta_velocity = new_sep_velocity - separating_velocity;
@@ -156,17 +153,15 @@ impl ParticleContact {
 			(_, CollisionObjectType::Platform) => if self.interpenetration.x > self.interpenetration.y { 
 				self.objects[0].borrow().particle.borrow_mut().reset_y()
 			},
-			(CollisionObjectType::Wall, _) => self.objects[1].borrow().particle.borrow_mut().reset_y(),
-			(_, CollisionObjectType::Wall) => self.objects[0].borrow().particle.borrow_mut().reset_y(),
 
 			// alter health for hit/hazard collisions
-			(CollisionObjectType::HitBox, CollisionObjectType::HurtBox) | (CollisionObjectType::Hazard, CollisionObjectType::HurtBox) => {
+			(CollisionObjectType::HitBox | CollisionObjectType::Hazard, CollisionObjectType::HurtBox) => {
 				self.objects[1].borrow().particle.borrow_mut().update_health(self.objects[0].borrow().particle.borrow().damage);
 				self.objects[0].borrow().particle.borrow_mut().velocity.add_vec(&impulse_per_mass.dot_product(mass_a));
 				self.objects[1].borrow().particle.borrow_mut().velocity.add_vec(&impulse_per_mass.dot_product(-mass_b));
 				hit_audio = true;
 			},
-			(CollisionObjectType::HurtBox, CollisionObjectType::HitBox) | (CollisionObjectType::HurtBox, CollisionObjectType::Hazard) => {
+			(CollisionObjectType::HurtBox, CollisionObjectType::HitBox | CollisionObjectType::Hazard) => {
 				self.objects[0].borrow().particle.borrow_mut().update_health(self.objects[1].borrow().particle.borrow().damage);
 				self.objects[0].borrow().particle.borrow_mut().velocity.add_vec(&impulse_per_mass.dot_product(mass_a));
 				self.objects[1].borrow().particle.borrow_mut().velocity.add_vec(&impulse_per_mass.dot_product(-mass_b));
@@ -191,7 +186,7 @@ impl ParticleContact {
 
 		match &types {
 			// stop y movement for platform collisions
-			(CollisionObjectType::Platform, _) => { 
+			(CollisionObjectType::Platform | CollisionObjectType::Wall, _) => { 
 				if self.interpenetration.x > self.interpenetration.y {
 					if a_loc.y() > b_loc.y() {
 						self.objects[1].borrow().particle.borrow_mut().position.y -= self.interpenetration.y;
@@ -211,11 +206,11 @@ impl ParticleContact {
 					}
 				}
 			},
-			(_, CollisionObjectType::Platform) => {
+			(_, CollisionObjectType::Platform | CollisionObjectType::Wall) => {
 				if self.interpenetration.x > self.interpenetration.y {
 					if a_loc.y() < b_loc.y() {
 						self.objects[0].borrow().particle.borrow_mut().position.y -= self.interpenetration.y;
-						self.objects[1].borrow().particle.borrow_mut().jump_count = 0;
+						self.objects[0].borrow().particle.borrow_mut().jump_count = 0;
 					}
 					else {
 						self.objects[0].borrow().particle.borrow_mut().position.y += self.interpenetration.y;
@@ -231,23 +226,6 @@ impl ParticleContact {
 					}
 				}
 			},
-			(CollisionObjectType::Wall, _) => {
-				// handle x-axis
-				if a_loc.x() > b_loc.x() { // if wall is on the right side, shift object left
-					self.objects[1].borrow().particle.borrow_mut().position.x -= self.interpenetration.x;
-				}
-				else { // if wall is on the left side, shift object right
-					self.objects[1].borrow().particle.borrow_mut().position.x += self.interpenetration.x;
-				}
-			}
-			(_, CollisionObjectType::Wall) => {
-				if a_loc.x() < b_loc.x() {
-					self.objects[0].borrow().particle.borrow_mut().position.x -= self.interpenetration.x;
-				}
-				else {
-					self.objects[0].borrow().particle.borrow_mut().position.x += self.interpenetration.x;
-				}
-			}
 
 			// just update others
 			_ => {

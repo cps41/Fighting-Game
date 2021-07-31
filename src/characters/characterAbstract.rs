@@ -376,11 +376,11 @@ impl CharacterState {
 		let vel_particle = self.particle.clone();
 		let rect = {
 			if self.direction == Direction::Right {
-				vel_particle.borrow_mut().velocity.x = 25.0;
+				vel_particle.borrow_mut().velocity.x = 40.0;
 				Rect::new(self.x()+W_OFFSET+SPRITE_W as i32/2, self.y()+H_OFFSET, SPRITE_W as u32, SPRITE_H/2)
 			}
 			else {
-				vel_particle.borrow_mut().velocity.x = -25.0;
+				vel_particle.borrow_mut().velocity.x = -40.0;
 				Rect::new(self.x()+W_OFFSET-SPRITE_W as i32/2, self.y()+H_OFFSET, SPRITE_W as u32, SPRITE_H/2)
 			}
 		};
@@ -417,7 +417,7 @@ impl CharacterState {
         // clamp position
 		let w_offset = CAM_W as f32/2f32;
 		let (x, y) = self.particle.borrow().position.raw();
-		self.particle.borrow_mut().position.x = x.clamp(-w_offset+SPRITE_W as f32/2.0, w_offset-SPRITE_W as f32/2.0);
+		// self.particle.borrow_mut().position.x = x.clamp(-w_offset+SPRITE_W as f32/2.0, w_offset-SPRITE_W as f32/2.0);
 		
         if y <= -10.0 && x > -100.0 && x < 100.0 {
 		    self.particle.borrow_mut().position.y = y.clamp(-1000.0, -38.0);

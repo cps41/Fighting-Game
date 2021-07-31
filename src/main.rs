@@ -277,7 +277,7 @@ pub fn run_game() -> Result<(), String>{
         thread::sleep(frame_time - loop_time.elapsed().clamp(Duration::new(0, 0), frame_time));
     }
 
-    'endloop: loop {
+    'endloop: while end_message.is_some() {
     //################################################-GET-INPUT-##########################################
         //check if play quits
         for event in game_window.event_pump.poll_iter() {
