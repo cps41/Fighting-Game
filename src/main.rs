@@ -125,6 +125,8 @@ pub fn run_game() -> Result<(), String>{
     java_textures.insert(animation::sprites::State::HKick, java_hkick);
     java_textures.insert(animation::sprites::State::Block, java_block);
 
+    let mut end_message = None;
+
     ///////////////////////
     // NOT YET FUNCTIONING
     // Self::load_textures(&texture_creator, &mut fighter);
@@ -250,7 +252,7 @@ pub fn run_game() -> Result<(), String>{
             }
         };
 
-        let end_message = {
+        end_message = {
             // check if game should continue
             if fighter.char_state.health() <= 0 {
                 Some(&lose)
@@ -266,10 +268,31 @@ pub fn run_game() -> Result<(), String>{
         game_window.render(&background, &texture, &fighter, &texture2, &fighter2, 
             &hazard, &hazard_texture, end_message, &healthbar_left, &healthbar_right,
             &healthbar_fill_left, &healthbar_fill_right)?;
+        
+        if end_message.is_some() {
+            break 'gameloop;
+        }
     //##################################################-SLEEP-############################################
 
         thread::sleep(frame_time - loop_time.elapsed().clamp(Duration::new(0, 0), frame_time));
     }
+
+    'endloop: loop {
+    //################################################-GET-INPUT-##########################################
+        //check if play quits
+        for event in game_window.event_pump.poll_iter() {
+            match event {
+                Event::Quit{..} | Event::KeyDown{keycode: Some(Keycode::Escape), ..} => break 'endloop,
+                //_ => { input::inputHandler::keyboard_input(&event, &mut fighter); }
+                _=> {},
+            }
+        }
+        // render canvas
+        game_window.render(&background, &texture, &fighter, &texture2, &fighter2, 
+            &hazard, &hazard_texture, end_message, &healthbar_left, &healthbar_right,
+            &healthbar_fill_left, &healthbar_fill_right)?;
+    }
+
     Ok(())
 }
 
