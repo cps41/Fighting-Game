@@ -31,16 +31,23 @@ impl BVHierarchy {
 			let p1 = contact.objects[1].clone();
 			if check_collision(p0.borrow().clone(), p1.borrow().clone()) {
 				// println!("Resolving....");
-				if contact.resolve_velocity(FRAME_RATE as f32) {hazard_reset = true}
+				// if contact.resolve_velocity(FRAME_RATE as f32) {hazard_reset = true}
+				contact.resolve_velocity(FRAME_RATE as f32);
 				contact.resolve_interpenetration();
 				match (p0.borrow().obj_type, p1.borrow().obj_type) {
-					(CollisionObjectType::Platform, _) => //(),
-					println!("\n\nContact between\n {:#?}\nand\n {:#?}", contact.objects[0], contact.objects[1]),
-					(_, CollisionObjectType::Platform) => //(),
-					println!("\n\nContact between\n {:#?}\nand\n {:#?}", contact.objects[0], contact.objects[1]),
-					_ => // ()
-					{println!("\n\n**********BVH Head: {:#?}\n", self.head);
-					println!("\n\nContact between\n {:#?}\nand\n {:#?}", contact.objects[0], contact.objects[1])},
+					(CollisionObjectType::Hazard, _)  | (_, CollisionObjectType::Hazard) => {
+						hazard_reset = true;
+						println!("\n\nContact between\n {:#?}\nand\n {:#?}", contact.objects[0], contact.objects[1]);
+					},
+					// {println!("\n\n**********BVH Head: {:#?}\n", self.head);
+					// println!("\n\nContact between\n {:#?}\nand\n {:#?}", contact.objects[0], contact.objects[1])},
+					(CollisionObjectType::Platform, _) => (),
+					// println!("\n\nContact between\n {:#?}\nand\n {:#?}", contact.objects[0], contact.objects[1]),
+					(_, CollisionObjectType::Platform) => (),
+					// println!("\n\nContact between\n {:#?}\nand\n {:#?}", contact.objects[0], contact.objects[1]),
+					_ => ()
+					// {println!("\n\n**********BVH Head: {:#?}\n", self.head);
+					// println!("\n\nContact between\n {:#?}\nand\n {:#?}", contact.objects[0], contact.objects[1]),
 				}
 				// println!("\nVelocities updated between\n {:?}\nand\n {:?}", contact.particles[0], contact.particles[1]);
 			}
@@ -63,6 +70,7 @@ pub struct Node<T> {
 impl<T: fmt::Debug> fmt::Debug for Node<T> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.debug_struct("Node")
+		.field("area", &self.area)
 		.field("left", &self.left)
 		.field("right", &self.right)
 		.field("bv", &self.bv)
@@ -173,58 +181,68 @@ impl ParticleContact {
 
 	fn resolve_interpenetration(&self) {
 		let types = (self.objects[0].borrow().obj_type, self.objects[1].borrow().obj_type);
-		let a_size = self.objects[0].borrow().rect.size();
 		let a_loc = self.objects[0].borrow().rect.top_left();
-		let b_size = self.objects[1].borrow().rect.size();
 		let b_loc = self.objects[1].borrow().rect.top_left();
+
+		// println!("\ninterpenetration: {:?}\n", self.interpenetration);
 
 		match &types {
 			// stop y movement for platform collisions
 			(CollisionObjectType::Platform, _) => { 
 				if self.interpenetration.x > self.interpenetration.y {
-					self.objects[1].borrow().particle.borrow_mut().position.y -= self.interpenetration.y as f32;
+					if a_loc.y() > b_loc.y() {
+						self.objects[1].borrow().particle.borrow_mut().position.y -= self.interpenetration.y;
+						self.objects[1].borrow().particle.borrow_mut().jump_count = 0;
+					}
+					else {
+						self.objects[1].borrow().particle.borrow_mut().position.y += self.interpenetration.y;
+					}
 				}
 				// handle x-axis
 				else {
 					if a_loc.x() > b_loc.x() { // if wall is on the right side, shift object left
-						self.objects[1].borrow().particle.borrow_mut().position.x -= self.interpenetration.x as f32;
+						self.objects[1].borrow().particle.borrow_mut().position.x -= self.interpenetration.x;
 					}
 					else { // if wall is on the left side, shift object right
-						self.objects[1].borrow().particle.borrow_mut().position.x += self.interpenetration.x as f32;
+						self.objects[1].borrow().particle.borrow_mut().position.x += self.interpenetration.x;
 					}
 				}
-				self.objects[1].borrow().particle.borrow_mut().jump_count = 0;
 			},
 			(_, CollisionObjectType::Platform) => {
 				if self.interpenetration.x > self.interpenetration.y {
-					self.objects[0].borrow().particle.borrow_mut().position.y -= self.interpenetration.y as f32;
+					if a_loc.y() < b_loc.y() {
+						self.objects[0].borrow().particle.borrow_mut().position.y -= self.interpenetration.y;
+						self.objects[1].borrow().particle.borrow_mut().jump_count = 0;
+					}
+					else {
+						self.objects[0].borrow().particle.borrow_mut().position.y += self.interpenetration.y;
+					}
 				}
 				// handle x-axis
 				else {
 					if a_loc.x() < b_loc.x() {
-						self.objects[0].borrow().particle.borrow_mut().position.x -= self.interpenetration.x as f32;
+						self.objects[0].borrow().particle.borrow_mut().position.x -= self.interpenetration.x;
 					}
 					else {
-						self.objects[0].borrow().particle.borrow_mut().position.x += self.interpenetration.x as f32;
+						self.objects[0].borrow().particle.borrow_mut().position.x += self.interpenetration.x;
 					}
-					self.objects[0].borrow().particle.borrow_mut().jump_count = 0;
 				}
 			},
 			(CollisionObjectType::Wall, _) => {
 				// handle x-axis
 				if a_loc.x() > b_loc.x() { // if wall is on the right side, shift object left
-					self.objects[1].borrow().particle.borrow_mut().position.x -= self.interpenetration.x as f32;
+					self.objects[1].borrow().particle.borrow_mut().position.x -= self.interpenetration.x;
 				}
 				else { // if wall is on the left side, shift object right
-					self.objects[1].borrow().particle.borrow_mut().position.x += self.interpenetration.x as f32;
+					self.objects[1].borrow().particle.borrow_mut().position.x += self.interpenetration.x;
 				}
 			}
 			(_, CollisionObjectType::Wall) => {
 				if a_loc.x() < b_loc.x() {
-					self.objects[0].borrow().particle.borrow_mut().position.x -= self.interpenetration.x as f32;
+					self.objects[0].borrow().particle.borrow_mut().position.x -= self.interpenetration.x;
 				}
 				else {
-					self.objects[0].borrow().particle.borrow_mut().position.x += self.interpenetration.x as f32;
+					self.objects[0].borrow().particle.borrow_mut().position.x += self.interpenetration.x;
 				}
 			}
 
@@ -233,18 +251,18 @@ impl ParticleContact {
 				// if width overlap is less than height overlap, resolve x axis
 				if self.interpenetration.x < self.interpenetration.y {
 					if a_loc.x() < b_loc.x() {
-						self.objects[0].borrow().particle.borrow_mut().position.x -= self.interpenetration.x as f32;
+						self.objects[0].borrow().particle.borrow_mut().position.x -= self.interpenetration.x;
 					}
 					else {
-						self.objects[0].borrow().particle.borrow_mut().position.x += (self.interpenetration.x) as f32;
+						self.objects[0].borrow().particle.borrow_mut().position.x += self.interpenetration.x;
 					}
 				}
 				else {
 					if a_loc.y() < b_loc.y() {
-						self.objects[0].borrow().particle.borrow_mut().position.y -= self.interpenetration.y as f32;
+						self.objects[0].borrow().particle.borrow_mut().position.y -= self.interpenetration.y;
 					}
 					else {
-						self.objects[0].borrow().particle.borrow_mut().position.y += self.interpenetration.y as f32;
+						self.objects[0].borrow().particle.borrow_mut().position.y += self.interpenetration.y;
 					}
 				}
 			},

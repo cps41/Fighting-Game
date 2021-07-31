@@ -192,7 +192,7 @@ impl CharacterState {
 	pub fn new() -> CharacterState {
 		// current default values
 		// Stretch goals: expand to not use default values
-		let position = Particle::new(PhysVec::new(0f32,0f32), 0.01, 180f32, 270, 2);
+		let position = Particle::new(PhysVec::new(0f32,-300f32), 0.01, 180f32, 270, 10);
 		CharacterState {
 			// position: RefCell::new(position.clone()),
 			particle: Rc::new(RefCell::new(position.clone())),
@@ -353,7 +353,16 @@ impl CharacterState {
 			false
 		}
 	}
-	pub fn remove(link: &mut Option<RefCell<CollisionObject>>) {
+	
+	pub fn remove(&mut self, box_type: String) {
+		let mut none = None;
+		let link = {match box_type.as_str() {
+			"hurt" => &mut self.hurtbox,
+			"hit" => &mut self.hitbox,
+			"block" => &mut self.blockbox,
+			_ => &mut none,
+		}};
+
 		link.take().map(|l| {
 			l.borrow().getNodeRef().map(|n| {
 				// println!("\nremoving {:?}\n", n);
@@ -363,24 +372,19 @@ impl CharacterState {
 	}
 	pub fn insert_hit_box(&mut self, bvh: &BVHierarchy) {
 		// println!("inserting hit box...");
-		CharacterState::remove(&mut self.hitbox);
+		self.remove("hit".to_string());
 		let vel_particle = self.particle.clone();
 		let rect = {
 			if self.direction == Direction::Right {
-				vel_particle.borrow_mut().velocity.x = 50.0;
+				vel_particle.borrow_mut().velocity.x = 25.0;
 				Rect::new(self.x()+W_OFFSET+SPRITE_W as i32/2, self.y()+H_OFFSET, SPRITE_W as u32, SPRITE_H/2)
 			}
 			else {
-				vel_particle.borrow_mut().velocity.x = -50.0;
+				vel_particle.borrow_mut().velocity.x = -25.0;
 				Rect::new(self.x()+W_OFFSET-SPRITE_W as i32/2, self.y()+H_OFFSET, SPRITE_W as u32, SPRITE_H/2)
 			}
 		};
-		if self.particle.borrow().position.y < 88.0 {
-			vel_particle.borrow_mut().velocity.y = 500.0;
-		}
-		else {
-			vel_particle.borrow_mut().velocity.y = 0.0;
-		}
+		vel_particle.borrow_mut().velocity.y = 300.0;
 		self.hitbox = Some(bvh.insert(
 			CollisionObject {
 				obj_type: CollisionObjectType::HitBox, 
@@ -393,7 +397,7 @@ impl CharacterState {
 	}
 	pub fn insert_hurt_box(&mut self, bvh: &BVHierarchy) {
 		// println!("inserting hurt box...");
-		CharacterState::remove(&mut self.hurtbox);
+		self.remove("hurt".to_string());
 		self.hurtbox = Some(bvh.insert(
 			CollisionObject::new(
 				CollisionObjectType::HurtBox, self.x()+W_OFFSET, self.y()+H_OFFSET, SPRITE_W, SPRITE_H, self.particle.clone())
@@ -401,7 +405,8 @@ impl CharacterState {
 	}
 	pub fn insert_block_box(&mut self, bvh: &BVHierarchy) {
 		// println!("inserting block box...");
-		CharacterState::remove(&mut self.blockbox);
+		self.remove("block".to_string());
+		self.particle.borrow_mut().velocity.y = 300.0;
 		self.blockbox = Some(bvh.insert(
 			CollisionObject::new(
 				CollisionObjectType::BlockBox, self.x()+W_OFFSET, self.y()+H_OFFSET, SPRITE_W, SPRITE_H, self.particle.clone())
@@ -409,21 +414,31 @@ impl CharacterState {
 	}
 	pub fn update_bounding_boxes(&mut self, bvh: &BVHierarchy) {
 		// println!("updating...");
-		// println!("\nUpdating Bounding Boxes {:?}", bvh.head);
+        // clamp position
+		let w_offset = CAM_W as f32/2f32;
+		let (x, y) = self.particle.borrow().position.raw();
+		self.particle.borrow_mut().position.x = x.clamp(-w_offset+SPRITE_W as f32/2.0, w_offset-SPRITE_W as f32/2.0);
+		
+        if y <= -10.0 && x > -100.0 && x < 100.0 {
+		    self.particle.borrow_mut().position.y = y.clamp(-1000.0, -38.0);
+        }
+        else if y <= 120.0 && x > -600.0 && x < 600.0 {
+		    self.particle.borrow_mut().position.y = y.clamp(-1000.0, 92.0);
+        }
 		match &self.state {
 			State::Block => {
-				CharacterState::remove(&mut self.hitbox);
-				CharacterState::remove(&mut self.hurtbox);
+				self.remove("hit".to_string());
+				self.remove("hurt".to_string());
 				self.insert_block_box(&bvh);
 			},
 			State::LPunch | State::HKick | State::LKick => {
-				CharacterState::remove(&mut self.blockbox);
-				CharacterState::remove(&mut self.hurtbox);
+				self.remove("block".to_string());
+				self.remove("hurt".to_string());
 				self.insert_hit_box(&bvh);
 			},
 			_ => {
-				CharacterState::remove(&mut self.hitbox);
-				CharacterState::remove(&mut self.blockbox);
+				self.remove("hit".to_string());
+				self.remove("block".to_string());
 				self.insert_hurt_box(&bvh);
 			},
 		}

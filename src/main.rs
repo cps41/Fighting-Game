@@ -219,26 +219,21 @@ pub fn run_game() -> Result<(), String>{
         fighter.char_state.update_bounding_boxes(&collisions);
         fighter2.char_state.update_bounding_boxes(&collisions);
         hazard.update_bounding_box(&collisions);
+        // println!("\nCollisions head BEFORE: \n{:#?}\n", collisions.head);
         // println!("\n\nupdating...");
 		// println!("\nFighter 1\n {:?}\n", fighter.char_state.get_node());
 		// println!("\nFighter 2\n {:?}\n", fighter2.char_state.get_node());
 		// println!("\nHazard\n {:?}\n", hazard.hitbox);
         let hazard_reset = collisions.resolve_collisions();
-        // println!("\nCollisions head: \n{:?}\n", collisions.head);
+        // println!("\nCollisions head AFTER: \n{:#?}\n", collisions.head);
         fighter.char_state.particle.borrow_mut().integrate(FRAME_RATE as f32);
         fighter2.char_state.particle.borrow_mut().integrate(FRAME_RATE as f32);
         hazard.particle.borrow_mut().integrate(FRAME_RATE as f32);
 
         //move hazard
-        if hazard.sprite.y() < 600 && hazard.fell == false {
-            //hazard.sprite.offset(0, 7);
-            //println!("{}", hazard.sprite.y())
-            hazard.update_position();
-       }
-    //    if hazard.sprite.y() >= 600 || hazard_reset {
-        if hazard_reset || hazard.sprite.y() >= 560 {
+        hazard.update_position();
+        if hazard_reset {
            hazard.reset();
-           hazard.fell = false;
        }
     //##################################################-RENDER-###########################################
         // get the proper texture within the game
@@ -307,7 +302,7 @@ pub fn run_server() -> Result<(), String>{
 
     let mut hazard = physics::hazard::Hazard::new();
 
-    let platform = Rect::new(50, 560, CAM_W-100, 30);
+    let platform = Rect::new(100, 560, CAM_W-200, 30);
     let wall_l = Rect::new(WALL_L.0, WALL_L.1, WALL_SIZE.0, WALL_SIZE.1);
     let wall_r = Rect::new(WALL_R.0, WALL_R.1, WALL_SIZE.0, WALL_SIZE.1);
     let arch = Rect::new(ARCH.0, ARCH.1, ARCH_SIZE.0, ARCH_SIZE.1);
@@ -315,7 +310,7 @@ pub fn run_server() -> Result<(), String>{
 
     let collisions = BVHierarchy::new(CollisionObject::new_from(CollisionObjectType::Platform, platform.clone(),
         Rc::new(RefCell::new(Particle::new(
-            PhysVec::new((CAM_W-50-platform.width()) as f32, 560f32), 0.5, 2000000000.0, 0, 0)))));
+            PhysVec::new(((CAM_W-platform.width())/2) as f32, 560f32), 0.5, 2000000000.0, 0, 0)))));
 
     collisions.insert(CollisionObject::new_from(CollisionObjectType::Wall, wall_l, 
         Rc::new(RefCell::new(Particle::new(PhysVec::new(WALL_L.0 as f32, WALL_L.1 as f32), 0.5, 20000000000.0, 0, 0)))));
@@ -374,19 +369,13 @@ pub fn run_server() -> Result<(), String>{
         
 
         let hazard_reset = collisions.resolve_collisions();
-        // println!("\nCollisions head: \n{:?}\n", collisions.head);
         fighter1.char_state.particle.borrow_mut().integrate(FRAME_RATE as f32);
         fighter2.char_state.particle.borrow_mut().integrate(FRAME_RATE as f32);
 
         //move hazard
-        if hazard.sprite.y() < 600 && hazard.fell == false {
-           hazard.sprite.offset(0, 7);
-           //println!("{}", hazard.sprite.y())
-       }
-    //    if hazard.sprite.y() >= 600 || hazard_reset {
+        hazard.update_position();
         if hazard_reset {
            hazard.reset();
-           hazard.fell = false;
        }
     //#############################################-SEND-GAMESTATE-#######################################
         
@@ -424,7 +413,7 @@ pub fn run_client() -> Result<(), String>{
 
     let texture_creator = game_window.wincan.texture_creator();
 
-    let platform = Rect::new(50, 560, CAM_W-100, 30);
+    let platform = Rect::new(100, 560, CAM_W-200, 30);
     let wall_l = Rect::new(WALL_L.0, WALL_L.1, WALL_SIZE.0, WALL_SIZE.1);
     let wall_r = Rect::new(WALL_R.0, WALL_R.1, WALL_SIZE.0, WALL_SIZE.1);
     let arch = Rect::new(ARCH.0, ARCH.1, ARCH_SIZE.0, ARCH_SIZE.1);
@@ -544,7 +533,7 @@ pub fn run_client() -> Result<(), String>{
     }
 
     println!("Waiting for other player...");
-    let mut buffer = [0u8; 100];
+    let mut buffer = [0u8; 800];
     let (number_of_bytes) = socket.recv(&mut buffer).expect("Didn't receive data");
     println!("Starting Game");
     socket.set_nonblocking(true).unwrap();
@@ -628,7 +617,7 @@ pub fn run_client() -> Result<(), String>{
             let receive_time = Instant::now();
            
             'reading: loop{
-                if networking::transmit::receive_game_state(&socket, &mut next_state, &readout_time){ 
+                if networking::transmit::receive_game_state(&socket, &mut next_state, &readout_time) { 
                     break;
                 }else if(receive_time.elapsed().as_millis() > Duration::from_secs_f64(FRAME_RATE*2.0).as_millis()){
                     break;

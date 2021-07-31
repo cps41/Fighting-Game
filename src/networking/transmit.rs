@@ -147,7 +147,7 @@ pub fn receive_game_state(  socket: &UdpSocket,
                             next_state: &mut GameState, 
                             readout_time: &Instant
                          ) -> bool{
-    let mut buffer = [0u8; 150];
+    let mut buffer = [0u8; 800];
     //let mut number_of_bytes;
    
     match socket.recv(&mut buffer){

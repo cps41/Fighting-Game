@@ -38,6 +38,7 @@ impl<T> Clone for NodeRef<T> {
 impl<T: fmt::Debug> fmt::Debug for NodeRef<T> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.debug_struct("NodeRef")
+		.field("area", &self.0.borrow().area.area())
 		.field("parent", &self.0.borrow().parent)
 		.field("left", &self.0.borrow().left)
 		.field("right", &self.0.borrow().right)
@@ -202,23 +203,24 @@ impl NodeRef<CollisionObject> {
 	}
 
 	pub fn collidingWith(&self, other: &NodeRef<CollisionObject>, potential: &mut Vec<ParticleContact>, limit: i32) -> i32 {
-		// println!("self:\n {:?}, \nother:\n {:?}", self, other);
+		// println!("self:\n {:?}, \nother:\n {:?}", self.get(), other.get());
 		// return if there's no overlap
 		let intersection = self.get().area.intersection(other.get().area.clone());
 		if intersection.is_none() || limit == 0 {0}
 
 		// collision if both are leaves
 		else if self.get().isLeaf() && other.get().isLeaf() {
-			// println!("\n//////self:\n {:?}, \n///////other:\n {:?}", self, other);
+			// println!("\n//////self:\n {:#?}, \n///////other:\n {:#?}", self, other);
 			let a = self.get().bv.as_ref().unwrap().clone();
 			let b = other.get().bv.as_ref().unwrap().clone();
 			let types = (a.borrow().obj_type, b.borrow().obj_type);
+			let interpenetration = PhysVec::new(intersection.unwrap().width() as f32, intersection.unwrap().height() as f32);
+			let dif = a.borrow().particle.borrow().position.sub(&b.borrow().particle.borrow().position);
+			let collision_normal = dif.normalize();
 			match types {
-				// (CollisionObjectType::Platform, _) | (_, CollisionObjectType::Platform) => (),
+				(CollisionObjectType::Platform, _) | (_, CollisionObjectType::Platform) => 
+					potential.push(ParticleContact::new(a, b, collision_normal, 1.0, interpenetration)),
 				_ => {
-					let interpenetration = PhysVec::new(intersection.unwrap().width() as f32, intersection.unwrap().height() as f32);
-					let dif = a.borrow().particle.borrow().position.sub(&b.borrow().particle.borrow().position);
-					let collision_normal = dif.normalize();
 					// println!("\nmagnitude: {}, normal: {:?}, interpenetration: {:?}", dif.magnitude(), collision_normal, interpenetration);
 					potential.push(ParticleContact::new(a, b, collision_normal, 1.0, interpenetration));
 				},

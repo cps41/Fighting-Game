@@ -42,9 +42,6 @@ pub fn move_char(f: &mut characters::characterAbstract::Fighter){
         
         //jump or or left, depending on input
         animation::sprites::State::Jump => {
-            if f.char_state.frame_count == 1 {
-                f.char_state.particle.borrow_mut().jump_count += 1;
-            }
             if f.char_state.frame_count == 1 || 
                f.char_state.frame_count == 6 ||
                f.char_state.frame_count == 11{
@@ -68,9 +65,6 @@ pub fn move_char(f: &mut characters::characterAbstract::Fighter){
         
         //jump forward
         animation::sprites::State::FJump => {
-            if f.char_state.frame_count == 1 {
-                f.char_state.particle.borrow_mut().jump_count += 1;
-            }
             if f.char_state.frame_count == 1  ||
                f.char_state.frame_count == 7  ||
                f.char_state.frame_count == 13 ||
@@ -79,7 +73,7 @@ pub fn move_char(f: &mut characters::characterAbstract::Fighter){
                 // f.update_position(&PhysVec::new(0.0, 0.0));   
             }else if f.char_state.frame_count == 25 ||
                      f.char_state.frame_count == 31 {
-                        f.char_state.particle.borrow_mut().velocity.replace(&PhysVec::new(500.0, 500.0));
+                        f.char_state.particle.borrow_mut().velocity.replace(&PhysVec::new(500.0, 0.0));
                         // f.update_position(&PhysVec::new(0.0, 0.0));   
             }else{
                 // f.update_position(&PhysVec::new(0f32, 0f32));
@@ -95,9 +89,9 @@ pub fn move_char(f: &mut characters::characterAbstract::Fighter){
                 f.char_state.particle.borrow_mut().velocity.x = 0.0;
             } 
 
-            if y_pos < -40.0 || (y_pos > -49.0 && y_pos < 90.0) || y_pos > 98.75 {
-                f.char_state.particle.borrow_mut().velocity.y = 500.0;
-            }
+            // if y_pos < -35.0 || (y_pos > -40.0 && y_pos < 90.0) || y_pos > 98.75 {
+                f.char_state.particle.borrow_mut().velocity.y = 300.0;
+            // }
             f.update_position(&force);
         },
 

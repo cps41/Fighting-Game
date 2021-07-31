@@ -93,8 +93,8 @@ impl SDLCore{
 		// fill health bars
 		if fighter.char_state.health() > 0 {
 			self.wincan.copy(healthbar_fill_left, 
-				Rect::new(0,0, 270-(270-fighter.char_state.health() as u32), 40), 
-				Rect::new(3,10, 270-(270-fighter.char_state.health() as u32), 40))?;
+				Rect::new(0,0, 300-(270-fighter.char_state.health() as u32), 40), 
+				Rect::new(3,10, 300-(270-fighter.char_state.health() as u32), 40))?;
 		}
 		if fighter2.char_state.health() > 0 {
 			self.wincan.copy(healthbar_fill_right, 
@@ -136,7 +136,7 @@ impl SDLCore{
 
 		// hazard rectangle & position
 		let hazard_screen_position = hazard.position;
-		let hazard_screen_rectangle = hazard.sprite;
+		let hazard_screen_rectangle = Rect::new(hazard.sprite.x, hazard.sprite.y, 50, 50);
 
 		// copy textures
         if let Direction::Left = fighter.char_state.direction() {
@@ -145,7 +145,13 @@ impl SDLCore{
 		else {
 			self.wincan.copy(texture, current_frame, screen_rect)?;
 		}
-		self.wincan.copy_ex(texture2, current_frame2, screen_rect2, 0.0, None, true, false)?;
+        if let Direction::Left = fighter2.char_state.direction() {
+			self.wincan.copy_ex(texture2, current_frame2, screen_rect2, 0.0, None, true, false)?;
+		}
+		else {
+			self.wincan.copy(texture2, current_frame2, screen_rect2)?;
+		}
+		// self.wincan.copy_ex(texture2, current_frame2, screen_rect2, 0.0, None, true, false)?;
 		self.wincan.copy(hazard_texture, hazard_frame, hazard_screen_rectangle)?;
 		self.wincan.set_draw_color(Color::RED);
 		self.wincan.draw_rects(&[fighter.char_state.get_bb(), fighter2.char_state.get_bb(), hazard.get_bb()])?;

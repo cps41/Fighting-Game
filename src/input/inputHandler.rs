@@ -31,7 +31,8 @@ pub fn keyboard_input(player_input: &HashSet<u8>, fighter: &mut characters::char
                 3 =>  {fighter.char_state.set_state(animation::sprites::State::Block);    
                                      fighter.char_state.reset_current_frame();   
                                      break;},
-                4 if fighter.char_state.can_jump() => {fighter.char_state.set_state(animation::sprites::State::Jump);    
+                4 if fighter.char_state.can_jump() => {fighter.char_state.set_state(animation::sprites::State::Jump); 
+                                    fighter.char_state.particle.borrow_mut().jump_count += 1;   
                                      fighter.char_state.reset_current_frame();   
                                      break;},
                 5 =>       {fighter.char_state.set_state(animation::sprites::State::LKick);    
@@ -57,14 +58,15 @@ pub fn keyboard_input(player_input: &HashSet<u8>, fighter: &mut characters::char
             //inputs that intterupt walk
             for pressed in player_input.iter(){
                 match pressed{
-                    3 =>  {fighter.char_state.set_state(animation::sprites::State::Block);   
-                                         fighter.char_state.reset_current_frame();   
-                                         return;},
+                    // 3 =>  {fighter.char_state.set_state(animation::sprites::State::Block);   
+                    //                      fighter.char_state.reset_current_frame();   
+                    //                      return;},
                     4 if fighter.char_state.can_jump() => {if fighter.char_state.direction == input::movement::Direction::Right{
                                             fighter.char_state.set_state(animation::sprites::State::FJump);
                                          }else{
                                              fighter.char_state.set_state(animation::sprites::State::Jump);
                                          }
+                                         fighter.char_state.particle.borrow_mut().jump_count += 1;
                                          fighter.char_state.reset_current_frame();
                                          return;},
                     5 =>       {fighter.char_state.set_state(animation::sprites::State::LKick);   
