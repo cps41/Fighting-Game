@@ -57,6 +57,7 @@ impl Particle {
     pub fn update_health(&mut self, damage: i32) {
         self.health -= damage;
         self.health = self.health.clamp(0, 270);
+        println!("Updating health to {}", self.health);
     }
 
     /*

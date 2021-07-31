@@ -226,7 +226,7 @@ pub fn run_game() -> Result<(), String>{
 		// println!("\nFighter 1\n {:?}\n", fighter.char_state.get_node());
 		// println!("\nFighter 2\n {:?}\n", fighter2.char_state.get_node());
 		// println!("\nHazard\n {:?}\n", hazard.hitbox);
-        let hazard_reset = collisions.resolve_collisions();
+        let (hazard_reset, hit_audio) = collisions.resolve_collisions();
         // println!("\nCollisions head AFTER: \n{:#?}\n", collisions.head);
         fighter.char_state.particle.borrow_mut().integrate(FRAME_RATE as f32);
         fighter2.char_state.particle.borrow_mut().integrate(FRAME_RATE as f32);
@@ -391,7 +391,7 @@ pub fn run_server() -> Result<(), String>{
         hazard.update_bounding_box(&collisions);
         
 
-        let hazard_reset = collisions.resolve_collisions();
+        let (hazard_reset, hit_audio) = collisions.resolve_collisions();
         fighter1.char_state.particle.borrow_mut().integrate(FRAME_RATE as f32);
         fighter2.char_state.particle.borrow_mut().integrate(FRAME_RATE as f32);
 

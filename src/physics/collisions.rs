@@ -21,18 +21,21 @@ impl BVHierarchy {
 		// println!("inserting {:?}", co);
 		self.head.insert(co)
 	}
-	pub fn resolve_collisions(&self) -> bool {
+	pub fn resolve_collisions(&self) -> (bool, bool) {
 		let mut potential_collisions: Vec<ParticleContact> = Vec::new();
 		let count = self.head.getPotentialCollisions(&mut potential_collisions, 100);
 		// println!("Counted {} collisions\n", count);
 		let mut hazard_reset = false; // bool to reset hazard upon impact
+		let mut hit_audio = false;
 		for contact in potential_collisions.iter_mut() {
 			let p0 = contact.objects[0].clone();
 			let p1 = contact.objects[1].clone();
 			if check_collision(p0.borrow().clone(), p1.borrow().clone()) {
 				// println!("Resolving....");
 				// if contact.resolve_velocity(FRAME_RATE as f32) {hazard_reset = true}
-				contact.resolve_velocity(FRAME_RATE as f32);
+				if contact.resolve_velocity(FRAME_RATE as f32) {
+					hit_audio = true;
+				}
 				contact.resolve_interpenetration();
 				match (p0.borrow().obj_type, p1.borrow().obj_type) {
 					(CollisionObjectType::Hazard, _)  | (_, CollisionObjectType::Hazard) => {
@@ -52,7 +55,7 @@ impl BVHierarchy {
 				// println!("\nVelocities updated between\n {:?}\nand\n {:?}", contact.particles[0], contact.particles[1]);
 			}
 		}
-		hazard_reset
+		(hazard_reset, hit_audio)
 	}
 }
 
@@ -144,6 +147,7 @@ impl ParticleContact {
 		let types = (self.objects[0].borrow().obj_type, self.objects[1].borrow().obj_type);
 		let mass_a = a.borrow().inverse_mass;
 		let mass_b = b.borrow().inverse_mass;
+		let mut hit_audio = false;
 		match &types {
 			// stop y movement for platform/wall collisions
 			(CollisionObjectType::Platform, _) => if self.interpenetration.x > self.interpenetration.y { 
@@ -160,11 +164,13 @@ impl ParticleContact {
 				self.objects[1].borrow().particle.borrow_mut().update_health(self.objects[0].borrow().particle.borrow().damage);
 				self.objects[0].borrow().particle.borrow_mut().velocity.add_vec(&impulse_per_mass.dot_product(mass_a));
 				self.objects[1].borrow().particle.borrow_mut().velocity.add_vec(&impulse_per_mass.dot_product(-mass_b));
+				hit_audio = true;
 			},
 			(CollisionObjectType::HurtBox, CollisionObjectType::HitBox) | (CollisionObjectType::HurtBox, CollisionObjectType::Hazard) => {
 				self.objects[0].borrow().particle.borrow_mut().update_health(self.objects[1].borrow().particle.borrow().damage);
 				self.objects[0].borrow().particle.borrow_mut().velocity.add_vec(&impulse_per_mass.dot_product(mass_a));
 				self.objects[1].borrow().particle.borrow_mut().velocity.add_vec(&impulse_per_mass.dot_product(-mass_b));
+				hit_audio = true;
 			},
 
 			// just update others
@@ -173,10 +179,7 @@ impl ParticleContact {
 				self.objects[1].borrow().particle.borrow_mut().velocity.add_vec(&impulse_per_mass.dot_product(-mass_b));
 			},
 		}
-		match &types {
-			(CollisionObjectType::Hazard, _) | (_, CollisionObjectType::Hazard) => true,
-			_ => false,
-		}
+		hit_audio
 	}
 
 	fn resolve_interpenetration(&self) {

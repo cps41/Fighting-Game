@@ -192,7 +192,7 @@ impl CharacterState {
 	pub fn new() -> CharacterState {
 		// current default values
 		// Stretch goals: expand to not use default values
-		let position = Particle::new(PhysVec::new(0f32,-300f32), 0.01, 180f32, 270, 10);
+		let position = Particle::new(PhysVec::new(0f32,-300f32), 0.01, 180f32, 270, 5);
 		CharacterState {
 			// position: RefCell::new(position.clone()),
 			particle: Rc::new(RefCell::new(position.clone())),

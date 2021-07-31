@@ -90,7 +90,7 @@ pub fn move_char(f: &mut characters::characterAbstract::Fighter){
             } 
 
             // if y_pos < -35.0 || (y_pos > -40.0 && y_pos < 90.0) || y_pos > 98.75 {
-                f.char_state.particle.borrow_mut().velocity.y = 300.0;
+                f.char_state.particle.borrow_mut().velocity.y = 270.0;
             // }
             f.update_position(&force);
         },
