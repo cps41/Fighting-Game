@@ -1,7 +1,8 @@
 use core::cell::RefCell;
 use crate::animation; // to reference sprite State
 use crate::animation::sprites::State;
-use crate::input; // use to reference Direction
+use crate::input;
+use crate::input::movement::Direction; // use to reference Direction
 
 use sdl2::rect::{Rect};
 use sdl2::render::Texture;
@@ -107,7 +108,7 @@ impl <'t> Fighter <'t> {
     pub fn weight(&self) -> &i32 {&self.weight}
     pub fn gravity(&self) -> &f32 {&self.gravity}
     pub fn max_fall_speed(&self) -> &i32 {&self.max_fall_speed}
-	pub fn get_health(&self) -> &i32 {&self.health}
+	pub fn get_health(&self) -> i32 {self.health}
     pub fn walk_speed(&self) -> &i32 {&self.walk_speed}
     pub fn run_speed(&self) -> &i32 {&self.run_speed}
     pub fn max_air_speed(&self) -> &i32 {&self.max_air_speed}
@@ -144,6 +145,9 @@ impl <'t> Fighter <'t> {
 		scaled.dot_replace(1.0/0.0002645833);
 		self.char_state.particle.borrow_mut().add_force(&scaled);
 		self.char_state.particle.borrow_mut().integrate(FRAME_RATE as f32);
+		if self.char_state.particle.borrow().position.clone().y > 900.0 {
+			self.char_state.particle.borrow_mut().health = 0;
+		}
 	}
 
 	pub fn inflict_damage (&mut self, damage: i32) {
@@ -188,7 +192,7 @@ impl CharacterState {
 	pub fn new() -> CharacterState {
 		// current default values
 		// Stretch goals: expand to not use default values
-		let position = Particle::new(PhysVec::new(0f32,0f32), 0.01, 180f32, 270);
+		let position = Particle::new(PhysVec::new(0f32,-300f32), 0.01, 180f32, 270, 5);
 		CharacterState {
 			// position: RefCell::new(position.clone()),
 			particle: Rc::new(RefCell::new(position.clone())),
@@ -324,6 +328,7 @@ impl CharacterState {
 	pub fn velocity(&self)		-> (f32, f32)					{ self.particle.borrow().velocity.raw() }
 	pub fn acceleration(&self)		-> (f32, f32)					{ self.particle.borrow().acceleration.raw() }
 	pub fn direction(&self)		-> &input::movement::Direction	{ &self.direction }
+	pub fn can_jump(&self)		-> bool 						{ self.particle.borrow().jump_count < 2 }
 
 	// settters (use to update)
 	// pub fn set_position(&mut self, p: PhysVec)						{ self.position.borrow().position.replace(&p); }
@@ -348,7 +353,16 @@ impl CharacterState {
 			false
 		}
 	}
-	pub fn remove(link: &mut Option<RefCell<CollisionObject>>) {
+	
+	pub fn remove(&mut self, box_type: String) {
+		let mut none = None;
+		let link = {match box_type.as_str() {
+			"hurt" => &mut self.hurtbox,
+			"hit" => &mut self.hitbox,
+			"block" => &mut self.blockbox,
+			_ => &mut none,
+		}};
+
 		link.take().map(|l| {
 			l.borrow().getNodeRef().map(|n| {
 				// println!("\nremoving {:?}\n", n);
@@ -358,15 +372,24 @@ impl CharacterState {
 	}
 	pub fn insert_hit_box(&mut self, bvh: &BVHierarchy) {
 		// println!("inserting hit box...");
-		CharacterState::remove(&mut self.hitbox);
-		let mut vel_particle = self.particle.clone();
-		vel_particle.borrow_mut().velocity.x = 50.0;
-		vel_particle.borrow_mut().velocity.y = 0.0;
+		self.remove("hit".to_string());
+		let vel_particle = self.particle.clone();
+		let rect = {
+			if self.direction == Direction::Right {
+				vel_particle.borrow_mut().velocity.x = 25.0;
+				Rect::new(self.x()+W_OFFSET+SPRITE_W as i32/2, self.y()+H_OFFSET, SPRITE_W as u32, SPRITE_H/2)
+			}
+			else {
+				vel_particle.borrow_mut().velocity.x = -25.0;
+				Rect::new(self.x()+W_OFFSET-SPRITE_W as i32/2, self.y()+H_OFFSET, SPRITE_W as u32, SPRITE_H/2)
+			}
+		};
+		vel_particle.borrow_mut().velocity.y = 300.0;
 		self.hitbox = Some(bvh.insert(
 			CollisionObject {
 				obj_type: CollisionObjectType::HitBox, 
 				area: SPRITE_W as u32 * SPRITE_H/2,
-				rect: Rect::new(self.x()+W_OFFSET+SPRITE_W as i32/2, self.y()+H_OFFSET, SPRITE_W as u32, SPRITE_H/2),
+				rect: rect,
 				noderef: None,
 				particle: vel_particle,
 			}
@@ -374,7 +397,7 @@ impl CharacterState {
 	}
 	pub fn insert_hurt_box(&mut self, bvh: &BVHierarchy) {
 		// println!("inserting hurt box...");
-		CharacterState::remove(&mut self.hurtbox);
+		self.remove("hurt".to_string());
 		self.hurtbox = Some(bvh.insert(
 			CollisionObject::new(
 				CollisionObjectType::HurtBox, self.x()+W_OFFSET, self.y()+H_OFFSET, SPRITE_W, SPRITE_H, self.particle.clone())
@@ -382,7 +405,8 @@ impl CharacterState {
 	}
 	pub fn insert_block_box(&mut self, bvh: &BVHierarchy) {
 		// println!("inserting block box...");
-		CharacterState::remove(&mut self.blockbox);
+		self.remove("block".to_string());
+		self.particle.borrow_mut().velocity.y = 300.0;
 		self.blockbox = Some(bvh.insert(
 			CollisionObject::new(
 				CollisionObjectType::BlockBox, self.x()+W_OFFSET, self.y()+H_OFFSET, SPRITE_W, SPRITE_H, self.particle.clone())
@@ -390,21 +414,31 @@ impl CharacterState {
 	}
 	pub fn update_bounding_boxes(&mut self, bvh: &BVHierarchy) {
 		// println!("updating...");
-		// println!("\nUpdating Bounding Boxes {:?}", bvh.head);
+        // clamp position
+		let w_offset = CAM_W as f32/2f32;
+		let (x, y) = self.particle.borrow().position.raw();
+		self.particle.borrow_mut().position.x = x.clamp(-w_offset+SPRITE_W as f32/2.0, w_offset-SPRITE_W as f32/2.0);
+		
+        if y <= -10.0 && x > -100.0 && x < 100.0 {
+		    self.particle.borrow_mut().position.y = y.clamp(-1000.0, -38.0);
+        }
+        else if y <= 120.0 && x > -600.0 && x < 600.0 {
+		    self.particle.borrow_mut().position.y = y.clamp(-1000.0, 92.0);
+        }
 		match &self.state {
 			State::Block => {
-				CharacterState::remove(&mut self.hitbox);
-				CharacterState::remove(&mut self.hurtbox);
+				self.remove("hit".to_string());
+				self.remove("hurt".to_string());
 				self.insert_block_box(&bvh);
 			},
 			State::LPunch | State::HKick | State::LKick => {
-				CharacterState::remove(&mut self.blockbox);
-				CharacterState::remove(&mut self.hurtbox);
+				self.remove("block".to_string());
+				self.remove("hurt".to_string());
 				self.insert_hit_box(&bvh);
 			},
 			_ => {
-				CharacterState::remove(&mut self.hitbox);
-				CharacterState::remove(&mut self.blockbox);
+				self.remove("hit".to_string());
+				self.remove("block".to_string());
 				self.insert_hurt_box(&bvh);
 			},
 		}
@@ -421,6 +455,17 @@ impl CharacterState {
 			self.blockbox.clone().unwrap().borrow().rect.clone()
 		}
 		else {Rect::new(0,0,0,0)}
+	}
+	pub fn get_node(&self) -> CollisionObject {
+		if self.hurtbox.is_some() {
+			self.hurtbox.clone().unwrap().borrow().clone()
+		}
+		else if self.hitbox.is_some() {
+			self.hitbox.clone().unwrap().borrow().clone()
+		}
+		else {
+			self.blockbox.clone().unwrap().borrow().clone()
+		}
 	}
 }
 

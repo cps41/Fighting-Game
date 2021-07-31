@@ -1,5 +1,6 @@
 extern crate sdl2;
 
+use sdl2::keyboard::TextInputUtil;
 use sdl2::rect::Rect;
 use sdl2::render::{WindowCanvas, Texture, TextureCreator};
 use sdl2::pixels::Color;
@@ -9,6 +10,7 @@ use sdl2::rect::Point;
 
 use crate::characters;
 use crate::animation;
+use crate::input::movement::Direction;
 use crate::physics;
 
 use super::globals::*;
@@ -69,7 +71,7 @@ impl SDLCore{
 				fighter2: &characters::characterAbstract::Fighter,
 				hazard: &physics::hazard::Hazard,
 				hazard_texture: &Texture,
-				platform: &Rect,
+				end: Option<&Texture>,
 				healthbar_left: &Texture,
 				healthbar_right: &Texture,
 				healthbar_fill_left: &Texture,
@@ -85,16 +87,20 @@ impl SDLCore{
 		let wall_l = Rect::new(WALL_L.0, WALL_L.1, WALL_SIZE.0, WALL_SIZE.1);
 		let wall_r = Rect::new(WALL_R.0, WALL_R.1, WALL_SIZE.0, WALL_SIZE.1);
 		let arch = Rect::new(ARCH.0, ARCH.1, ARCH_SIZE.0, ARCH_SIZE.1);
-		self.wincan.draw_rects(&[Rect::new(50, 560, CAM_W-100, 30), wall_l, wall_r, arch])?;
+		self.wincan.draw_rects(&[Rect::new(100, 560, CAM_W-200, 30), wall_l, wall_r, arch])?;
 		//self.wincan.clear();
 
 		// fill health bars
-		self.wincan.copy(healthbar_fill_left, Rect::new(0,0, 
-				300-(270-fighter.char_state.health() as u32), 40), Rect::new(3,10, 
-				300-(270-fighter.char_state.health() as u32), 40))?;
-		self.wincan.copy(healthbar_fill_right, 
-			Rect::new(270-fighter2.char_state.health(),0, 300-(270-fighter.char_state.health() as u32), 40), 
-			Rect::new(CAM_W as i32-(300-(270-fighter.char_state.health()))-3,10, 300-(270-fighter.char_state.health() as u32), 40))?;
+		if fighter.char_state.health() > 0 {
+			self.wincan.copy(healthbar_fill_left, 
+				Rect::new(0,0, 300-(270-fighter.char_state.health() as u32), 40), 
+				Rect::new(3,10, 300-(270-fighter.char_state.health() as u32), 40))?;
+		}
+		if fighter2.char_state.health() > 0 {
+			self.wincan.copy(healthbar_fill_right, 
+				Rect::new(270-fighter2.char_state.health(),0, 300-(270-fighter2.char_state.health() as u32), 40), 
+				Rect::new(CAM_W as i32-(300-(270-fighter2.char_state.health()))-3,10, 300-(270-fighter2.char_state.health() as u32), 40))?;
+		}
 		self.wincan.copy(healthbar_left, None, Rect::new(3,10, 300, 40))?;
 		self.wincan.copy(healthbar_right, None, Rect::new(CAM_W as i32-300-3,10, 300, 40))?;
 
@@ -130,14 +136,30 @@ impl SDLCore{
 
 		// hazard rectangle & position
 		let hazard_screen_position = hazard.position;
-		let hazard_screen_rectangle = hazard.sprite;
+		let hazard_screen_rectangle = Rect::new(hazard.sprite.x, hazard.sprite.y, 50, 50);
 
 		// copy textures
-        self.wincan.copy(texture, current_frame, screen_rect)?;
-		self.wincan.copy_ex(texture2, current_frame2, screen_rect2, 0.0, None, true, false)?;
+        if let Direction::Left = fighter.char_state.direction() {
+			self.wincan.copy_ex(texture, current_frame, screen_rect, 0.0, None, true, false)?;
+		}
+		else {
+			self.wincan.copy(texture, current_frame, screen_rect)?;
+		}
+        if let Direction::Left = fighter2.char_state.direction() {
+			self.wincan.copy_ex(texture2, current_frame2, screen_rect2, 0.0, None, true, false)?;
+		}
+		else {
+			self.wincan.copy(texture2, current_frame2, screen_rect2)?;
+		}
+		// self.wincan.copy_ex(texture2, current_frame2, screen_rect2, 0.0, None, true, false)?;
 		self.wincan.copy(hazard_texture, hazard_frame, hazard_screen_rectangle)?;
 		self.wincan.set_draw_color(Color::RED);
 		self.wincan.draw_rects(&[fighter.char_state.get_bb(), fighter2.char_state.get_bb(), hazard.get_bb()])?;
+		if end.is_some() {
+			self.wincan.copy(end.unwrap(), 
+				Rect::new((700-415)/2,(300-155)/2,415, 155), 
+				Rect::new((CAM_W as i32-415)/2, (CAM_H as i32-155)/2, 415, 155))?;
+		}
         self.wincan.present();
 
         /*

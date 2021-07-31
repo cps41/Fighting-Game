@@ -12,7 +12,7 @@ pub fn keyboard_input(player_input: &HashSet<u8>, fighter: &mut characters::char
     if fighter.char_state.frame_count == animation::sprites::get_frame_cnt(&fighter.char_state){
         fighter.char_state.set_state(animation::sprites::State::Idle);
         fighter.char_state.reset_current_frame();
-        fighter.char_state.direction = input::movement::Direction::Up;        
+        // fighter.char_state.direction = input::movement::Direction::Up;        
     }
 
     //inputs accepted while idle
@@ -31,7 +31,8 @@ pub fn keyboard_input(player_input: &HashSet<u8>, fighter: &mut characters::char
                 3 =>  {fighter.char_state.set_state(animation::sprites::State::Block);    
                                      fighter.char_state.reset_current_frame();   
                                      break;},
-                4 =>       {fighter.char_state.set_state(animation::sprites::State::Jump);    
+                4 if fighter.char_state.can_jump() => {fighter.char_state.set_state(animation::sprites::State::Jump); 
+                                    fighter.char_state.particle.borrow_mut().jump_count += 1;   
                                      fighter.char_state.reset_current_frame();   
                                      break;},
                 5 =>       {fighter.char_state.set_state(animation::sprites::State::LKick);    
@@ -50,21 +51,22 @@ pub fn keyboard_input(player_input: &HashSet<u8>, fighter: &mut characters::char
     }else if fighter.char_state.state == animation::sprites::State::Walk{
         //if no longer holding down, stop walking
         if player_input.is_empty(){
-            fighter.char_state.direction = input::movement::Direction::Up;
+            // fighter.char_state.direction = input::movement::Direction::Up;
             fighter.char_state.set_state(animation::sprites::State::Idle); 
             fighter.char_state.reset_current_frame();
         }else{
             //inputs that intterupt walk
             for pressed in player_input.iter(){
                 match pressed{
-                    3 =>  {fighter.char_state.set_state(animation::sprites::State::Block);   
-                                         fighter.char_state.reset_current_frame();   
-                                         return;},
-                    4 =>       {if fighter.char_state.direction == input::movement::Direction::Right{
+                    // 3 =>  {fighter.char_state.set_state(animation::sprites::State::Block);   
+                    //                      fighter.char_state.reset_current_frame();   
+                    //                      return;},
+                    4 if fighter.char_state.can_jump() => {if fighter.char_state.direction == input::movement::Direction::Right{
                                             fighter.char_state.set_state(animation::sprites::State::FJump);
                                          }else{
                                              fighter.char_state.set_state(animation::sprites::State::Jump);
                                          }
+                                         fighter.char_state.particle.borrow_mut().jump_count += 1;
                                          fighter.char_state.reset_current_frame();
                                          return;},
                     5 =>       {fighter.char_state.set_state(animation::sprites::State::LKick);   

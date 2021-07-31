@@ -13,10 +13,12 @@ pub struct Particle {
     pub inverse_mass: f32,
     pub force_accumulator: PhysVec,
     pub health: i32,
+    pub jump_count: i32,
+    pub damage: i32,
 }
 
 impl Particle {
-    pub fn new(position: PhysVec, damping: f32, mass: f32, health: i32) -> Self {
+    pub fn new(position: PhysVec, damping: f32, mass: f32, health: i32, damage: i32) -> Self {
         let zero = PhysVec::new(0f32, 0f32);
         let inverse_mass = 1f32/mass;
         Particle {
@@ -27,6 +29,8 @@ impl Particle {
             inverse_mass,
             force_accumulator: zero.clone(),
             health: health,
+            damage: damage,
+            jump_count: 0,
         }
     }
 
@@ -52,7 +56,8 @@ impl Particle {
 
     pub fn update_health(&mut self, damage: i32) {
         self.health -= damage;
-        self.health.clamp(0, 270);
+        self.health = self.health.clamp(0, 270);
+        println!("Updating health to {}", self.health);
     }
 
     /*
@@ -69,16 +74,10 @@ impl Particle {
         Approximation of integral.
     */
     pub fn integrate(&mut self, duration: f32) {
-        let old = self.clone();
-		let w_offset = CAM_W as f32/2f32;
-		let h_offset = CAM_H as f32/2f32;
         if duration <= 0f32 { return }
 
         // update linear position
         self.update_position(duration);
-        // clamp position
-		self.position.x = self.position.x.clamp(-w_offset+SPRITE_W as f32/2.0, w_offset-SPRITE_W as f32/2.0);
-		// self.position.y = self.position.y.clamp(-1000.0, h_offset-SPRITE_H as f32/2.0);
         // calculate acceleration
         self.acceleration.add_scaled_product(&self.force_accumulator, self.inverse_mass); // a += F/m
         // update linear velocity based on new acceleration

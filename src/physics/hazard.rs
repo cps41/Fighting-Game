@@ -1,5 +1,6 @@
 use std::rc::*;
 use std::cell::*;
+use rand::{thread_rng, Rng};
 use crate::physics::particle::Particle;
 use crate::physics::collisions::*;
 use crate::physics::vecmath::PhysVec;
@@ -74,17 +75,24 @@ impl Hazard {
             position: Point::new(35,0),
 			sprite: Rect::new(250, 0, 100, 100),
             hitbox: None,
-            particle: Rc::new(RefCell::new(Particle::new(PhysVec::new(35f32,0f32), 0.01, 300f32, 0))),
+            particle: Rc::new(RefCell::new(Particle::new(PhysVec::new(135f32,0f32), 0.01, 300f32, 0, 20))),
 		}
     }
-
+	pub fn update_position(&mut self) {
+		let mut scaled = PhysVec::new(0.0, 0.0);
+		self.particle.borrow_mut().velocity.y = 175.0;
+		self.particle.borrow_mut().add_force(&scaled);
+		self.particle.borrow_mut().integrate(FRAME_RATE as f32);
+		self.sprite.reposition(self.particle.borrow().to_point());
+	}
 	pub fn reset(&mut self, ) {
-		if self.sprite.x() > 800 {
-			self.sprite.offset(-650, -600);
-		}
-		else {
-			self.sprite.offset(350, -600);
-		}
+		self.sprite.set_y(0);
+		self.sprite.set_x(thread_rng().gen_range(100..1080));
+		self.sprite.set_x(self.sprite.x.clamp(100, 1080));
+		self.particle.borrow_mut().reset_x();
+		self.particle.borrow_mut().reset_y();
+		self.particle.borrow_mut().position.x = self.sprite.x() as f32;
+		self.particle.borrow_mut().position.y = self.sprite.y() as f32;
 		self.fell = true;
 	}
 	
@@ -99,16 +107,15 @@ impl Hazard {
 	
 	pub fn insert(&mut self, bvh: &BVHierarchy) {
 		// println!("inserting block box...");
-		Hazard::remove(&mut self.hitbox);
 		self.hitbox = Some(bvh.insert(
 			CollisionObject::new(
-				CollisionObjectType::Hazard, self.sprite.x(), self.sprite.y(), 100, 100, self.particle.clone())
+				CollisionObjectType::Hazard, self.sprite.x(), self.sprite.y(), 50, 50, self.particle.clone())
 		));
 	}
 	
 	pub fn update_bounding_box(&mut self, bvh: &BVHierarchy) {
 		// println!("updating...");
-		// println!("\nUpdating Bounding Boxes {:?}", bvh.head);
+		// println!("\nUpdating Hazard\n {:?}\n", self.hitbox);
         Hazard::remove(&mut self.hitbox);
         self.insert(&bvh);
     }
