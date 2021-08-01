@@ -254,13 +254,16 @@ pub fn run_game() -> Result<(), String>{
         };
 
         end_message = {
+            if fighter.char_state.health() <= 0 || fighter2.char_state.health() <= 0 {
+                sdl2::mixer::Channel::all().halt();
+                sdl2::mixer::Channel::all().play(&clips.ko, 1);
+            }
+
             // check if game should continue
             if fighter.char_state.health() <= 0 {
-                 sdl2::mixer::Channel::all().halt();
                 Some(&lose)
             }
             else if fighter2.char_state.health() <= 0 {
-                sdl2::mixer::Channel::all().halt();
                 Some(&win)
             }
             else {
