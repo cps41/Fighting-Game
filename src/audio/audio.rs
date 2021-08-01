@@ -14,8 +14,8 @@ const chunk_size: i32 = 256; // can be 1_024, but setting low for low latency
 
 // file names
 const opening_file: &str = "src/assets/audio/songs/opening-test.mp3";
-const hit_file: &str = "src/assets/audio/sfx/hit-test.mp3";
-const ko_file: &str = "src/assets/audio/sfx/ko-test.mp3";
+const hit_file: &str = "src/assets/audio/sfx/hit-sound.mp3";
+const ko_file: &str = "src/assets/audio/sfx/ko-sound.mp3";
 const combat_file: &str = "src/assets/audio/sfx/combat-test.mp3";
 
 // time of files, idk how not to hardcore...
