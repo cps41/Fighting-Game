@@ -227,6 +227,7 @@ pub fn run_game() -> Result<(), String>{
 		// println!("\nFighter 2\n {:?}\n", fighter2.char_state.get_node());
 		// println!("\nHazard\n {:?}\n", hazard.hitbox);
         let (hazard_reset, hit_audio) = collisions.resolve_collisions();
+
         // println!("\nCollisions head AFTER: \n{:#?}\n", collisions.head);
         fighter.char_state.particle.borrow_mut().integrate(FRAME_RATE as f32);
         fighter2.char_state.particle.borrow_mut().integrate(FRAME_RATE as f32);
@@ -253,6 +254,11 @@ pub fn run_game() -> Result<(), String>{
         };
 
         end_message = {
+            if fighter.char_state.health() <= 0 || fighter2.char_state.health() <= 0 {
+                sdl2::mixer::Channel::all().halt();
+                sdl2::mixer::Channel::all().play(&clips.ko, 1);
+            }
+
             // check if game should continue
             if fighter.char_state.health() <= 0 {
                 Some(&lose)
@@ -264,6 +270,11 @@ pub fn run_game() -> Result<(), String>{
                 None
             }
         };
+
+        // hit audio
+        if hit_audio {
+          sdl2::mixer::Channel::all().play(&clips.hit, 1);
+        }
         // render canvas
         game_window.render(&background, &texture, &fighter, &texture2, &fighter2, 
             &hazard, &hazard_texture, end_message, &healthbar_left, &healthbar_right,
@@ -620,11 +631,17 @@ pub fn run_client() -> Result<(), String>{
 
         let end_message = {
             // check if game should continue
-            if fighter1.char_state.health() <= 0 {
+            if fighter1.char_state.health() <= 0 && player_number == 1 {
                 Some(&lose)
             }
-            else if fighter2.char_state.health() <= 0 {
+            else if fighter2.char_state.health() <= 0 && player_number == 1 {
                 Some(&win)
+            }
+            else if fighter1.char_state.health() <= 0 && player_number == 2 {
+                Some(&win)
+            }
+            else if fighter2.char_state.health() <= 0 && player_number == 2 {
+                Some(&lose)
             }
             else {
                 None
